@@ -22,7 +22,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyTRxaWU0AAwlyWXg4hnBWNRb_DRU0AvyfoT4mgwinvIj1FiHtvJqPoqK0C0UgY6ZbpQQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyiCDm4LEXRQ8x4EaWfDCWfL314bN3ejvrjTMJ95POF8QSUov6GeA76vmnI4GeDz6HqEg/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -1800,35 +1800,43 @@
     // 🔥 FUNGSI PANGGIL GAS VIA FETCH - SEMUA PAKAI INI! 🔥
     // ============================================================
     function callGAS(action, data) {
-      return new Promise(function(resolve, reject) {
-        console.log('📤 callGAS:', action, data);
-        
-        fetch(GAS_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: action,
-            data: data || {}
-          })
-        })
-        .then(function(response) {
-          if (!response.ok) {
-            throw new Error('HTTP ' + response.status);
-          }
-          return response.json();
-        })
-        .then(function(result) {
-          console.log('📥 Result:', result);
-          resolve(result);
-        })
-        .catch(function(error) {
-          console.error('❌ callGAS error:', error);
-          reject(error);
-        });
-      });
-    }
+  return new Promise(function(resolve, reject) {
+
+    console.log('📤 callGAS:', action, data);
+
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify({
+        action: action,
+        data: data || {}
+      })
+    })
+    .then(function(response) {
+
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+
+      return response.json();
+    })
+    .then(function(result) {
+
+      console.log('📥 Result:', result);
+
+      resolve(result);
+    })
+    .catch(function(error) {
+
+      console.error('❌ callGAS error:', error);
+
+      reject(error);
+    });
+
+  });
+}
     
     // ==================== DROPDOWN EXCEL TOGGLE ====================
     function toggleExcelDropdown() {
