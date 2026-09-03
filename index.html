@@ -3156,7 +3156,7 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
     if (legendEl) legendEl.innerHTML = '⏳ Memuat grafik...';
     if (totalEl) totalEl.textContent = '⏳ Memuat total...';
     
-    console.log('📊 loadBulananChart - Bulan:', bulan, 'Tahun:', tahun, 'Kasir:', kasirFilter);
+    console.log('📊 loadBulananChart - Bulan:', bulan, 'Tahun:', tahun);
     
     callGAS('getPenjualanBulananPerKasir', {
       bulan: bulan,
@@ -3166,17 +3166,26 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
       role: role
     })
     .then(function(result) {
-      console.log('📊 Data grafik diterima:', result);
+      console.log('📊 Raw response:', JSON.stringify(result));
       
-      // Cek apakah result valid
-      if (!result || !result.success) {
-        console.error('❌ Error dari server:', result ? result.error : 'No data');
-        if (legendEl) legendEl.innerHTML = '❌ Gagal memuat grafik: ' + (result ? result.error : 'Unknown error');
-        if (totalEl) totalEl.textContent = 'Total: Rp 0';
-        return;
+      // CEK RESPONSE
+      if (!result) {
+        throw new Error('Tidak ada response dari server');
       }
       
+      if (!result.success) {
+        throw new Error(result.error || 'Gagal memuat data');
+      }
+      
+      // AMBIL DATA
       var data = result.data || {};
+      
+      // PASTIKAN data adalah OBJECT
+      if (typeof data !== 'object' || Array.isArray(data)) {
+        console.warn('⚠️ Data bukan object, reset ke object kosong');
+        data = {};
+      }
+      
       var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
       var datasets = [];
       var totalAll = 0;
@@ -3185,17 +3194,44 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
       var colorIndex = 0;
       
       console.log('📊 Kasir names:', kasirNames);
+      console.log('📊 Data:', data);
       
+      // LOOP PER KASIR
       for (var i = 0; i < kasirNames.length; i++) {
         var namaKasir = kasirNames[i];
-        var values = data[namaKasir] || [];
-        while (values.length < 12) values.push(0);
-        var sum = values.reduce(function(a, b) { return a + b; }, 0);
+        var values = data[namaKasir];
+        
+        // PASTIKAN values adalah ARRAY
+        if (!Array.isArray(values)) {
+          console.warn('⚠️ values untuk ' + namaKasir + ' bukan array:', values);
+          values = [];
+        }
+        
+        // PASTIKAN semua value adalah NUMBER
+        var cleanValues = [];
+        for (var j = 0; j < values.length; j++) {
+          var val = parseFloat(values[j]) || 0;
+          cleanValues.push(val);
+        }
+        
+        // PASTIKAN panjangnya 12
+        while (cleanValues.length < 12) {
+          cleanValues.push(0);
+        }
+        if (cleanValues.length > 12) {
+          cleanValues = cleanValues.slice(0, 12);
+        }
+        
+        // HITUNG TOTAL
+        var sum = 0;
+        for (var j = 0; j < cleanValues.length; j++) {
+          sum += cleanValues[j];
+        }
         totalAll += sum;
         
         datasets.push({
           label: namaKasir,
-          data: values,
+          data: cleanValues,
           backgroundColor: chartColors[colorIndex % chartColors.length] + '80',
           borderColor: chartColors[colorIndex % chartColors.length],
           borderWidth: 2
@@ -3205,7 +3241,7 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
       
       var canvas = document.getElementById('penjualanBulananChart');
       if (!canvas) {
-        console.error('❌ Canvas penjualanBulananChart tidak ditemukan!');
+        console.error('❌ Canvas tidak ditemukan!');
         if (legendEl) legendEl.innerHTML = '❌ Elemen chart tidak ditemukan';
         if (totalEl) totalEl.textContent = 'Total: Rp 0';
         return;
@@ -3213,15 +3249,13 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
       
       var chartCtx = canvas.getContext('2d');
       
-      // Hapus chart lama jika ada
+      // Hapus chart lama
       if (typeof penjualanBulananChart !== 'undefined' && penjualanBulananChart) {
-        try {
-          penjualanBulananChart.destroy();
-        } catch(e) {}
+        try { penjualanBulananChart.destroy(); } catch(e) {}
         penjualanBulananChart = null;
       }
       
-      // Jika tidak ada data, tampilkan chart kosong
+      // Jika TIDAK ADA DATA
       if (datasets.length === 0 || totalAll === 0) {
         if (legendEl) legendEl.innerHTML = '<span style="color:#999;">📊 Belum ada data penjualan</span>';
         if (totalEl) totalEl.textContent = 'Total: Rp 0';
@@ -3241,16 +3275,7 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return 'Belum ada data';
-                  }
-                }
-              }
-            },
+            plugins: { legend: { display: false } },
             scales: {
               y: { 
                 beginAtZero: true,
@@ -3268,7 +3293,7 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
         return;
       }
       
-      // Buat chart baru
+      // BUAT CHART
       try {
         penjualanBulananChart = new Chart(chartCtx, {
           type: 'bar',
@@ -3280,10 +3305,7 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { 
-                display: false,
-                position: 'bottom'
-              },
+              legend: { display: false },
               tooltip: {
                 callbacks: {
                   label: function(context) {
@@ -3314,11 +3336,14 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
         
         console.log('✅ Chart berhasil dibuat');
         
-        // Update legend
+        // UPDATE LEGEND
         var legendHtml = '';
         for (var i = 0; i < datasets.length; i++) {
           var d = datasets[i];
-          var sum = d.data.reduce(function(a,b) { return a + b; }, 0);
+          var sum = 0;
+          for (var j = 0; j < d.data.length; j++) {
+            sum += d.data[j];
+          }
           var persen = totalAll > 0 ? ((sum / totalAll) * 100).toFixed(1) : 0;
           legendHtml += '<span class="legend-item"><span class="legend-color" style="background:' + d.backgroundColor + '"></span>' + d.label + ' (' + persen + '%)</span>';
         }
