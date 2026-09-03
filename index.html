@@ -2160,6 +2160,13 @@ function exportHutangVendorCSV() {
                 riwayat = riwayatResult.data.riwayatPembayaran || [];
               }
               
+              // ===== URUTKAN RIWAYAT BERDASARKAN TANGGAL (LAMA KE BARU) =====
+              riwayat.sort(function(a, b) {
+                var tglA = a.tanggal || '';
+                var tglB = b.tanggal || '';
+                return tglA.localeCompare(tglB);
+              });
+              
               // Jika TIDAK ADA riwayat, tampilkan 1 baris
               if (riwayat.length === 0) {
                 allRows.push([
@@ -2177,7 +2184,7 @@ function exportHutangVendorCSV() {
                   ''  // Catatan
                 ]);
               } else {
-                // Tampilkan nota + riwayat di bawahnya
+                // Tampilkan nota + riwayat di bawahnya (urutan tanggal)
                 for (var r = 0; r < riwayat.length; r++) {
                   var row = [];
                   if (r === 0) {
