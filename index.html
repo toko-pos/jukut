@@ -53,7 +53,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxpLy5T9PHklMrxwrDmeG5DrDrvBO3N3_FjF48akwzPTMTGWyZE3tHG595dsFKmIcnxjg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzIrdMnegH1KnZxXhKtdzVOEVLSsTdiFftVPlmNxl9N7q8F0wYkIFIVSmCuO5XoZ1VSbQ/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -2451,10 +2451,12 @@ var currentStokCart = [];
 var produkList = [];
 var allUsers = [];
 var isRefreshing = false;
+var riwayatStok = [];
 var batchList = [];
-var penjualanBulananChart = null;
+var penjualanBulananChart = null;  // <-- PASTIKAN ADA BARIS INI
 var allLogs = [];
 var allLogStok = [];
+var isDataLoaded = false;
 var loadAttempts = 0;
 var maxLoadAttempts = 3;
 var batchUntukDibatalkan = [];
@@ -3143,98 +3145,205 @@ function loadDashboard() {
 
 // ==================== LOAD CHART ====================
 function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
-  var dateParts = tanggal.split('-');
-  var bulan = dateParts[1] || '01';
-  var tahun = dateParts[0] || '2026';
-  
-  document.getElementById('bulananLegend').innerHTML = '⏳ Memuat grafik...';
-  document.getElementById('bulananTotal').textContent = '⏳ Memuat total...';
-  
-  callGAS('getPenjualanBulananPerKasir', {
-    bulan: bulan,
-    tahun: tahun,
-    kasirFilter: kasirFilter,
-    namaUser: namaUser,
-    role: role
-  })
-  .then(function(data) {
-    var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-    var datasets = [];
-    var totalAll = 0;
-    var kasirNames = Object.keys(data);
-    var colorIndex = 0;
+  try {
+    var dateParts = tanggal.split('-');
+    var bulan = dateParts[1] || '01';
+    var tahun = dateParts[0] || '2026';
     
-    for (var i = 0; i < kasirNames.length; i++) {
-      var namaKasir = kasirNames[i];
-      var values = data[namaKasir] || [];
-      while (values.length < 12) values.push(0);
-      var sum = values.reduce(function(a, b) { return a + b; }, 0);
-      totalAll += sum;
+    var legendEl = document.getElementById('bulananLegend');
+    var totalEl = document.getElementById('bulananTotal');
+    
+    if (legendEl) legendEl.innerHTML = '⏳ Memuat grafik...';
+    if (totalEl) totalEl.textContent = '⏳ Memuat total...';
+    
+    console.log('📊 loadBulananChart - Bulan:', bulan, 'Tahun:', tahun, 'Kasir:', kasirFilter);
+    
+    callGAS('getPenjualanBulananPerKasir', {
+      bulan: bulan,
+      tahun: tahun,
+      kasirFilter: kasirFilter,
+      namaUser: namaUser,
+      role: role
+    })
+    .then(function(result) {
+      console.log('📊 Data grafik diterima:', result);
       
-      datasets.push({
-        label: namaKasir,
-        data: values,
-        backgroundColor: chartColors[colorIndex % chartColors.length] + '80',
-        borderColor: chartColors[colorIndex % chartColors.length],
-        borderWidth: 1
-      });
-      colorIndex++;
-    }
-    
-    var ctx = document.getElementById('penjualanBulananChart').getContext('2d');
-    if (penjualanBulananChart) { penjualanBulananChart.destroy(); }
-    
-    if (datasets.length === 0 || totalAll === 0) {
-      document.getElementById('bulananLegend').innerHTML = '<span style="color:#999;">Belum ada data penjualan</span>';
-      document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
-      return;
-    }
-    
-    penjualanBulananChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: datasets
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                return context.dataset.label + ': ' + formatRupiah(context.parsed.y);
+      // Cek apakah result valid
+      if (!result || !result.success) {
+        console.error('❌ Error dari server:', result ? result.error : 'No data');
+        if (legendEl) legendEl.innerHTML = '❌ Gagal memuat grafik: ' + (result ? result.error : 'Unknown error');
+        if (totalEl) totalEl.textContent = 'Total: Rp 0';
+        return;
+      }
+      
+      var data = result.data || {};
+      var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+      var datasets = [];
+      var totalAll = 0;
+      var kasirNames = Object.keys(data);
+      var chartColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF8A65', '#A5D6A7', '#90CAF9', '#CE93D8'];
+      var colorIndex = 0;
+      
+      console.log('📊 Kasir names:', kasirNames);
+      
+      for (var i = 0; i < kasirNames.length; i++) {
+        var namaKasir = kasirNames[i];
+        var values = data[namaKasir] || [];
+        while (values.length < 12) values.push(0);
+        var sum = values.reduce(function(a, b) { return a + b; }, 0);
+        totalAll += sum;
+        
+        datasets.push({
+          label: namaKasir,
+          data: values,
+          backgroundColor: chartColors[colorIndex % chartColors.length] + '80',
+          borderColor: chartColors[colorIndex % chartColors.length],
+          borderWidth: 2
+        });
+        colorIndex++;
+      }
+      
+      var canvas = document.getElementById('penjualanBulananChart');
+      if (!canvas) {
+        console.error('❌ Canvas penjualanBulananChart tidak ditemukan!');
+        if (legendEl) legendEl.innerHTML = '❌ Elemen chart tidak ditemukan';
+        if (totalEl) totalEl.textContent = 'Total: Rp 0';
+        return;
+      }
+      
+      var chartCtx = canvas.getContext('2d');
+      
+      // Hapus chart lama jika ada
+      if (typeof penjualanBulananChart !== 'undefined' && penjualanBulananChart) {
+        try {
+          penjualanBulananChart.destroy();
+        } catch(e) {}
+        penjualanBulananChart = null;
+      }
+      
+      // Jika tidak ada data, tampilkan chart kosong
+      if (datasets.length === 0 || totalAll === 0) {
+        if (legendEl) legendEl.innerHTML = '<span style="color:#999;">📊 Belum ada data penjualan</span>';
+        if (totalEl) totalEl.textContent = 'Total: Rp 0';
+        
+        penjualanBulananChart = new Chart(chartCtx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Belum ada data',
+              data: [0,0,0,0,0,0,0,0,0,0,0,0],
+              backgroundColor: 'rgba(200,200,200,0.3)',
+              borderColor: 'rgba(200,200,200,0.5)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return 'Belum ada data';
+                  }
+                }
+              }
+            },
+            scales: {
+              y: { 
+                beginAtZero: true,
+                ticks: { 
+                  callback: function(value) { 
+                    if (value >= 1000000) return 'Rp ' + (value/1000000).toFixed(1) + 'Jt'; 
+                    else if (value >= 1000) return 'Rp ' + (value/1000).toFixed(0) + 'K'; 
+                    return 'Rp ' + value; 
+                  } 
+                }
               }
             }
           }
-        },
-        scales: {
-          x: { stacked: true },
-          y: { 
-            stacked: true,
-            beginAtZero: true,
-            ticks: { callback: function(value) { if (value >= 1000000) return 'Rp ' + (value/1000000).toFixed(1) + 'Jt'; else if (value >= 1000) return 'Rp ' + (value/1000).toFixed(0) + 'K'; return 'Rp ' + value; } }
-          }
-        }
+        });
+        return;
       }
+      
+      // Buat chart baru
+      try {
+        penjualanBulananChart = new Chart(chartCtx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { 
+                display: false,
+                position: 'bottom'
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return context.dataset.label + ': ' + formatRupiah(context.parsed.y);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { 
+                stacked: true,
+                grid: { display: false }
+              },
+              y: { 
+                stacked: true,
+                beginAtZero: true,
+                ticks: { 
+                  callback: function(value) { 
+                    if (value >= 1000000) return 'Rp ' + (value/1000000).toFixed(1) + 'Jt'; 
+                    else if (value >= 1000) return 'Rp ' + (value/1000).toFixed(0) + 'K'; 
+                    return 'Rp ' + value; 
+                  } 
+                }
+              }
+            }
+          }
+        });
+        
+        console.log('✅ Chart berhasil dibuat');
+        
+        // Update legend
+        var legendHtml = '';
+        for (var i = 0; i < datasets.length; i++) {
+          var d = datasets[i];
+          var sum = d.data.reduce(function(a,b) { return a + b; }, 0);
+          var persen = totalAll > 0 ? ((sum / totalAll) * 100).toFixed(1) : 0;
+          legendHtml += '<span class="legend-item"><span class="legend-color" style="background:' + d.backgroundColor + '"></span>' + d.label + ' (' + persen + '%)</span>';
+        }
+        if (legendEl) legendEl.innerHTML = legendHtml;
+        if (totalEl) totalEl.textContent = 'Total: ' + formatRupiah(totalAll);
+        
+      } catch (e) {
+        console.error('❌ Error membuat chart:', e);
+        if (legendEl) legendEl.innerHTML = '❌ Error: ' + e.message;
+        if (totalEl) totalEl.textContent = 'Total: Rp 0';
+      }
+    })
+    .catch(function(error) {
+      console.error('❌ Error loadBulananChart:', error);
+      if (legendEl) legendEl.innerHTML = '❌ Gagal memuat grafik: ' + error.message;
+      if (totalEl) totalEl.textContent = 'Total: Rp 0';
+      showToast('❌ Gagal memuat grafik: ' + error.message, 'error');
     });
-    
-    var legendHtml = '';
-    for (var i = 0; i < datasets.length; i++) {
-      var d = datasets[i];
-      var sum = d.data.reduce(function(a,b) { return a + b; }, 0);
-      var persen = totalAll > 0 ? ((sum / totalAll) * 100).toFixed(1) : 0;
-      legendHtml += '<span class="legend-item"><span class="legend-color" style="background:' + d.backgroundColor + '"></span>' + d.label + ' (' + persen + '%)</span>';
-    }
-    document.getElementById('bulananLegend').innerHTML = legendHtml;
-    document.getElementById('bulananTotal').textContent = 'Total: ' + formatRupiah(totalAll);
-  })
-  .catch(function(error) {
-    console.error('Error loadBulananChart:', error);
-    document.getElementById('bulananLegend').innerHTML = '❌ Gagal memuat grafik';
-    document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
-  });
+  } catch (e) {
+    console.error('❌ Error loadBulananChart (outer):', e);
+    var legendEl = document.getElementById('bulananLegend');
+    var totalEl = document.getElementById('bulananTotal');
+    if (legendEl) legendEl.innerHTML = '❌ Error: ' + e.message;
+    if (totalEl) totalEl.textContent = 'Total: Rp 0';
+  }
 }
 
 // ==================== POS FUNCTIONS ====================
