@@ -67,54 +67,50 @@
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background: var(--gray); color: var(--dark); min-height: 100vh; }
     .container { max-width: 1200px; margin: 0 auto; padding: 10px; }
     
-    /* ===== LOGIN WITH LOGO ===== */
-    .login-container { 
-      max-width: 420px; 
-      margin: 60px auto; 
-      padding: 40px 35px; 
-      background: white; 
-      border-radius: 12px; 
-      box-shadow: 0 5px 25px rgba(0,0,0,0.12); 
-      text-align: center;
-    }
-    .login-container .app-logo {
-      width: 100px;
-      height: 100px;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #4CAF50, #388E3C);
-      border-radius: 24px;
-      box-shadow: 0 8px 30px rgba(76, 175, 80, 0.35);
-      transition: transform 0.3s ease;
-      overflow: hidden;
-    }
-    .login-container .app-logo:hover {
-      transform: scale(1.05) rotate(-5deg);
-    }
-    .login-container .app-logo img {
-      width: 70px;
-      height: 70px;
-      object-fit: contain;
-    }
-    .login-container .app-logo .logo-text {
-      font-size: 48px;
-      color: white;
-      font-weight: bold;
-      line-height: 1;
-      letter-spacing: 2px;
-    }
-    .login-container h1 { 
-      color: var(--primary); 
-      margin-bottom: 5px; 
-      font-size: 1.8rem; 
-    }
-    .login-container .app-subtitle {
-      color: #888;
-      font-size: 0.9rem;
-      margin-bottom: 30px;
-    }
+    /* ===== LOGIN WITH LOGO - TANPA BACKGROUND HIJAU ===== */
+.login-container { 
+  max-width: 420px; 
+  margin: 60px auto; 
+  padding: 40px 35px; 
+  background: white; 
+  border-radius: 12px; 
+  box-shadow: 0 5px 25px rgba(0,0,0,0.12); 
+  text-align: center;
+}
+.login-container .app-logo {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transition: transform 0.3s ease;
+  overflow: hidden;
+}
+.login-container .app-logo:hover {
+  transform: scale(1.05);
+}
+.login-container .app-logo img {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+}
+.login-container .app-logo .logo-text {
+  display: none;
+}
+.login-container h1 { 
+  color: var(--primary); 
+  margin-bottom: 5px; 
+  font-size: 1.8rem; 
+}
+.login-container .app-subtitle {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 30px;
+}
     .login-container .form-group label { font-size: 0.95rem; font-weight: 600; color: #444; margin-bottom: 6px; display: block; text-align: left; }
     .login-container .form-group input { padding: 14px 16px; font-size: 1.05rem; border-radius: 8px; border: 2px solid var(--border); height: 50px; background: #fafafa; transition: all 0.3s; width: 100%; }
     .login-container .form-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15); background: white; }
@@ -1031,13 +1027,13 @@
 <body>
 
 <!-- ==================== LOGIN PAGE ==================== -->
+<!-- ==================== LOGIN PAGE ==================== -->
 <div id="loginPage" class="container">
   <div class="login-container">
-    <!-- LOGO / ICON APP -->
+    <!-- LOGO / ICON APP - TANPA BACKGROUND -->
     <div class="app-logo" id="appLogo">
-      <img src="iconbayamtabur.png" alt="POS System" id="appLogoImg" 
-           onerror="this.style.display='none';document.getElementById('logoTextFallback').style.display='block'">
-      <span class="logo-text" id="logoTextFallback" style="display:none;">🛒</span>
+      <img src="iconbayamtabur.png" alt="POS System" id="appLogoImg">
+      <span class="logo-text" id="logoTextFallback">🛒</span>
     </div>
     <h1 id="loginTitle">POS System (FIFO)</h1>
     <div class="app-subtitle">Point of Sale · FIFO Inventory</div>
@@ -1910,30 +1906,16 @@ function callGAS(action, data) {
 
 // ==================== LOAD LOGO ====================
 function loadAppLogo() {
-  var img = new Image();
-  img.onload = function() {
-    console.log('✅ Logo iconbayamtabur.png berhasil dimuat');
-    var logoImg = document.getElementById('appLogoImg');
-    if (logoImg) {
-      logoImg.style.display = 'block';
-      document.getElementById('logoTextFallback').style.display = 'none';
-    }
-    var brandImg = document.getElementById('brandIconImg');
-    if (brandImg) {
-      brandImg.style.display = 'block';
-      document.getElementById('brandIconFallback').style.display = 'none';
-    }
-  };
-  img.onerror = function() {
-    console.warn('⚠️ iconbayamtabur.png tidak ditemukan, menggunakan fallback emoji');
-    var logoImg = document.getElementById('appLogoImg');
-    if (logoImg) logoImg.style.display = 'none';
-    document.getElementById('logoTextFallback').style.display = 'block';
-    var brandImg = document.getElementById('brandIconImg');
-    if (brandImg) brandImg.style.display = 'none';
-    document.getElementById('brandIconFallback').style.display = 'block';
-  };
-  img.src = 'iconbayamtabur.png';
+  var img = document.getElementById('appLogoImg');
+  if (img) {
+    img.onerror = function() {
+      // Jika icon tidak ditemukan, tampilkan fallback
+      this.style.display = 'none';
+      document.getElementById('logoTextFallback').style.display = 'block';
+    };
+    // Coba load icon
+    img.src = 'iconbayamtabur.png';
+  }
 }
 
 // ==================== DROPDOWN EXCEL TOGGLE ====================
