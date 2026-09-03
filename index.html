@@ -53,7 +53,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycby_tyAYFI7NCH9Rg4YluX0JsNHBSl4PCJBBaoQEc1nKQXwhcJcrcLY07QJo3PTpIM4Heg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxTInV7KZilsPIO-V8WOBiZ2I_ejqpBjJmfpnWIQJgxeff3TZIXsQh2VyMDlwogv5mx/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -2102,6 +2102,7 @@ function exportHutangVendorCSV() {
   try {
     showToast('⏳ Memproses ekspor hutang vendor...', 'info');
     
+    // Ambil data hutang vendor
     callGAS('getHutangVendor', {})
     .then(function(res) {
       if (!res || !res.success) {
@@ -2116,128 +2117,140 @@ function exportHutangVendorCSV() {
       }
       var s = (res && res.summary) || { totalNota: 0, totalDibayar: 0, totalSisa: 0 };
       
-      // ===== BAGIAN 1: SUMMARY =====
-      var summaryHeaders = ['Total Belanja', 'Total Dibayar', 'Total Sisa', 'Jumlah Nota', 'Lunas', 'Cicilan', 'Belum Bayar'];
-      var summaryData = [{
-        'Total Belanja': s.totalNota || 0,
-        'Total Dibayar': s.totalDibayar || 0,
-        'Total Sisa': s.totalSisa || 0,
-        'Jumlah Nota': data.length,
-        'Lunas': data.filter(function(x) { return x.status === 'LUNAS'; }).length,
-        'Cicilan': data.filter(function(x) { return x.status === 'CICILAN'; }).length,
-        'Belum Bayar': data.filter(function(x) { return x.status === 'BELUM BAYAR'; }).length
-      }];
+      // HITUNG SUMMARY
+      var lunas = data.filter(function(x) { return x.status === 'LUNAS'; }).length;
+      var cicilan = data.filter(function(x) { return x.status === 'CICILAN'; }).length;
+      var belum = data.filter(function(x) { return x.status === 'BELUM BAYAR'; }).length;
       
-      // ===== BAGIAN 2: DATA PER NOTA + RIWAYAT =====
-      var detailHeaders = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total', 'Dibayar', 'Sisa', 'Status', 'Tgl Bayar', 'Nominal Bayar', 'User', 'Catatan'];
-      var detailData = [];
-      var counter = 1;
+      // ===== BUAT DATA UNTUK CSV =====
+      var allRows = [];
       
-      // Ambil riwayat untuk setiap nota
-      var riwayatPromises = [];
+      // 1. BARIS SUMMARY (judul)
+      allRows.push(['=== SUMMARY HUTANG VENDOR ===']);
+      allRows.push([]);
+      allRows.push(['Total Belanja', 'Total Dibayar', 'Total Sisa', 'Jumlah Nota', 'Lunas', 'Cicilan', 'Belum Bayar']);
+      allRows.push([
+        s.totalNota || 0,
+        s.totalDibayar || 0,
+        s.totalSisa || 0,
+        data.length,
+        lunas,
+        cicilan,
+        belum
+      ]);
+      allRows.push([]);
+      allRows.push([]);
+      
+      // 2. BARIS HEADER DETAIL NOTA
+      allRows.push(['=== DETAIL PER NOTA + RIWAYAT PEMBAYARAN ===']);
+      allRows.push([]);
+      allRows.push([
+        'No', 'No.Nota', 'Tanggal', 'Vendor', 'Total', 'Dibayar', 'Sisa', 'Status',
+        'Tgl Bayar', 'Nominal Bayar', 'User', 'Catatan'
+      ]);
+      
+      // 3. AMBIL RIWAYAT UNTUK SETIAP NOTA
+      var detailPromises = [];
       for (var i = 0; i < data.length; i++) {
-        var x = data[i];
-        // Gunakan closure untuk menyimpan data
         (function(nota, index) {
-          riwayatPromises.push(
-            callGAS('getDetailHutangVendor', { noNota: nota.noNota })
+          var p = callGAS('getDetailHutangVendor', { noNota: nota.noNota })
             .then(function(riwayatResult) {
-              var riwayat = (riwayatResult && riwayatResult.success && riwayatResult.data) ? 
-                            (riwayatResult.data.riwayatPembayaran || []) : [];
+              var riwayat = [];
+              if (riwayatResult && riwayatResult.success && riwayatResult.data) {
+                riwayat = riwayatResult.data.riwayatPembayaran || [];
+              }
               
-              // Jika tidak ada riwayat, tambahkan 1 baris
+              // Jika TIDAK ADA riwayat, tampilkan 1 baris
               if (riwayat.length === 0) {
-                detailData.push({
-                  'No': index + 1,
-                  'No.Nota': nota.noNota,
-                  'Tanggal': nota.tanggal || '',
-                  'Vendor': nota.vendor || nota.pemasok || '-',
-                  'Total': nota.totalNota || 0,
-                  'Dibayar': nota.totalDibayar || 0,
-                  'Sisa': nota.sisaHutang || 0,
-                  'Status': nota.status || '',
-                  'Tgl Bayar': '',
-                  'Nominal Bayar': '',
-                  'User': '',
-                  'Catatan': ''
-                });
+                allRows.push([
+                  (index + 1),
+                  nota.noNota || '',
+                  nota.tanggal || '',
+                  nota.vendor || nota.pemasok || '-',
+                  nota.totalNota || 0,
+                  nota.totalDibayar || 0,
+                  nota.sisaHutang || 0,
+                  nota.status || '',
+                  '', // Tgl Bayar
+                  '', // Nominal Bayar
+                  '', // User
+                  ''  // Catatan
+                ]);
               } else {
                 // Tampilkan nota + riwayat di bawahnya
                 for (var r = 0; r < riwayat.length; r++) {
-                  var row = {
-                    'No': (r === 0) ? (index + 1) : '',
-                    'No.Nota': (r === 0) ? nota.noNota : '',
-                    'Tanggal': (r === 0) ? (nota.tanggal || '') : '',
-                    'Vendor': (r === 0) ? (nota.vendor || nota.pemasok || '-') : '',
-                    'Total': (r === 0) ? (nota.totalNota || 0) : '',
-                    'Dibayar': (r === 0) ? (nota.totalDibayar || 0) : '',
-                    'Sisa': (r === 0) ? (nota.sisaHutang || 0) : '',
-                    'Status': (r === 0) ? (nota.status || '') : '',
-                    'Tgl Bayar': riwayat[r].tanggal || '',
-                    'Nominal Bayar': riwayat[r].nominal || 0,
-                    'User': riwayat[r].user || '',
-                    'Catatan': riwayat[r].catatan || ''
-                  };
-                  detailData.push(row);
+                  var row = [];
+                  if (r === 0) {
+                    // Baris pertama = data nota
+                    row.push(index + 1);
+                    row.push(nota.noNota || '');
+                    row.push(nota.tanggal || '');
+                    row.push(nota.vendor || nota.pemasok || '-');
+                    row.push(nota.totalNota || 0);
+                    row.push(nota.totalDibayar || 0);
+                    row.push(nota.sisaHutang || 0);
+                    row.push(nota.status || '');
+                  } else {
+                    // Baris riwayat = kosong di kolom nota
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                  }
+                  // Tambahkan riwayat
+                  row.push(riwayat[r].tanggal || '');
+                  row.push(riwayat[r].nominal || 0);
+                  row.push(riwayat[r].user || '');
+                  row.push(riwayat[r].catatan || '');
+                  allRows.push(row);
                 }
               }
-            })
-          );
-        })(x, i);
+            });
+          detailPromises.push(p);
+        })(data[i], i);
       }
       
-      // Tunggu semua riwayat selesai
-      Promise.all(riwayatPromises)
+      // Tunggu semua selesai
+      Promise.all(detailPromises)
       .then(function() {
-        // Urutkan berdasarkan No
-        detailData.sort(function(a, b) {
-          var noA = parseInt(a['No']) || 0;
-          var noB = parseInt(b['No']) || 0;
-          return noA - noB;
-        });
-        
-        // Gabungkan data
-        var allData = [];
-        
-        // Tambahkan SUMMARY
-        var summaryRow = {};
-        for (var i = 0; i < summaryHeaders.length; i++) {
-          summaryRow[summaryHeaders[i]] = summaryData[0][summaryHeaders[i]] || '';
-        }
-        allData.push(summaryRow);
-        
-        // Tambahkan baris kosong sebagai pemisah
-        var emptyRow = {};
-        for (var i = 0; i < summaryHeaders.length; i++) {
-          emptyRow[summaryHeaders[i]] = '';
-        }
-        allData.push(emptyRow);
-        
-        // Tambahkan DATA PER NOTA + RIWAYAT
-        var detailHeadersWithPrefix = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total', 'Dibayar', 'Sisa', 'Status', 'Tgl Bayar', 'Nominal Bayar', 'User', 'Catatan'];
-        
-        // Tambahkan header detail
-        var headerRow = {};
-        for (var i = 0; i < detailHeadersWithPrefix.length; i++) {
-          headerRow[detailHeadersWithPrefix[i]] = detailHeadersWithPrefix[i];
-        }
-        allData.push(headerRow);
-        
-        // Tambahkan data detail
-        for (var i = 0; i < detailData.length; i++) {
-          var row = {};
-          for (var j = 0; j < detailHeadersWithPrefix.length; j++) {
-            var key = detailHeadersWithPrefix[j];
-            row[key] = detailData[i][key] !== undefined ? detailData[i][key] : '';
+        // Konversi ke CSV
+        var csvContent = '';
+        for (var i = 0; i < allRows.length; i++) {
+          var row = allRows[i];
+          // Skip baris kosong
+          if (row.length === 0) {
+            csvContent += '\n';
+            continue;
           }
-          allData.push(row);
+          // Escape nilai yang mengandung koma atau kutip
+          var escapedRow = [];
+          for (var j = 0; j < row.length; j++) {
+            var val = row[j];
+            if (val === undefined || val === null) val = '';
+            val = String(val);
+            if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+              val = '"' + val.replace(/"/g, '""') + '"';
+            }
+            escapedRow.push(val);
+          }
+          csvContent += escapedRow.join(',') + '\n';
         }
         
-        // Tentukan headers gabungan
-        var allHeaders = summaryHeaders.concat(detailHeadersWithPrefix);
-        
+        // Download
         var filename = 'Laporan_Hutang_Vendor_' + getTodayString();
-        downloadCSV(allData, allHeaders, filename);
+        var blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        var url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename + '.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
         
         showToast('✅ Laporan Hutang Vendor berhasil diunduh!', 'success');
       });
