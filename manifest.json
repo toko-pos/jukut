@@ -2,20 +2,21 @@
   "name": "POS System FIFO",
   "short_name": "POS FIFO",
   "description": "Point of Sale System with FIFO Inventory",
-  "start_url": "/",
+  "start_url": "/jukut/",
+  "scope": "/jukut/",
   "display": "standalone",
   "background_color": "#4CAF50",
   "theme_color": "#4CAF50",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "iconbayamtabur.png",
+      "src": "/jukut/iconbayamtabur.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "iconbayamtabur.png",
+      "src": "/jukut/iconbayamtabur.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
