@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- ===== THEME COLOR ===== -->
+  <meta name="theme-color" content="#4CAF50">
+  <meta name="msapplication-TileColor" content="#4CAF50">
   
   <!-- ===== PWA MANIFEST ===== -->
   <link rel="manifest" href="data:application/json,{
@@ -135,6 +138,85 @@
       .login-container .form-group input { padding: 12px 14px; font-size: 0.95rem; height: 46px; }
       .login-container .btn-login, .login-container .btn-register { padding: 14px 16px !important; font-size: 1rem !important; height: 50px !important; }
     }
+
+    /* ===== BANNER INSTALL PWA ===== */
+#installBanner {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
+  color: white;
+  padding: 14px 18px;
+  z-index: 9999;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
+  border-top: 2px solid rgba(255,255,255,0.15);
+}
+#installBanner .banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 180px;
+}
+#installBanner .banner-left img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: white;
+  padding: 4px;
+}
+#installBanner .banner-left .banner-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+#installBanner .banner-left .banner-sub {
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+#installBanner .banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+#installBanner .btn-install {
+  background: white;
+  color: #4CAF50;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: transform 0.2s;
+}
+#installBanner .btn-install:hover {
+  transform: scale(1.05);
+}
+#installBanner .btn-close-install {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+#installBanner .btn-close-install:hover {
+  background: rgba(255,255,255,0.1);
+}
+@media (max-width: 480px) {
+  #installBanner .banner-left .banner-title { font-size: 0.8rem; }
+  #installBanner .banner-left .banner-sub { font-size: 0.6rem; }
+  #installBanner .btn-install { padding: 6px 14px; font-size: 0.75rem; }
+  #installBanner .btn-close-install { padding: 6px 10px; font-size: 0.7rem; }
+}
+
     
     /* ===== SCANNER ===== */
     .scanner-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; background: #000; }
@@ -1100,6 +1182,23 @@
       <button class="btn-logout" onclick="showLogoutModal()">🚪 Logout</button>
     </div>
   </div>
+
+  
+  <!-- ===== BANNER INSTALL PWA ===== -->
+<div id="installBanner">
+  <div class="banner-left">
+    <img src="iconbayamtabur.png" alt="Icon" id="bannerIcon"
+         onerror="this.outerHTML='<span style=&quot;font-size:32px;&quot;>🛒</span>'">
+    <div>
+      <div class="banner-title">Install Aplikasi</div>
+      <div class="banner-sub">Tambahkan ke layar utama untuk akses cepat</div>
+    </div>
+  </div>
+  <div class="banner-actions">
+    <button class="btn-install" onclick="installApp()">Install</button>
+    <button class="btn-close-install" onclick="closeInstallBanner()">✕</button>
+  </div>
+</div>
   
   <!-- ===== NAVIGASI ===== -->
   <div class="nav">
@@ -6607,5 +6706,75 @@ setTimeout(function() {
 }, 1000);
 
 </script>
+
+
+<script>
+// ============================================================
+// REGISTER SERVICE WORKER - PWA
+// ============================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js')
+      .then(function(registration) {
+        console.log('✅ Service Worker registered with scope:', registration.scope);
+      })
+      .catch(function(error) {
+        console.log('❌ Service Worker registration failed:', error);
+      });
+  });
+}
+
+// ============================================================
+// DETEKSI APAKAH SUDAH TERINSTALL SEBAGAI PWA
+// ============================================================
+window.addEventListener('load', function() {
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('✅ Aplikasi berjalan sebagai PWA (standalone)');
+    var banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'none';
+  }
+});
+
+// ============================================================
+// INSTALL PROMPT
+// ============================================================
+var deferredPrompt;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('✅ beforeinstallprompt event fired');
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  var banner = document.getElementById('installBanner');
+  if (banner) {
+    banner.style.display = 'flex';
+  }
+}
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(choiceResult) {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('✅ User accepted the install prompt');
+        var banner = document.getElementById('installBanner');
+        if (banner) banner.style.display = 'none';
+      } else {
+        console.log('❌ User dismissed the install prompt');
+      }
+      deferredPrompt = null;
+    });
+  }
+}
+
+function closeInstallBanner() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+}
+</script>
+
+  
 </body>
 </html>
