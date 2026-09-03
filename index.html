@@ -15,8 +15,7 @@
   <!-- html5-qrcode untuk scan barcode -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-
-    <!-- ============================================================ -->
+  <!-- ============================================================ -->
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
@@ -30,8 +29,6 @@
     // ============================================
   </script>
 
-    
-  
   <style>
     /* ===== RESET & BASE ===== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -930,8 +927,10 @@
   </style>
 </head>
 
-<body>
-<!-- ==================== LOGIN PAGE ==================== -->
+
+  <body>
+
+  <!-- ==================== LOGIN PAGE ==================== -->
   <div id="loginPage" class="container">
     <div class="login-container">
       <h1 id="loginTitle">🛒 POS System (FIFO)</h1>
@@ -1613,7 +1612,8 @@
     </div>
   </div>
 
-    <script>
+
+      <script>
     // ==================== UTILITY FUNCTIONS ====================
     function formatTanggalDisplay(tanggal, withTime) {
       if (!tanggal) return '-';
@@ -1795,13 +1795,46 @@
         debugEl.classList.remove('show');
       }
     }
+
+    // ============================================================
+    // 🔥 FUNGSI PANGGIL GAS VIA FETCH - SEMUA PAKAI INI! 🔥
+    // ============================================================
+    function callGAS(action, data) {
+      return new Promise(function(resolve, reject) {
+        console.log('📤 callGAS:', action, data);
+        
+        fetch(GAS_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: action,
+            data: data || {}
+          })
+        })
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+          }
+          return response.json();
+        })
+        .then(function(result) {
+          console.log('📥 Result:', result);
+          resolve(result);
+        })
+        .catch(function(error) {
+          console.error('❌ callGAS error:', error);
+          reject(error);
+        });
+      });
+    }
     
     // ==================== DROPDOWN EXCEL TOGGLE ====================
     function toggleExcelDropdown() {
       var dropdown = document.getElementById('excelDropdown');
       if (dropdown) {
         dropdown.classList.toggle('show');
-        // Close other dropdowns
         var other = document.getElementById('excelDropdownVendor');
         if (other && other !== dropdown) other.classList.remove('show');
         var otherStok = document.getElementById('excelDropdownStok');
@@ -1831,7 +1864,6 @@
       }
     }
     
-    // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
       var dropdowns = document.querySelectorAll('.dropdown-content');
       for (var i = 0; i < dropdowns.length; i++) {
@@ -1906,76 +1938,77 @@
         var role = currentUser ? currentUser.role : 'kasir';
         var namaUser = currentUser ? currentUser.nama : '';
         
-        // Close dropdown
         var dropdown = document.getElementById('excelDropdown');
         if (dropdown) dropdown.classList.remove('show');
         
-        google.script.run
-          .withSuccessHandler(function(data) {
-            try {
-              if (!data || data.length === 0) {
-                showToast('⚠️ Tidak ada data untuk diekspor!', 'warning');
-                return;
-              }
-              
-              var headers, exportData = [];
-              
-              if (type === 'summary') {
-                // Summary per transaksi
-                headers = ['No', 'Tanggal', 'ID Transaksi', 'Kasir', 'Nama Pembeli', 'Total', 'Quantity'];
-                if (showLaba) headers.push('Laba');
-                headers.push('Status', 'Pembayaran', 'Kembalian');
-                
-                for (var i = 0; i < data.length; i++) {
-                  var item = data[i];
-                  var row = {
-                    'No': i + 1,
-                    'Tanggal': item.tanggal || '',
-                    'ID Transaksi': item.id || '',
-                    'Kasir': item.kasir || '',
-                    'Nama Pembeli': item.namaPembeli || '',
-                    'Total': item.total || 0,
-                    'Quantity': item.qty || 0
-                  };
-                  if (showLaba) row['Laba'] = item.laba || 0;
-                  row['Status'] = item.status || 'Selesai';
-                  row['Pembayaran'] = item.pembayaran || 0;
-                  row['Kembalian'] = item.kembalian || 0;
-                  exportData.push(row);
-                }
-              } else {
-                // Detail per item
-                headers = ['No', 'Tanggal', 'ID Transaksi', 'Kasir', 'Nama Pembeli', 'Produk', 'Qty', 'Harga', 'Subtotal'];
-                for (var i = 0; i < data.length; i++) {
-                  var item = data[i];
-                  // Get detail items - need to call another function
-                  // For now, we'll use the summary data
-                  exportData.push({
-                    'No': i + 1,
-                    'Tanggal': item.tanggal || '',
-                    'ID Transaksi': item.id || '',
-                    'Kasir': item.kasir || '',
-                    'Nama Pembeli': item.namaPembeli || '',
-                    'Produk': '-',
-                    'Qty': item.qty || 0,
-                    'Harga': 0,
-                    'Subtotal': item.total || 0
-                  });
-                }
-              }
-              
-              var filename = 'Laporan_Transaksi_' + tanggalMulai + '_sampai_' + tanggalSampai + '_' + type;
-              downloadCSV(exportData, headers, filename);
-            } catch (e) {
-              console.error('❌ Error processing export:', e);
-              showToast('❌ Error: ' + e.message, 'error');
+        callGAS('getTransaksiFilteredWithLaba', {
+          tanggalMulai: tanggalMulai,
+          tanggalSampai: tanggalSampai,
+          role: role,
+          namaUser: namaUser,
+          showLaba: showLaba
+        })
+        .then(function(result) {
+          if (!result || !result.success) {
+            showToast('❌ Gagal mengambil data: ' + (result ? result.error : 'Unknown error'), 'error');
+            return;
+          }
+          
+          var data = result.data || [];
+          if (!data || data.length === 0) {
+            showToast('⚠️ Tidak ada data untuk diekspor!', 'warning');
+            return;
+          }
+          
+          var headers, exportData = [];
+          
+          if (type === 'summary') {
+            headers = ['No', 'Tanggal', 'ID Transaksi', 'Kasir', 'Nama Pembeli', 'Total', 'Quantity'];
+            if (showLaba) headers.push('Laba');
+            headers.push('Status', 'Pembayaran', 'Kembalian');
+            
+            for (var i = 0; i < data.length; i++) {
+              var item = data[i];
+              var row = {
+                'No': i + 1,
+                'Tanggal': item.tanggal || '',
+                'ID Transaksi': item.id || '',
+                'Kasir': item.kasir || '',
+                'Nama Pembeli': item.namaPembeli || '',
+                'Total': item.total || 0,
+                'Quantity': item.qty || 0
+              };
+              if (showLaba) row['Laba'] = item.laba || 0;
+              row['Status'] = item.status || 'Selesai';
+              row['Pembayaran'] = item.pembayaran || 0;
+              row['Kembalian'] = item.kembalian || 0;
+              exportData.push(row);
             }
-          })
-          .withFailureHandler(function(error) {
-            console.error('❌ Error exportTransaksiCSV:', error);
-            showToast('❌ Gagal ekspor: ' + error.message, 'error');
-          })
-          .getTransaksiFilteredWithLaba(tanggalMulai, tanggalSampai, role, namaUser, showLaba);
+          } else {
+            headers = ['No', 'Tanggal', 'ID Transaksi', 'Kasir', 'Nama Pembeli', 'Produk', 'Qty', 'Harga', 'Subtotal'];
+            for (var i = 0; i < data.length; i++) {
+              var item = data[i];
+              exportData.push({
+                'No': i + 1,
+                'Tanggal': item.tanggal || '',
+                'ID Transaksi': item.id || '',
+                'Kasir': item.kasir || '',
+                'Nama Pembeli': item.namaPembeli || '',
+                'Produk': '-',
+                'Qty': item.qty || 0,
+                'Harga': 0,
+                'Subtotal': item.total || 0
+              });
+            }
+          }
+          
+          var filename = 'Laporan_Transaksi_' + tanggalMulai + '_sampai_' + tanggalSampai + '_' + type;
+          downloadCSV(exportData, headers, filename);
+        })
+        .catch(function(error) {
+          console.error('❌ Error exportTransaksiCSV:', error);
+          showToast('❌ Gagal ekspor: ' + error.message, 'error');
+        });
       } catch (e) {
         console.error('❌ Error exportTransaksiCSV:', e);
         showToast('❌ Error: ' + e.message, 'error');
@@ -1990,64 +2023,60 @@
         var dropdown = document.getElementById('excelDropdownVendor');
         if (dropdown) dropdown.classList.remove('show');
         
-        google.script.run
-          .withSuccessHandler(function(res) {
-            try {
-              var data = (res && res.data) || [];
-              var summary = (res && res.summary) || {};
-              
-              if (!data || data.length === 0) {
-                showToast('⚠️ Tidak ada data hutang vendor!', 'warning');
-                return;
-              }
-              
-              var headers, exportData = [];
-              
-              if (type === 'summary') {
-                headers = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total Hutang', 'Total Dibayar', 'Sisa Hutang', 'Status', 'Persentase'];
-                for (var i = 0; i < data.length; i++) {
-                  var x = data[i];
-                  var progress = x.totalNota > 0 ? Math.round((x.totalDibayar / x.totalNota) * 100) : 0;
-                  exportData.push({
-                    'No': i + 1,
-                    'No.Nota': x.noNota || '',
-                    'Tanggal': x.tanggal || '',
-                    'Vendor': x.pemasok || '',
-                    'Total Hutang': x.totalNota || 0,
-                    'Total Dibayar': x.totalDibayar || 0,
-                    'Sisa Hutang': x.sisaHutang || 0,
-                    'Status': x.status || '',
-                    'Persentase': progress + '%'
-                  });
-                }
-              } else {
-                // Detail per item - need to expand
-                headers = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total Hutang', 'Status'];
-                for (var i = 0; i < data.length; i++) {
-                  var x = data[i];
-                  exportData.push({
-                    'No': i + 1,
-                    'No.Nota': x.noNota || '',
-                    'Tanggal': x.tanggal || '',
-                    'Vendor': x.pemasok || '',
-                    'Total Hutang': x.totalNota || 0,
-                    'Status': x.status || ''
-                  });
-                }
-              }
-              
-              var filename = 'Laporan_Hutang_Vendor_' + getTodayString() + '_' + type;
-              downloadCSV(exportData, headers, filename);
-            } catch (e) {
-              console.error('❌ Error processing export:', e);
-              showToast('❌ Error: ' + e.message, 'error');
+        callGAS('getHutangVendor', {})
+        .then(function(res) {
+          if (!res || !res.success) {
+            showToast('❌ Gagal mengambil data: ' + (res ? res.error : 'Unknown error'), 'error');
+            return;
+          }
+          
+          var data = (res && res.data) || [];
+          if (!data || data.length === 0) {
+            showToast('⚠️ Tidak ada data hutang vendor!', 'warning');
+            return;
+          }
+          
+          var headers, exportData = [];
+          
+          if (type === 'summary') {
+            headers = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total Hutang', 'Total Dibayar', 'Sisa Hutang', 'Status', 'Persentase'];
+            for (var i = 0; i < data.length; i++) {
+              var x = data[i];
+              var progress = x.totalNota > 0 ? Math.round((x.totalDibayar / x.totalNota) * 100) : 0;
+              exportData.push({
+                'No': i + 1,
+                'No.Nota': x.noNota || '',
+                'Tanggal': x.tanggal || '',
+                'Vendor': x.pemasok || '',
+                'Total Hutang': x.totalNota || 0,
+                'Total Dibayar': x.totalDibayar || 0,
+                'Sisa Hutang': x.sisaHutang || 0,
+                'Status': x.status || '',
+                'Persentase': progress + '%'
+              });
             }
-          })
-          .withFailureHandler(function(error) {
-            console.error('❌ Error exportHutangVendorCSV:', error);
-            showToast('❌ Gagal ekspor: ' + error.message, 'error');
-          })
-          .getHutangVendor();
+          } else {
+            headers = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total Hutang', 'Status'];
+            for (var i = 0; i < data.length; i++) {
+              var x = data[i];
+              exportData.push({
+                'No': i + 1,
+                'No.Nota': x.noNota || '',
+                'Tanggal': x.tanggal || '',
+                'Vendor': x.pemasok || '',
+                'Total Hutang': x.totalNota || 0,
+                'Status': x.status || ''
+              });
+            }
+          }
+          
+          var filename = 'Laporan_Hutang_Vendor_' + getTodayString() + '_' + type;
+          downloadCSV(exportData, headers, filename);
+        })
+        .catch(function(error) {
+          console.error('❌ Error exportHutangVendorCSV:', error);
+          showToast('❌ Gagal ekspor: ' + error.message, 'error');
+        });
       } catch (e) {
         console.error('❌ Error exportHutangVendorCSV:', e);
         showToast('❌ Error: ' + e.message, 'error');
@@ -2062,79 +2091,77 @@
         var dropdown = document.getElementById('excelDropdownStok');
         if (dropdown) dropdown.classList.remove('show');
         
-        google.script.run
-          .withSuccessHandler(function(riwayat) {
-            try {
-              if (!riwayat || riwayat.length === 0) {
-                showToast('⚠️ Tidak ada riwayat stok!', 'warning');
-                return;
+        callGAS('getRiwayatStokMasuk', {})
+        .then(function(result) {
+          if (!result || !result.success) {
+            showToast('❌ Gagal mengambil data: ' + (result ? result.error : 'Unknown error'), 'error');
+            return;
+          }
+          
+          var riwayat = result.data || [];
+          if (!riwayat || riwayat.length === 0) {
+            showToast('⚠️ Tidak ada riwayat stok!', 'warning');
+            return;
+          }
+          
+          var headers, exportData = [];
+          
+          if (type === 'summary') {
+            var notaMap = {};
+            for (var i = 0; i < riwayat.length; i++) {
+              var r = riwayat[i];
+              var key = r.noNota || 'unknown';
+              if (!notaMap[key]) {
+                notaMap[key] = {
+                  noNota: r.noNota || '-',
+                  tanggal: r.tanggal || '',
+                  pemasok: r.pemasok || '-',
+                  total: 0,
+                  items: 0
+                };
               }
-              
-              var headers, exportData = [];
-              
-              if (type === 'summary') {
-                // Group by nota
-                var notaMap = {};
-                for (var i = 0; i < riwayat.length; i++) {
-                  var r = riwayat[i];
-                  var key = r.noNota || 'unknown';
-                  if (!notaMap[key]) {
-                    notaMap[key] = {
-                      noNota: r.noNota || '-',
-                      tanggal: r.tanggal || '',
-                      pemasok: r.pemasok || '-',
-                      total: 0,
-                      items: 0
-                    };
-                  }
-                  notaMap[key].total += r.subtotal || 0;
-                  notaMap[key].items += 1;
-                }
-                
-                headers = ['No', 'Tanggal', 'No.Nota', 'Pemasok', 'Total Nota', 'Jumlah Item'];
-                var keys = Object.keys(notaMap);
-                for (var i = 0; i < keys.length; i++) {
-                  var n = notaMap[keys[i]];
-                  exportData.push({
-                    'No': i + 1,
-                    'Tanggal': n.tanggal || '',
-                    'No.Nota': n.noNota || '',
-                    'Pemasok': n.pemasok || '',
-                    'Total Nota': n.total || 0,
-                    'Jumlah Item': n.items || 0
-                  });
-                }
-              } else {
-                // Detail per item
-                headers = ['No', 'Tanggal', 'No.Nota', 'Pemasok', 'Produk', 'Qty', 'Harga', 'Subtotal'];
-                for (var i = riwayat.length - 1; i >= 0; i--) {
-                  var r = riwayat[i];
-                  var no = riwayat.length - i;
-                  exportData.push({
-                    'No': no,
-                    'Tanggal': r.tanggal || '',
-                    'No.Nota': r.noNota || '',
-                    'Pemasok': r.pemasok || '',
-                    'Produk': r.namaProduk || '',
-                    'Qty': r.qty || 0,
-                    'Harga': r.harga || 0,
-                    'Subtotal': r.subtotal || 0
-                  });
-                }
-              }
-              
-              var filename = 'Riwayat_Stok_Masuk_' + getTodayString() + '_' + type;
-              downloadCSV(exportData, headers, filename);
-            } catch (e) {
-              console.error('❌ Error processing export:', e);
-              showToast('❌ Error: ' + e.message, 'error');
+              notaMap[key].total += r.subtotal || 0;
+              notaMap[key].items += 1;
             }
-          })
-          .withFailureHandler(function(error) {
-            console.error('❌ Error exportRiwayatStokCSV:', error);
-            showToast('❌ Gagal ekspor: ' + error.message, 'error');
-          })
-          .getRiwayatStokMasuk();
+            
+            headers = ['No', 'Tanggal', 'No.Nota', 'Pemasok', 'Total Nota', 'Jumlah Item'];
+            var keys = Object.keys(notaMap);
+            for (var i = 0; i < keys.length; i++) {
+              var n = notaMap[keys[i]];
+              exportData.push({
+                'No': i + 1,
+                'Tanggal': n.tanggal || '',
+                'No.Nota': n.noNota || '',
+                'Pemasok': n.pemasok || '',
+                'Total Nota': n.total || 0,
+                'Jumlah Item': n.items || 0
+              });
+            }
+          } else {
+            headers = ['No', 'Tanggal', 'No.Nota', 'Pemasok', 'Produk', 'Qty', 'Harga', 'Subtotal'];
+            for (var i = riwayat.length - 1; i >= 0; i--) {
+              var r = riwayat[i];
+              var no = riwayat.length - i;
+              exportData.push({
+                'No': no,
+                'Tanggal': r.tanggal || '',
+                'No.Nota': r.noNota || '',
+                'Pemasok': r.pemasok || '',
+                'Produk': r.namaProduk || '',
+                'Qty': r.qty || 0,
+                'Harga': r.harga || 0,
+                'Subtotal': r.subtotal || 0
+              });
+            }
+          }
+          
+          var filename = 'Riwayat_Stok_Masuk_' + getTodayString() + '_' + type;
+          downloadCSV(exportData, headers, filename);
+        })
+        .catch(function(error) {
+          console.error('❌ Error exportRiwayatStokCSV:', error);
+          showToast('❌ Gagal ekspor: ' + error.message, 'error');
+        });
       } catch (e) {
         console.error('❌ Error exportRiwayatStokCSV:', e);
         showToast('❌ Error: ' + e.message, 'error');
@@ -2152,7 +2179,6 @@
         
         var filtered = allRiwayatStokData;
         
-        // Filter by keyword
         if (keyword) {
           filtered = filtered.filter(function(item) {
             var noNota = (item.noNota || '').toLowerCase();
@@ -2161,7 +2187,6 @@
           });
         }
         
-        // Filter by date range
         if (tanggalMulai) {
           filtered = filtered.filter(function(item) {
             return (item.tanggal || '') >= tanggalMulai;
@@ -2175,7 +2200,6 @@
         
         renderRiwayatStokGrouped(filtered);
         
-        // Update info
         var totalNota = getUniqueNotaCount(filtered);
         var totalItem = filtered.length;
         var totalNominal = 0;
@@ -2221,7 +2245,6 @@
         return;
       }
       
-      // Group by No.Nota
       var notaMap = {};
       for (var i = 0; i < data.length; i++) {
         var r = data[i];
@@ -2241,7 +2264,6 @@
       }
       
       var keys = Object.keys(notaMap);
-      // Sort by tanggal descending
       keys.sort(function(a, b) {
         return notaMap[b].tanggal.localeCompare(notaMap[a].tanggal);
       });
@@ -2251,13 +2273,10 @@
       
       for (var i = 0; i < keys.length; i++) {
         var nota = notaMap[keys[i]];
-        var isExpanded = false; // default collapsed
         var itemCount = nota.items.length;
         var total = nota.total;
-        var status = 'Active'; // Default, could be enhanced
+        var status = 'Active';
         var statusClass = 'badge-active';
-        
-        // Check if any item is legacy
         var isLegacy = nota.isLegacy;
         
         html += '<tr class="nota-master" onclick="toggleNotaDetail(this)" data-nota="' + escapeHtml(keys[i]) + '">';
@@ -2281,7 +2300,6 @@
         html += '</td>';
         html += '</tr>';
         
-        // Detail row (hidden by default)
         html += '<tr class="nota-detail" style="display:none;">';
         html += '<td colspan="8">';
         html += '<div class="detail-inner">';
@@ -2445,56 +2463,56 @@
         if (savedUser) {
           currentUser = JSON.parse(savedUser);
           console.log('📋 User ditemukan di localStorage:', currentUser.username);
-          google.script.run
-            .withSuccessHandler(function(result) {
-              if (result && result.valid) {
-                console.log('✅ Session valid untuk:', currentUser.nama);
-                var app = document.getElementById('app');
-                var loginPage = document.getElementById('loginPage');
-                if (app) app.style.display = 'block';
-                if (loginPage) loginPage.style.display = 'none';
-                var currentUserEl = document.getElementById('currentUser');
-                var currentRoleEl = document.getElementById('currentRole');
-                if (currentUserEl) currentUserEl.textContent = currentUser.nama;
-                if (currentRoleEl) currentRoleEl.textContent = '(' + currentUser.role + ')';
-                setupFilters();
-                var today = getTodayString();
-                var filterTanggal = document.getElementById('filterTanggal');
-                if (filterTanggal) filterTanggal.value = today;
-                var savedPosTanggal = localStorage.getItem('pos_tanggal');
-                if (savedPosTanggal) {
-                  var posTanggal = document.getElementById('tanggalTransaksi');
-                  if (posTanggal) posTanggal.value = savedPosTanggal;
-                }
-                var savedStokTanggal = localStorage.getItem('stok_tanggal');
-                if (savedStokTanggal) {
-                  var stokTanggal = document.getElementById('tanggalStokMasuk');
-                  if (stokTanggal) stokTanggal.value = savedStokTanggal;
-                }
-                loadAllData();
-                updateHeaderInfo();
-                console.log('✅ Semua data dimuat');
-              } else {
-                console.log('❌ Session tidak valid');
-                localStorage.removeItem('pos_user');
-                currentUser = null;
-                var app = document.getElementById('app');
-                var loginPage = document.getElementById('loginPage');
-                if (app) app.style.display = 'none';
-                if (loginPage) loginPage.style.display = 'block';
+          
+          callGAS('verifySession', { username: currentUser.username })
+          .then(function(result) {
+            if (result && result.valid) {
+              console.log('✅ Session valid untuk:', currentUser.nama);
+              var app = document.getElementById('app');
+              var loginPage = document.getElementById('loginPage');
+              if (app) app.style.display = 'block';
+              if (loginPage) loginPage.style.display = 'none';
+              var currentUserEl = document.getElementById('currentUser');
+              var currentRoleEl = document.getElementById('currentRole');
+              if (currentUserEl) currentUserEl.textContent = currentUser.nama;
+              if (currentRoleEl) currentRoleEl.textContent = '(' + currentUser.role + ')';
+              setupFilters();
+              var today = getTodayString();
+              var filterTanggal = document.getElementById('filterTanggal');
+              if (filterTanggal) filterTanggal.value = today;
+              var savedPosTanggal = localStorage.getItem('pos_tanggal');
+              if (savedPosTanggal) {
+                var posTanggal = document.getElementById('tanggalTransaksi');
+                if (posTanggal) posTanggal.value = savedPosTanggal;
               }
-            })
-            .withFailureHandler(function(error) {
-              console.error('❌ Error verifySession:', error);
+              var savedStokTanggal = localStorage.getItem('stok_tanggal');
+              if (savedStokTanggal) {
+                var stokTanggal = document.getElementById('tanggalStokMasuk');
+                if (stokTanggal) stokTanggal.value = savedStokTanggal;
+              }
+              loadAllData();
+              updateHeaderInfo();
+              console.log('✅ Semua data dimuat');
+            } else {
+              console.log('❌ Session tidak valid');
               localStorage.removeItem('pos_user');
               currentUser = null;
               var app = document.getElementById('app');
               var loginPage = document.getElementById('loginPage');
               if (app) app.style.display = 'none';
               if (loginPage) loginPage.style.display = 'block';
-              showToast('❌ Gagal verifikasi session: ' + error.message, 'error');
-            })
-            .verifySession(currentUser ? currentUser.username : '');
+            }
+          })
+          .catch(function(error) {
+            console.error('❌ Error verifySession:', error);
+            localStorage.removeItem('pos_user');
+            currentUser = null;
+            var app = document.getElementById('app');
+            var loginPage = document.getElementById('loginPage');
+            if (app) app.style.display = 'none';
+            if (loginPage) loginPage.style.display = 'block';
+            showToast('❌ Gagal verifikasi session: ' + error.message, 'error');
+          });
         } else {
           console.log('ℹ️ Tidak ada session tersimpan');
           var app = document.getElementById('app');
@@ -2561,49 +2579,48 @@
       btn.textContent = '⏳ Memproses...';
       btn.disabled = true;
       
-      google.script.run
-        .withSuccessHandler(function(result) {
-          btn.textContent = 'Login';
-          btn.disabled = false;
-          if (result.success) {
-            currentUser = result.user;
-            localStorage.setItem('pos_user', JSON.stringify(currentUser));
-            var app = document.getElementById('app');
-            var loginPage = document.getElementById('loginPage');
-            if (app) app.style.display = 'block';
-            if (loginPage) loginPage.style.display = 'none';
-            var currentUserEl = document.getElementById('currentUser');
-            var currentRoleEl = document.getElementById('currentRole');
-            if (currentUserEl) currentUserEl.textContent = currentUser.nama;
-            if (currentRoleEl) currentRoleEl.textContent = '(' + currentUser.role + ')';
-            setupFilters();
-            var today = getTodayString();
-            var filterTanggal = document.getElementById('filterTanggal');
-            if (filterTanggal) filterTanggal.value = today;
-            var savedPosTanggal = localStorage.getItem('pos_tanggal');
-            if (savedPosTanggal) {
-              var posTanggal = document.getElementById('tanggalTransaksi');
-              if (posTanggal) posTanggal.value = savedPosTanggal;
-            }
-            var savedStokTanggal = localStorage.getItem('stok_tanggal');
-            if (savedStokTanggal) {
-              var stokTanggal = document.getElementById('tanggalStokMasuk');
-              if (stokTanggal) stokTanggal.value = savedStokTanggal;
-            }
-            loadAllData();
-            updateHeaderInfo();
-            showToast('✅ Login berhasil! Selamat datang ' + currentUser.nama);
-          } else {
-            showToast('❌ ' + (result.message || 'Login gagal!'), 'error');
+      callGAS('login', { username: username, password: password })
+      .then(function(result) {
+        btn.textContent = 'Login';
+        btn.disabled = false;
+        if (result.success) {
+          currentUser = result.user;
+          localStorage.setItem('pos_user', JSON.stringify(currentUser));
+          var app = document.getElementById('app');
+          var loginPage = document.getElementById('loginPage');
+          if (app) app.style.display = 'block';
+          if (loginPage) loginPage.style.display = 'none';
+          var currentUserEl = document.getElementById('currentUser');
+          var currentRoleEl = document.getElementById('currentRole');
+          if (currentUserEl) currentUserEl.textContent = currentUser.nama;
+          if (currentRoleEl) currentRoleEl.textContent = '(' + currentUser.role + ')';
+          setupFilters();
+          var today = getTodayString();
+          var filterTanggal = document.getElementById('filterTanggal');
+          if (filterTanggal) filterTanggal.value = today;
+          var savedPosTanggal = localStorage.getItem('pos_tanggal');
+          if (savedPosTanggal) {
+            var posTanggal = document.getElementById('tanggalTransaksi');
+            if (posTanggal) posTanggal.value = savedPosTanggal;
           }
-        })
-        .withFailureHandler(function(error) {
-          btn.textContent = 'Login';
-          btn.disabled = false;
-          console.error('Login error:', error);
-          showToast('❌ Error: ' + error.message, 'error');
-        })
-        .login(username, password);
+          var savedStokTanggal = localStorage.getItem('stok_tanggal');
+          if (savedStokTanggal) {
+            var stokTanggal = document.getElementById('tanggalStokMasuk');
+            if (stokTanggal) stokTanggal.value = savedStokTanggal;
+          }
+          loadAllData();
+          updateHeaderInfo();
+          showToast('✅ Login berhasil! Selamat datang ' + currentUser.nama);
+        } else {
+          showToast('❌ ' + (result.message || 'Login gagal!'), 'error');
+        }
+      })
+      .catch(function(error) {
+        btn.textContent = 'Login';
+        btn.disabled = false;
+        console.error('Login error:', error);
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     });
     
     document.getElementById('formRegister').addEventListener('submit', function(e) {
@@ -2627,28 +2644,28 @@
       var btn = document.getElementById('btnRegister');
       btn.textContent = '⏳ Memproses...';
       btn.disabled = true;
-      google.script.run
-        .withSuccessHandler(function(result) {
-          btn.textContent = 'Daftar';
-          btn.disabled = false;
-          if (result.success) {
-            showToast('✅ Registrasi berhasil! Silakan login.', 'success');
-            showLogin();
-            document.getElementById('regUsername').value = '';
-            document.getElementById('regPassword').value = '';
-            document.getElementById('regConfirmPassword').value = '';
-            document.getElementById('regNama').value = '';
-          } else {
-            showToast('❌ ' + (result.message || 'Registrasi gagal!'), 'error');
-          }
-        })
-        .withFailureHandler(function(error) {
-          btn.textContent = 'Daftar';
-          btn.disabled = false;
-          console.error('Register error:', error);
-          showToast('❌ Error: ' + error.message, 'error');
-        })
-        .registerUser(username, password, nama);
+      
+      callGAS('registerUser', { username: username, password: password, nama: nama })
+      .then(function(result) {
+        btn.textContent = 'Daftar';
+        btn.disabled = false;
+        if (result.success) {
+          showToast('✅ Registrasi berhasil! Silakan login.', 'success');
+          showLogin();
+          document.getElementById('regUsername').value = '';
+          document.getElementById('regPassword').value = '';
+          document.getElementById('regConfirmPassword').value = '';
+          document.getElementById('regNama').value = '';
+        } else {
+          showToast('❌ ' + (result.message || 'Registrasi gagal!'), 'error');
+        }
+      })
+      .catch(function(error) {
+        btn.textContent = 'Daftar';
+        btn.disabled = false;
+        console.error('Register error:', error);
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     });
     
     // ==================== EVENT LISTENERS ====================
@@ -2694,7 +2711,6 @@
         });
       }
       
-      // ===== DASHBOARD FILTERS =====
       var tanggalInput = document.getElementById('filterTanggal');
       if (tanggalInput) {
         tanggalInput.addEventListener('change', function() { 
@@ -2709,7 +2725,6 @@
         });
       }
       
-      // ===== POS TANGGAL =====
       var posTanggal = document.getElementById('tanggalTransaksi');
       if (posTanggal) {
         var savedPosTanggal = localStorage.getItem('pos_tanggal');
@@ -2732,7 +2747,6 @@
         }, 100);
       }
       
-      // ===== STOK TANGGAL =====
       var stokTanggal = document.getElementById('tanggalStokMasuk');
       if (stokTanggal) {
         var savedStokTanggal = localStorage.getItem('stok_tanggal');
@@ -2754,7 +2768,6 @@
         }, 100);
       }
       
-      // ===== TRANSAKSI - AUTO REFRESH SAAT TANGGAL BERUBAH =====
       var filterMulai = document.getElementById('filterTransaksiMulai');
       var filterSampai = document.getElementById('filterTransaksiSampai');
       
@@ -2774,7 +2787,6 @@
         });
       }
       
-      // ===== CEK SESSION =====
       checkSession();
     });
     
@@ -2801,9 +2813,10 @@
     }
     
     function loadKasirList() {
-      google.script.run
-        .withSuccessHandler(function(users) {
-          allUsers = users || [];
+      callGAS('getUsers', {})
+      .then(function(result) {
+        if (result && result.success) {
+          allUsers = result.data || [];
           var filterKasir = document.getElementById('filterKasir');
           if (!filterKasir) return;
           filterKasir.innerHTML = '<option value="all">Semua Kasir</option>';
@@ -2815,26 +2828,31 @@
               filterKasir.appendChild(opt);
             }
           }
-        })
-        .getUsers();
+        }
+      })
+      .catch(function(error) {
+        console.error('❌ Error loadKasirList:', error);
+      });
     }
     
     // ==================== UPDATE HEADER INFO ====================
     function updateHeaderInfo() {
-      google.script.run
-        .withSuccessHandler(function(data) {
-          if (data && data.namaToko) {
-            var header = document.getElementById('headerTitle');
-            if (header) {
-              header.textContent = '🛒 ' + data.namaToko;
-            }
-            var loginTitle = document.getElementById('loginTitle');
-            if (loginTitle) {
-              loginTitle.textContent = '🛒 ' + data.namaToko;
-            }
+      callGAS('getInfoToko', {})
+      .then(function(result) {
+        if (result && result.success && result.data && result.data.namaToko) {
+          var header = document.getElementById('headerTitle');
+          if (header) {
+            header.textContent = '🛒 ' + result.data.namaToko;
           }
-        })
-        .getInfoToko();
+          var loginTitle = document.getElementById('loginTitle');
+          if (loginTitle) {
+            loginTitle.textContent = '🛒 ' + result.data.namaToko;
+          }
+        }
+      })
+      .catch(function(error) {
+        console.error('❌ Error updateHeaderInfo:', error);
+      });
     }
     
     // ==================== LOAD ALL DATA ====================
@@ -2972,58 +2990,64 @@
       document.getElementById('bulananTotal').textContent = '⏳ Memuat total...';
       document.getElementById('lowStockList').innerHTML = '⏳ Memuat data stok...';
       
-      google.script.run
-        .withSuccessHandler(function(data) {
-          console.log('📊 Dashboard data received:', data);
-          document.getElementById('keuntunganHari').textContent = formatRupiah(data.keuntunganHariIni || 0);
-          document.getElementById('penjualanHari').textContent = formatRupiah(data.penjualanHariIni || 0);
-          document.getElementById('quantityHari').textContent = data.quantityHari || 0;
-          document.getElementById('totalTransaksi').textContent = data.totalTransaksi || 0;
-          document.getElementById('keuntunganBulan').textContent = formatRupiah(data.keuntunganBulan || 0);
-          document.getElementById('stokRendah').textContent = data.stokRendah || 0;
-          document.getElementById('totalQuantityBulan').textContent = data.totalQuantityBulan || 0;
-          document.getElementById('totalTransaksiBulan').textContent = data.totalTransaksiBulan || 0;
-          document.getElementById('nilaiStok').textContent = formatRupiah(data.nilaiStok || 0);
-          document.getElementById('potensiPenjualan').textContent = formatRupiah(data.potensiPenjualan || 0);
-          document.getElementById('nilaiStokSub').textContent = (data.totalStokPcs || 0) + ' pcs';
-          document.getElementById('potensiPenjualanSub').textContent = (data.totalStokPcs || 0) + ' pcs';
-          resetRefreshButton();
-          
-          google.script.run
-            .withSuccessHandler(function(produk) {
-              var lowStock = produk.filter(function(p) { return parseInt(p.Stok) <= parseInt(p['Minimum Stok'] || 0); });
-              var container = document.getElementById('lowStockList');
-              if (lowStock.length === 0) { container.innerHTML = '✅ Semua produk stok aman'; }
-              else { var html = ''; for (var i = 0; i < lowStock.length; i++) { html += '⚠️ ' + lowStock[i]['Nama Produk'] + ' - Stok: ' + lowStock[i].Stok + ' ' + (lowStock[i].Satuan || 'pcs') + '<br>'; } container.innerHTML = html; }
-            })
-            .withFailureHandler(function(error) { 
-              console.error('Error load low stock:', error); 
-              document.getElementById('lowStockList').innerHTML = '❌ Gagal memuat data stok';
-              resetRefreshButton();
-            })
-            .getProduk();
-            
-          loadBulananChart(tanggal, kasir, namaUser, role);
+      callGAS('getDashboardDataBulanan', {
+        tanggal: tanggal,
+        kasir: kasir,
+        namaUser: namaUser,
+        role: role
+      })
+      .then(function(data) {
+        console.log('📊 Dashboard data received:', data);
+        document.getElementById('keuntunganHari').textContent = formatRupiah(data.keuntunganHariIni || 0);
+        document.getElementById('penjualanHari').textContent = formatRupiah(data.penjualanHariIni || 0);
+        document.getElementById('quantityHari').textContent = data.quantityHari || 0;
+        document.getElementById('totalTransaksi').textContent = data.totalTransaksi || 0;
+        document.getElementById('keuntunganBulan').textContent = formatRupiah(data.keuntunganBulan || 0);
+        document.getElementById('stokRendah').textContent = data.stokRendah || 0;
+        document.getElementById('totalQuantityBulan').textContent = data.totalQuantityBulan || 0;
+        document.getElementById('totalTransaksiBulan').textContent = data.totalTransaksiBulan || 0;
+        document.getElementById('nilaiStok').textContent = formatRupiah(data.nilaiStok || 0);
+        document.getElementById('potensiPenjualan').textContent = formatRupiah(data.potensiPenjualan || 0);
+        document.getElementById('nilaiStokSub').textContent = (data.totalStokPcs || 0) + ' pcs';
+        document.getElementById('potensiPenjualanSub').textContent = (data.totalStokPcs || 0) + ' pcs';
+        resetRefreshButton();
+        
+        callGAS('getProduk', {})
+        .then(function(prodResult) {
+          if (prodResult && prodResult.success) {
+            var produk = prodResult.data || [];
+            var lowStock = produk.filter(function(p) { return parseInt(p.Stok) <= parseInt(p['Minimum Stok'] || 0); });
+            var container = document.getElementById('lowStockList');
+            if (lowStock.length === 0) { container.innerHTML = '✅ Semua produk stok aman'; }
+            else { var html = ''; for (var i = 0; i < lowStock.length; i++) { html += '⚠️ ' + lowStock[i]['Nama Produk'] + ' - Stok: ' + lowStock[i].Stok + ' ' + (lowStock[i].Satuan || 'pcs') + '<br>'; } container.innerHTML = html; }
+          }
         })
-        .withFailureHandler(function(error) {
-          console.error('Error loadDashboard:', error);
-          document.getElementById('keuntunganHari').textContent = '❌ Error';
-          document.getElementById('penjualanHari').textContent = '❌ Error';
-          document.getElementById('quantityHari').textContent = '❌';
-          document.getElementById('totalTransaksi').textContent = '❌';
-          document.getElementById('keuntunganBulan').textContent = '❌';
-          document.getElementById('stokRendah').textContent = '❌';
-          document.getElementById('totalQuantityBulan').textContent = '❌';
-          document.getElementById('totalTransaksiBulan').textContent = '❌';
-          document.getElementById('nilaiStok').textContent = '❌';
-          document.getElementById('potensiPenjualan').textContent = '❌';
-          document.getElementById('bulananLegend').innerHTML = '❌ Gagal memuat grafik';
-          document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
+        .catch(function(error) { 
+          console.error('Error load low stock:', error); 
           document.getElementById('lowStockList').innerHTML = '❌ Gagal memuat data stok';
-          showToast('❌ Gagal memuat dashboard: ' + error.message, 'error');
           resetRefreshButton();
-        })
-        .getDashboardDataBulanan(tanggal, kasir, namaUser, role);
+        });
+        
+        loadBulananChart(tanggal, kasir, namaUser, role);
+      })
+      .catch(function(error) {
+        console.error('Error loadDashboard:', error);
+        document.getElementById('keuntunganHari').textContent = '❌ Error';
+        document.getElementById('penjualanHari').textContent = '❌ Error';
+        document.getElementById('quantityHari').textContent = '❌';
+        document.getElementById('totalTransaksi').textContent = '❌';
+        document.getElementById('keuntunganBulan').textContent = '❌';
+        document.getElementById('stokRendah').textContent = '❌';
+        document.getElementById('totalQuantityBulan').textContent = '❌';
+        document.getElementById('totalTransaksiBulan').textContent = '❌';
+        document.getElementById('nilaiStok').textContent = '❌';
+        document.getElementById('potensiPenjualan').textContent = '❌';
+        document.getElementById('bulananLegend').innerHTML = '❌ Gagal memuat grafik';
+        document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
+        document.getElementById('lowStockList').innerHTML = '❌ Gagal memuat data stok';
+        showToast('❌ Gagal memuat dashboard: ' + error.message, 'error');
+        resetRefreshButton();
+      });
     }
     
     // ==================== LOAD CHART ====================
@@ -3035,86 +3059,91 @@
       document.getElementById('bulananLegend').innerHTML = '⏳ Memuat grafik...';
       document.getElementById('bulananTotal').textContent = '⏳ Memuat total...';
       
-      google.script.run
-        .withSuccessHandler(function(data) {
-          var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-          var datasets = [];
-          var totalAll = 0;
-          var kasirNames = Object.keys(data);
-          var colorIndex = 0;
+      callGAS('getPenjualanBulananPerKasir', {
+        bulan: bulan,
+        tahun: tahun,
+        kasirFilter: kasirFilter,
+        namaUser: namaUser,
+        role: role
+      })
+      .then(function(data) {
+        var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+        var datasets = [];
+        var totalAll = 0;
+        var kasirNames = Object.keys(data);
+        var colorIndex = 0;
+        
+        for (var i = 0; i < kasirNames.length; i++) {
+          var namaKasir = kasirNames[i];
+          var values = data[namaKasir] || [];
+          while (values.length < 12) values.push(0);
+          var sum = values.reduce(function(a, b) { return a + b; }, 0);
+          totalAll += sum;
           
-          for (var i = 0; i < kasirNames.length; i++) {
-            var namaKasir = kasirNames[i];
-            var values = data[namaKasir] || [];
-            while (values.length < 12) values.push(0);
-            var sum = values.reduce(function(a, b) { return a + b; }, 0);
-            totalAll += sum;
-            
-            datasets.push({
-              label: namaKasir,
-              data: values,
-              backgroundColor: chartColors[colorIndex % chartColors.length] + '80',
-              borderColor: chartColors[colorIndex % chartColors.length],
-              borderWidth: 1
-            });
-            colorIndex++;
-          }
-          
-          var ctx = document.getElementById('penjualanBulananChart').getContext('2d');
-          if (penjualanBulananChart) { penjualanBulananChart.destroy(); }
-          
-          if (datasets.length === 0 || totalAll === 0) {
-            document.getElementById('bulananLegend').innerHTML = '<span style="color:#999;">Belum ada data penjualan</span>';
-            document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
-            return;
-          }
-          
-          penjualanBulananChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: labels,
-              datasets: datasets
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      return context.dataset.label + ': ' + formatRupiah(context.parsed.y);
-                    }
+          datasets.push({
+            label: namaKasir,
+            data: values,
+            backgroundColor: chartColors[colorIndex % chartColors.length] + '80',
+            borderColor: chartColors[colorIndex % chartColors.length],
+            borderWidth: 1
+          });
+          colorIndex++;
+        }
+        
+        var ctx = document.getElementById('penjualanBulananChart').getContext('2d');
+        if (penjualanBulananChart) { penjualanBulananChart.destroy(); }
+        
+        if (datasets.length === 0 || totalAll === 0) {
+          document.getElementById('bulananLegend').innerHTML = '<span style="color:#999;">Belum ada data penjualan</span>';
+          document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
+          return;
+        }
+        
+        penjualanBulananChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return context.dataset.label + ': ' + formatRupiah(context.parsed.y);
                   }
                 }
-              },
-              scales: {
-                x: { stacked: true },
-                y: { 
-                  stacked: true,
-                  beginAtZero: true,
-                  ticks: { callback: function(value) { if (value >= 1000000) return 'Rp ' + (value/1000000).toFixed(1) + 'Jt'; else if (value >= 1000) return 'Rp ' + (value/1000).toFixed(0) + 'K'; return 'Rp ' + value; } }
-                }
+              }
+            },
+            scales: {
+              x: { stacked: true },
+              y: { 
+                stacked: true,
+                beginAtZero: true,
+                ticks: { callback: function(value) { if (value >= 1000000) return 'Rp ' + (value/1000000).toFixed(1) + 'Jt'; else if (value >= 1000) return 'Rp ' + (value/1000).toFixed(0) + 'K'; return 'Rp ' + value; } }
               }
             }
-          });
-          
-          var legendHtml = '';
-          for (var i = 0; i < datasets.length; i++) {
-            var d = datasets[i];
-            var sum = d.data.reduce(function(a,b) { return a + b; }, 0);
-            var persen = totalAll > 0 ? ((sum / totalAll) * 100).toFixed(1) : 0;
-            legendHtml += '<span class="legend-item"><span class="legend-color" style="background:' + d.backgroundColor + '"></span>' + d.label + ' (' + persen + '%)</span>';
           }
-          document.getElementById('bulananLegend').innerHTML = legendHtml;
-          document.getElementById('bulananTotal').textContent = 'Total: ' + formatRupiah(totalAll);
-        })
-        .withFailureHandler(function(error) {
-          console.error('Error loadBulananChart:', error);
-          document.getElementById('bulananLegend').innerHTML = '❌ Gagal memuat grafik';
-          document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
-        })
-        .getPenjualanBulananPerKasir(bulan, tahun, kasirFilter, namaUser, role);
+        });
+        
+        var legendHtml = '';
+        for (var i = 0; i < datasets.length; i++) {
+          var d = datasets[i];
+          var sum = d.data.reduce(function(a,b) { return a + b; }, 0);
+          var persen = totalAll > 0 ? ((sum / totalAll) * 100).toFixed(1) : 0;
+          legendHtml += '<span class="legend-item"><span class="legend-color" style="background:' + d.backgroundColor + '"></span>' + d.label + ' (' + persen + '%)</span>';
+        }
+        document.getElementById('bulananLegend').innerHTML = legendHtml;
+        document.getElementById('bulananTotal').textContent = 'Total: ' + formatRupiah(totalAll);
+      })
+      .catch(function(error) {
+        console.error('Error loadBulananChart:', error);
+        document.getElementById('bulananLegend').innerHTML = '❌ Gagal memuat grafik';
+        document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
+      });
     }
     
     // ==================== POS FUNCTIONS ====================
@@ -3128,63 +3157,73 @@
       
       container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">⏳ Memuat produk...</p>';
       
-      google.script.run
-        .withSuccessHandler(function(produk) {
-          console.log('✅ Data produk POS diterima:', produk);
-          produkList = produk || [];
-          var container = document.getElementById('posProducts');
-          if (!container) return;
-          
-          if (produkList.length === 0) {
-            container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
-            return;
-          }
-          
-          var html = '';
-          var hasDate = getTanggalTransaksi() !== '';
-          var processedKode = {};
-          
-          for (var i = 0; i < produkList.length; i++) {
-            var p = produkList[i];
-            if (processedKode[p.Kode]) continue;
-            processedKode[p.Kode] = true;
-
-            var stok = parseInt(p.Stok) || 0;
-            var isOutOfStock = stok <= 0;
-            var disabledClass = isOutOfStock ? 'disabled' : '';
-            var posDisabledClass = !hasDate ? 'pos-disabled' : '';
-            var stockClass = isOutOfStock ? 'out-of-stock' : '';
-            var onclickAttr = (isOutOfStock || !hasDate) ? '' : 'onclick="addToCart(\'' + p.Kode + '\')"';
-            var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
-            
-            html += '<div class="product-item ' + disabledClass + ' ' + posDisabledClass + '" ' + onclickAttr + ' data-kode="' + p.Kode + '">' +
-                      imgHtml +
-                      (isOutOfStock ? '<div class="badge-out-of-stock">⛔ HABIS</div>' : '') +
-                      (!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : '') +
-                      '<div class="name">' + (p['Nama Produk'] || '-') + '</div>' +
-                      '<div class="price">' + formatRupiah(p['Harga Jual'] || 0) + '</div>' +
-                      '<div class="stock ' + stockClass + '">' + (isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.Satuan || 'pcs')) + '</div>' +
-                    '</div>';
-          }
-          
-          container.innerHTML = html;
-          updatePosUI();
-          updateStokGridPOS();
-          
-          console.log('✅ Produk POS berhasil ditampilkan: ' + produkList.length + ' produk');
-        })
-        .withFailureHandler(function(error) {
-          console.error('❌ Error loadPosProduk:', error);
+      callGAS('getProduk', {})
+      .then(function(result) {
+        if (!result || !result.success) {
+          console.error('❌ Error getProduk:', result ? result.error : 'Unknown');
           var container = document.getElementById('posProducts');
           if (container) {
-            container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk: ' + error.message + '</p>';
+            container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk</p>';
           }
-          showToast('❌ Gagal memuat produk POS: ' + error.message, 'error');
-        })
-        .getProduk();
+          showToast('❌ Gagal memuat produk POS', 'error');
+          return;
+        }
+        
+        var produk = result.data || [];
+        console.log('✅ Data produk POS diterima:', produk);
+        produkList = produk;
+        var container = document.getElementById('posProducts');
+        if (!container) return;
+        
+        if (produkList.length === 0) {
+          container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
+          return;
+        }
+        
+        var html = '';
+        var hasDate = getTanggalTransaksi() !== '';
+        var processedKode = {};
+        
+        for (var i = 0; i < produkList.length; i++) {
+          var p = produkList[i];
+          if (processedKode[p.Kode]) continue;
+          processedKode[p.Kode] = true;
+
+          var stok = parseInt(p.Stok) || 0;
+          var isOutOfStock = stok <= 0;
+          var disabledClass = isOutOfStock ? 'disabled' : '';
+          var posDisabledClass = !hasDate ? 'pos-disabled' : '';
+          var stockClass = isOutOfStock ? 'out-of-stock' : '';
+          var onclickAttr = (isOutOfStock || !hasDate) ? '' : 'onclick="addToCart(\'' + p.Kode + '\')"';
+          var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
+          
+          html += '<div class="product-item ' + disabledClass + ' ' + posDisabledClass + '" ' + onclickAttr + ' data-kode="' + p.Kode + '">' +
+                    imgHtml +
+                    (isOutOfStock ? '<div class="badge-out-of-stock">⛔ HABIS</div>' : '') +
+                    (!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : '') +
+                    '<div class="name">' + (p['Nama Produk'] || '-') + '</div>' +
+                    '<div class="price">' + formatRupiah(p['Harga Jual'] || 0) + '</div>' +
+                    '<div class="stock ' + stockClass + '">' + (isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.Satuan || 'pcs')) + '</div>' +
+                  '</div>';
+        }
+        
+        container.innerHTML = html;
+        updatePosUI();
+        updateStokGridPOS();
+        
+        console.log('✅ Produk POS berhasil ditampilkan: ' + produkList.length + ' produk');
+      })
+      .catch(function(error) {
+        console.error('❌ Error loadPosProduk:', error);
+        var container = document.getElementById('posProducts');
+        if (container) {
+          container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk: ' + error.message + '</p>';
+        }
+        showToast('❌ Gagal memuat produk POS: ' + error.message, 'error');
+      });
     }
     
-    // ==================== CART FUNCTIONS (POS) ====================
+    // ==================== CART FUNCTIONS (POS) - LANJUTAN ====================
     function addToCart(kode) {
       if (!currentUser) { showToast('Silakan login terlebih dahulu!', 'warning'); return; }
       var produk = null;
@@ -3488,57 +3527,67 @@
       
       container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">⏳ Memuat produk...</p>';
       
-      google.script.run
-        .withSuccessHandler(function(produk) {
-          console.log('✅ Data produk STOK MASUK diterima:', produk);
-          produkList = produk || [];
-          var container = document.getElementById('stokProducts');
-          if (!container) return;
-          
-          if (produkList.length === 0) {
-            container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
-            return;
-          }
-          
-          var html = '';
-          var hasDate = getTanggalStokMasuk() !== '';
-          var processedKode = {};
-          
-          for (var i = 0; i < produkList.length; i++) {
-            var p = produkList[i];
-            if (processedKode[p.Kode]) continue;
-            processedKode[p.Kode] = true;
-
-            var stok = parseInt(p.Stok) || 0;
-            var disabledClass = !hasDate ? 'disabled' : '';
-            var onclickAttr = (!hasDate) ? '' : 'onclick="addToStokCart(\'' + p.Kode + '\')"';
-            var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
-            
-            var stokDisplay = stok + ' ' + (p.Satuan || 'pcs');
-            var stokColor = stok === 0 ? '#ff9800' : '#999';
-            
-            html += '<div class="stok-product-item ' + disabledClass + '" ' + onclickAttr + '>' +
-                      imgHtml +
-                      (!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : '') +
-                      '<div class="name">' + (p['Nama Produk'] || '-') + '</div>' +
-                      '<div class="price">' + formatRupiah(p['Harga Beli'] || 0) + '</div>' +
-                      '<div class="stock" style="color:' + stokColor + ';font-weight:' + (stok === 0 ? 'bold' : 'normal') + ';">Stok: ' + stokDisplay + '</div>' +
-                      (stok === 0 ? '<div style="font-size:0.6rem;color:#ff9800;margin-top:2px;">🔄 Klik untuk tambah stok</div>' : '') +
-                    '</div>';
-          }
-          
-          container.innerHTML = html;
-          console.log('✅ Produk STOK MASUK berhasil ditampilkan: ' + produkList.length + ' produk');
-        })
-        .withFailureHandler(function(error) {
-          console.error('❌ Error loadStokProduk:', error);
+      callGAS('getProduk', {})
+      .then(function(result) {
+        if (!result || !result.success) {
+          console.error('❌ Error getProduk:', result ? result.error : 'Unknown');
           var container = document.getElementById('stokProducts');
           if (container) {
-            container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk: ' + error.message + '</p>';
+            container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk</p>';
           }
-          showToast('❌ Gagal memuat produk: ' + error.message, 'error');
-        })
-        .getProduk();
+          showToast('❌ Gagal memuat produk STOK', 'error');
+          return;
+        }
+        
+        var produk = result.data || [];
+        console.log('✅ Data produk STOK MASUK diterima:', produk);
+        produkList = produk;
+        var container = document.getElementById('stokProducts');
+        if (!container) return;
+        
+        if (produkList.length === 0) {
+          container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
+          return;
+        }
+        
+        var html = '';
+        var hasDate = getTanggalStokMasuk() !== '';
+        var processedKode = {};
+        
+        for (var i = 0; i < produkList.length; i++) {
+          var p = produkList[i];
+          if (processedKode[p.Kode]) continue;
+          processedKode[p.Kode] = true;
+
+          var stok = parseInt(p.Stok) || 0;
+          var disabledClass = !hasDate ? 'disabled' : '';
+          var onclickAttr = (!hasDate) ? '' : 'onclick="addToStokCart(\'' + p.Kode + '\')"';
+          var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
+          
+          var stokDisplay = stok + ' ' + (p.Satuan || 'pcs');
+          var stokColor = stok === 0 ? '#ff9800' : '#999';
+          
+          html += '<div class="stok-product-item ' + disabledClass + '" ' + onclickAttr + '>' +
+                    imgHtml +
+                    (!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : '') +
+                    '<div class="name">' + (p['Nama Produk'] || '-') + '</div>' +
+                    '<div class="price">' + formatRupiah(p['Harga Beli'] || 0) + '</div>' +
+                    '<div class="stock" style="color:' + stokColor + ';font-weight:' + (stok === 0 ? 'bold' : 'normal') + ';">Stok: ' + stokDisplay + '</div>' +
+                    (stok === 0 ? '<div style="font-size:0.6rem;color:#ff9800;margin-top:2px;">🔄 Klik untuk tambah stok</div>' : '') +
+                  '</div>';
+        }
+        
+        container.innerHTML = html;
+        console.log('✅ Produk STOK MASUK berhasil ditampilkan: ' + produkList.length + ' produk');
+      })
+      .catch(function(error) {
+        console.error('❌ Error loadStokProduk:', error);
+        var container = document.getElementById('stokProducts');
+        if (container) {
+          container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk: ' + error.message + '</p>';
+        }
+        showToast('❌ Gagal memuat produk: ' + error.message, 'error');
+      });
     }
     
     function addToStokCart(kode) {
@@ -3714,15 +3763,16 @@
     
     // ==================== STOK MASUK - GENERATE NO NOTA ====================
     function generateNoNotaStok() {
-      google.script.run
-        .withSuccessHandler(function(noNota) {
+      callGAS('generateNoNotaStok', {})
+      .then(function(result) {
+        if (result && result.success) {
           var el = document.getElementById('noNotaStok');
-          if (el) el.value = noNota;
-        })
-        .withFailureHandler(function(error) {
-          console.error('❌ Error generateNoNotaStok:', error);
-        })
-        .generateNoNotaStok();
+          if (el) el.value = result.data || '';
+        }
+      })
+      .catch(function(error) {
+        console.error('❌ Error generateNoNotaStok:', error);
+      });
     }
     
     // ==================== STOK MASUK - SIMPAN ====================
@@ -3785,53 +3835,52 @@
         detail: detail
       };
       
-      google.script.run
-        .withSuccessHandler(function(result) {
-          _isProcessingStok = false;
-          btn.disabled = false;
-          btn.textContent = '🛒 BELANJA PRODUK';
+      callGAS('simpanStokMasuk', data)
+      .then(function(result) {
+        _isProcessingStok = false;
+        btn.disabled = false;
+        btn.textContent = '🛒 BELANJA PRODUK';
+        
+        if (result.success) {
+          showToast('✅ Stok Masuk berhasil disimpan!', 'success');
           
-          if (result.success) {
-            showToast('✅ Stok Masuk berhasil disimpan!', 'success');
-            
-            for (var i = 0; i < detail.length; i++) {
-              var item = detail[i];
-              for (var j = 0; j < produkList.length; j++) {
-                if (produkList[j].Kode === item.kode) {
-                  produkList[j].Stok = parseInt(produkList[j].Stok) + item.qty;
-                  break;
-                }
+          for (var i = 0; i < detail.length; i++) {
+            var item = detail[i];
+            for (var j = 0; j < produkList.length; j++) {
+              if (produkList[j].Kode === item.kode) {
+                produkList[j].Stok = parseInt(produkList[j].Stok) + item.qty;
+                break;
               }
             }
-            updateStokProductGrid();
-            
-            currentStokCart = [];
-            updateStokCartDisplay();
-            
-            document.getElementById('pemasokStok').value = '';
-            generateNoNotaStok();
-            
-            showPreviewNotaStok(noNota, tanggal, pemasok, detail, total);
-            
-            loadProdukWithRetry();
-            loadPosProduk();
-            loadDashboard();
-            loadStokProduk();
-            loadRiwayatStok();
-            loadBatchList();
-            loadBatchUntukDibatalkan();
-            
-          } else {
-            showToast('❌ Gagal menyimpan: ' + (result.error || 'Terjadi kesalahan'), 'error');
           }
-        })
-        .withFailureHandler(function(error) {
-          _isProcessingStok = false;
-          btn.disabled = false;
-          btn.textContent = '🛒 BELANJA PRODUK';
-          showToast('❌ Error: ' + error.message, 'error');
-        })
-        .simpanStokMasuk(data);
+          updateStokProductGrid();
+          
+          currentStokCart = [];
+          updateStokCartDisplay();
+          
+          document.getElementById('pemasokStok').value = '';
+          generateNoNotaStok();
+          
+          showPreviewNotaStok(noNota, tanggal, pemasok, detail, total);
+          
+          loadProdukWithRetry();
+          loadPosProduk();
+          loadDashboard();
+          loadStokProduk();
+          loadRiwayatStok();
+          loadBatchList();
+          loadBatchUntukDibatalkan();
+          
+        } else {
+          showToast('❌ Gagal menyimpan: ' + (result.error || 'Terjadi kesalahan'), 'error');
+        }
+      })
+      .catch(function(error) {
+        _isProcessingStok = false;
+        btn.disabled = false;
+        btn.textContent = '🛒 BELANJA PRODUK';
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     }
     
     // ==================== SHOW PREVIEW NOTA STOK ====================
@@ -3956,32 +4005,33 @@
         }
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">⏳ Memuat data...</td></tr>';
         
-        google.script.run
-          .withSuccessHandler(function(riwayat) {
-            try {
-              allRiwayatStokData = riwayat || [];
-              if (!allRiwayatStokData || allRiwayatStokData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">📭 Belum ada riwayat stok masuk</td></tr>';
-                var infoEl = document.getElementById('stokFilterInfo');
-                if (infoEl) infoEl.textContent = 'Menampilkan semua nota (0 nota · 0 item)';
-                return;
-              }
-              
-              // Apply filters
-              filterRiwayatStok();
-              console.log('✅ Riwayat stok berhasil dimuat:', allRiwayatStokData.length, 'baris');
-            } catch (e) {
-              console.error('❌ Error processing riwayat:', e);
-              tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Error: ' + e.message + '</td></tr>';
+        callGAS('getRiwayatStokMasuk', {})
+        .then(function(result) {
+          try {
+            if (!result || !result.success) {
+              throw new Error(result ? result.error : 'Gagal memuat data');
             }
-          })
-          .withFailureHandler(function(error) {
-            console.error('❌ Gagal memuat riwayat:', error);
-            if (tbody) {
-              tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Gagal memuat data: ' + (error.message || 'Unknown error') + '</td></tr>';
+            allRiwayatStokData = result.data || [];
+            if (!allRiwayatStokData || allRiwayatStokData.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">📭 Belum ada riwayat stok masuk</td></tr>';
+              var infoEl = document.getElementById('stokFilterInfo');
+              if (infoEl) infoEl.textContent = 'Menampilkan semua nota (0 nota · 0 item)';
+              return;
             }
-          })
-          .getRiwayatStokMasuk();
+            
+            filterRiwayatStok();
+            console.log('✅ Riwayat stok berhasil dimuat:', allRiwayatStokData.length, 'baris');
+          } catch (e) {
+            console.error('❌ Error processing riwayat:', e);
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Error: ' + e.message + '</td></tr>';
+          }
+        })
+        .catch(function(error) {
+          console.error('❌ Gagal memuat riwayat:', error);
+          if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Gagal memuat data: ' + (error.message || 'Unknown error') + '</td></tr>';
+          }
+        });
       } catch (e) {
         console.error('❌ Error loadRiwayatStok:', e);
         var tbody = document.getElementById('riwayatStokTable');
@@ -3999,99 +4049,98 @@
       document.getElementById('modalBody').innerHTML = '<p style="text-align:center;padding:30px;">⏳ Memuat data untuk ' + noNota + '...</p>';
       document.getElementById('modal').classList.add('active');
       
-      google.script.run
-        .withSuccessHandler(function(data) {
-          console.log('🔍 Data dari server:', data);
+      callGAS('getDetailStokMasuk', { noNota: noNota })
+      .then(function(data) {
+        console.log('🔍 Data dari server:', data);
+        
+        if (!data || !data.success) {
+          var pesan = data && data.error ? data.error : 'Data tidak ditemukan';
+          console.error('❌ ' + pesan);
+          document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ ' + pesan + '</p>';
+          showToast(pesan, 'error');
+          return;
+        }
+        
+        if (!data.header) {
+          console.error('❌ Header tidak ditemukan!');
+          document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Header tidak ditemukan untuk: ' + noNota + '</p>';
+          showToast('Header tidak ditemukan!', 'error');
+          return;
+        }
+        
+        console.log('✅ Data ditemukan! Header:', data.header);
+        console.log('✅ Jumlah detail:', data.detail ? data.detail.length : 0);
+        
+        try {
+          var h = data.header;
+          var detail = data.detail || [];
           
-          if (!data || !data.success) {
-            var pesan = data && data.error ? data.error : 'Data tidak ditemukan';
-            console.error('❌ ' + pesan);
-            document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ ' + pesan + '</p>';
-            showToast(pesan, 'error');
-            return;
+          var total = 0;
+          for (var i = 0; i < detail.length; i++) {
+            total += detail[i].subtotal || 0;
           }
           
-          if (!data.header) {
-            console.error('❌ Header tidak ditemukan!');
-            document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Header tidak ditemukan untuk: ' + noNota + '</p>';
-            showToast('Header tidak ditemukan!', 'error');
-            return;
-          }
+          var statusColor = h.status === 'ACTIVE' ? '#4CAF50' : '#f44336';
+          var statusText = h.status === 'ACTIVE' ? '✅ ACTIVE' : '❌ CANCELLED';
           
-          console.log('✅ Data ditemukan! Header:', data.header);
-          console.log('✅ Jumlah detail:', data.detail ? data.detail.length : 0);
+          var html = '<div style="margin-bottom:15px;">';
+          html += '<div style="background:#f9f9f9;padding:15px;border-radius:8px;border:1px solid #e0e0e0;">';
+          html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+          html += '<div><strong>No.Nota:</strong> ' + h.noNota + '</div>';
+          html += '<div><strong>Pemasok:</strong> ' + (h.pemasok || '-') + '</div>';
+          html += '<div><strong>Tanggal:</strong> ' + formatTanggalDisplay(h.tanggal) + '</div>';
+          html += '<div><strong>Status:</strong> <span style="color:' + statusColor + ';font-weight:bold;">' + statusText + '</span></div>';
+          html += '<div><strong>User:</strong> ' + (h.user || '-') + '</div>';
+          html += '<div><strong>Jumlah Item:</strong> ' + detail.length + ' produk</div>';
+          html += '</div></div>';
           
-          try {
-            var h = data.header;
-            var detail = data.detail || [];
-            
-            var total = 0;
-            for (var i = 0; i < detail.length; i++) {
-              total += detail[i].subtotal || 0;
-            }
-            
-            var statusColor = h.status === 'ACTIVE' ? '#4CAF50' : '#f44336';
-            var statusText = h.status === 'ACTIVE' ? '✅ ACTIVE' : '❌ CANCELLED';
-            
-            var html = '<div style="margin-bottom:15px;">';
-            html += '<div style="background:#f9f9f9;padding:15px;border-radius:8px;border:1px solid #e0e0e0;">';
-            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
-            html += '<div><strong>No.Nota:</strong> ' + h.noNota + '</div>';
-            html += '<div><strong>Pemasok:</strong> ' + (h.pemasok || '-') + '</div>';
-            html += '<div><strong>Tanggal:</strong> ' + formatTanggalDisplay(h.tanggal) + '</div>';
-            html += '<div><strong>Status:</strong> <span style="color:' + statusColor + ';font-weight:bold;">' + statusText + '</span></div>';
-            html += '<div><strong>User:</strong> ' + (h.user || '-') + '</div>';
-            html += '<div><strong>Jumlah Item:</strong> ' + detail.length + ' produk</div>';
-            html += '</div></div>';
-            
-            html += '<div style="margin-top:15px;max-height:400px;overflow-y:auto;">';
-            html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
-            html += '<thead><tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">No</th><th style="padding:8px;text-align:left;">Produk</th><th style="padding:8px;text-align:center;">Qty</th><th style="padding:8px;text-align:right;">Harga</th><th style="padding:8px;text-align:right;">Subtotal</th></tr></thead>';
-            html += '<tbody>';
-            
-            for (var i = 0; i < detail.length; i++) {
-              var item = detail[i];
-              html += '<tr>' +
-                '<td style="padding:6px 8px;">' + (i+1) + '</td>' +
-                '<td style="padding:6px 8px;">' + (item.namaProduk || '-') + '</td>' +
-                '<td style="padding:6px 8px;text-align:center;">' + (item.qty || 0) + '</td>' +
-                '<td style="padding:6px 8px;text-align:right;">' + formatRupiah(item.harga || 0) + '</td>' +
-                '<td style="padding:6px 8px;text-align:right;">' + formatRupiah(item.subtotal || 0) + '</td>' +
-                '</tr>';
-            }
-            
-            html += '<tr style="font-weight:bold;border-top:2px solid #333;">' +
-              '<td colspan="4" style="padding:8px;text-align:right;">TOTAL</td>' +
-              '<td style="padding:8px;text-align:right;">' + formatRupiah(total) + '</td>' +
+          html += '<div style="margin-top:15px;max-height:400px;overflow-y:auto;">';
+          html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
+          html += '<thead><tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">No</th><th style="padding:8px;text-align:left;">Produk</th><th style="padding:8px;text-align:center;">Qty</th><th style="padding:8px;text-align:right;">Harga</th><th style="padding:8px;text-align:right;">Subtotal</th></tr></thead>';
+          html += '<tbody>';
+          
+          for (var i = 0; i < detail.length; i++) {
+            var item = detail[i];
+            html += '<tr>' +
+              '<td style="padding:6px 8px;">' + (i+1) + '</td>' +
+              '<td style="padding:6px 8px;">' + (item.namaProduk || '-') + '</td>' +
+              '<td style="padding:6px 8px;text-align:center;">' + (item.qty || 0) + '</td>' +
+              '<td style="padding:6px 8px;text-align:right;">' + formatRupiah(item.harga || 0) + '</td>' +
+              '<td style="padding:6px 8px;text-align:right;">' + formatRupiah(item.subtotal || 0) + '</td>' +
               '</tr>';
-            html += '</tbody></table></div>';
-            
-            if (h.status === 'ACTIVE' && currentUser) {
-              html += '<div style="margin-top:15px;display:flex;gap:10px;">';
-              html += '<button class="btn btn-info" onclick="cetakStokMasukFromHistory(\'' + h.noNota + '\')" style="flex:1;padding:10px;">🖨️ Cetak</button>';
-              html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:10px;">Tutup</button>';
-              html += '</div>';
-            }
-            
-            document.getElementById('modalTitle').textContent = '📄 Detail Stok Masuk';
-            document.getElementById('modalContent').classList.add('large');
-            document.getElementById('modalBody').innerHTML = html;
-            
-            console.log('✅ Modal berhasil ditampilkan!');
-            
-          } catch (e) {
-            console.error('❌ ERROR di successHandler:', e);
-            console.error('❌ Stack:', e.stack);
-            document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Error: ' + e.message + '</p>';
-            showToast('Error: ' + e.message, 'error');
           }
-        })
-        .withFailureHandler(function(error) {
-          console.error('❌ Error dari server:', error);
-          document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Error: ' + error.message + '</p>';
-          showToast('❌ Error: ' + error.message, 'error');
-        })
-        .getDetailStokMasuk(noNota);
+          
+          html += '<tr style="font-weight:bold;border-top:2px solid #333;">' +
+            '<td colspan="4" style="padding:8px;text-align:right;">TOTAL</td>' +
+            '<td style="padding:8px;text-align:right;">' + formatRupiah(total) + '</td>' +
+            '</tr>';
+          html += '</tbody></table></div>';
+          
+          if (h.status === 'ACTIVE' && currentUser) {
+            html += '<div style="margin-top:15px;display:flex;gap:10px;">';
+            html += '<button class="btn btn-info" onclick="cetakStokMasukFromHistory(\'' + h.noNota + '\')" style="flex:1;padding:10px;">🖨️ Cetak</button>';
+            html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:10px;">Tutup</button>';
+            html += '</div>';
+          }
+          
+          document.getElementById('modalTitle').textContent = '📄 Detail Stok Masuk';
+          document.getElementById('modalContent').classList.add('large');
+          document.getElementById('modalBody').innerHTML = html;
+          
+          console.log('✅ Modal berhasil ditampilkan!');
+          
+        } catch (e) {
+          console.error('❌ ERROR di successHandler:', e);
+          console.error('❌ Stack:', e.stack);
+          document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Error: ' + e.message + '</p>';
+          showToast('Error: ' + e.message, 'error');
+        }
+      })
+      .catch(function(error) {
+        console.error('❌ Error dari server:', error);
+        document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Error: ' + error.message + '</p>';
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     }
     
     // ==================== BATAL STOK MASUK (NOTA) ====================
@@ -4159,113 +4208,116 @@
       
       showToast('⏳ Memproses pembatalan nota...', 'warning');
       
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (btnYaHapus) { 
-            btnYaHapus.disabled = false; 
-            btnYaHapus.textContent = '✅ Ya, Hapus'; 
-          }
-          if (btnCancel) { 
-            btnCancel.disabled = false; 
-          }
+      callGAS('batalkanStokMasuk', {
+        noNota: noNota,
+        alasan: alasan,
+        userPembatal: userPembatal,
+        rolePembatal: rolePembatal
+      })
+      .then(function(result) {
+        if (btnYaHapus) { 
+          btnYaHapus.disabled = false; 
+          btnYaHapus.textContent = '✅ Ya, Hapus'; 
+        }
+        if (btnCancel) { 
+          btnCancel.disabled = false; 
+        }
+        
+        if (result.success) {
+          showToast('✅ ' + result.message, 'success');
+          closeModal();
           
-          if (result.success) {
-            showToast('✅ ' + result.message, 'success');
-            closeModal();
-            
-            loadRiwayatStok();
-            loadBatchList();
-            loadBatchUntukDibatalkan();
-            loadProdukWithRetry();
-            loadPosProduk();
-            loadStokProduk();
-            loadDashboard();
-            loadLogPembatalanStok();
-            
-            setTimeout(function() {
-              showToast('🔄 Data telah diperbarui!', 'success');
-            }, 500);
-          } else {
-            showToast('❌ Gagal membatalkan nota: ' + (result.error || ''), 'error');
-          }
-        })
-        .withFailureHandler(function(error) {
-          if (btnYaHapus) { 
-            btnYaHapus.disabled = false; 
-            btnYaHapus.textContent = '✅ Ya, Hapus'; 
-          }
-          if (btnCancel) { 
-            btnCancel.disabled = false; 
-          }
-          console.error('❌ Error batalStokMasuk:', error);
-          showToast('❌ Error: ' + error.message, 'error');
-        })
-        .batalkanStokMasuk(noNota, alasan, userPembatal, rolePembatal);
+          loadRiwayatStok();
+          loadBatchList();
+          loadBatchUntukDibatalkan();
+          loadProdukWithRetry();
+          loadPosProduk();
+          loadStokProduk();
+          loadDashboard();
+          loadLogPembatalanStok();
+          
+          setTimeout(function() {
+            showToast('🔄 Data telah diperbarui!', 'success');
+          }, 500);
+        } else {
+          showToast('❌ Gagal membatalkan nota: ' + (result.error || ''), 'error');
+        }
+      })
+      .catch(function(error) {
+        if (btnYaHapus) { 
+          btnYaHapus.disabled = false; 
+          btnYaHapus.textContent = '✅ Ya, Hapus'; 
+        }
+        if (btnCancel) { 
+          btnCancel.disabled = false; 
+        }
+        console.error('❌ Error batalStokMasuk:', error);
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     }
     
     // ==================== CETAK STOK DARI HISTORY ====================
     function cetakStokMasukFromHistory(noNota) {
-      google.script.run
-        .withSuccessHandler(function(data) {
-          if (!data || !data.header) {
-            showToast('Data tidak ditemukan!', 'error');
-            return;
-          }
-          
-          var h = data.header;
-          var detail = data.detail || [];
-          
-          var total = 0;
-          for (var i = 0; i < detail.length; i++) {
-            total += detail[i].subtotal;
-          }
-          
-          var html = '<div class="struk-container" id="strukStokHistory">';
-          html += '<div class="header-struk">';
-          html += '<h2>STOK MASUK</h2>';
-          html += '<div class="info"><b>No.Nota:</b> ' + h.noNota + '</div>';
-          html += '<div class="info"><b>Pemasok:</b> ' + h.pemasok + '</div>';
-          html += '<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(h.tanggal) + '</div>';
-          html += '<div class="info"><b>User:</b> ' + (h.user || '-') + '</div>';
-          html += '<div class="info"><b>Status:</b> ' + h.status + '</div>';
-          html += '</div>';
-          
-          html += '<div class="items-struk">';
-          html += '<div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>';
-          for (var i = 0; i < detail.length; i++) {
-            var item = detail[i];
-            var name = item.namaProduk || 'Produk';
-            if (name.length > 20) name = name.substring(0,18) + '..';
-            html += '<div class="item-row"><span class="item-name">' + name + '</span><span class="item-qty">' + item.qty + '</span><span class="item-harga">' + formatRupiahPlain(item.harga) + '</span><span class="item-subtotal">' + formatRupiahPlain(item.subtotal) + '</span></div>';
-          }
-          html += '</div>';
-          
-          html += '<div class="total-struk">';
-          html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(total) + '</span></div>';
-          html += '</div>';
-          
-          html += '<div class="footer-struk">';
-          html += '<div class="divider"></div>';
-          html += '<div style="font-size:9px;color:#999;">Dicatat oleh: ' + (h.user || '-') + '</div>';
-          html += '<div class="small">' + formatTanggalDisplay(h.tanggal) + '</div>';
-          html += '</div>';
-          html += '</div>';
-          
-          html += '<div class="struk-actions">';
-          html += '<button class="btn btn-success" onclick="printStokHistory()">🖨️ Cetak</button>';
-          html += '<button class="btn btn-info" onclick="downloadStokHistoryPDF()">📄 Download PDF</button>';
-          html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
-          html += '</div>';
-          
-          document.getElementById('modalTitle').textContent = '🖨️ Nota Stok Masuk: ' + h.noNota;
-          document.getElementById('modalContent').classList.add('large');
-          document.getElementById('modalBody').innerHTML = html;
-          document.getElementById('modal').classList.add('active');
-        })
-        .withFailureHandler(function(error) {
-          showToast('❌ Gagal memuat nota: ' + error.message, 'error');
-        })
-        .getDetailStokMasuk(noNota);
+      callGAS('getDetailStokMasuk', { noNota: noNota })
+      .then(function(data) {
+        if (!data || !data.header) {
+          showToast('Data tidak ditemukan!', 'error');
+          return;
+        }
+        
+        var h = data.header;
+        var detail = data.detail || [];
+        
+        var total = 0;
+        for (var i = 0; i < detail.length; i++) {
+          total += detail[i].subtotal;
+        }
+        
+        var html = '<div class="struk-container" id="strukStokHistory">';
+        html += '<div class="header-struk">';
+        html += '<h2>STOK MASUK</h2>';
+        html += '<div class="info"><b>No.Nota:</b> ' + h.noNota + '</div>';
+        html += '<div class="info"><b>Pemasok:</b> ' + h.pemasok + '</div>';
+        html += '<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(h.tanggal) + '</div>';
+        html += '<div class="info"><b>User:</b> ' + (h.user || '-') + '</div>';
+        html += '<div class="info"><b>Status:</b> ' + h.status + '</div>';
+        html += '</div>';
+        
+        html += '<div class="items-struk">';
+        html += '<div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>';
+        for (var i = 0; i < detail.length; i++) {
+          var item = detail[i];
+          var name = item.namaProduk || 'Produk';
+          if (name.length > 20) name = name.substring(0,18) + '..';
+          html += '<div class="item-row"><span class="item-name">' + name + '</span><span class="item-qty">' + item.qty + '</span><span class="item-harga">' + formatRupiahPlain(item.harga) + '</span><span class="item-subtotal">' + formatRupiahPlain(item.subtotal) + '</span></div>';
+        }
+        html += '</div>';
+        
+        html += '<div class="total-struk">';
+        html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(total) + '</span></div>';
+        html += '</div>';
+        
+        html += '<div class="footer-struk">';
+        html += '<div class="divider"></div>';
+        html += '<div style="font-size:9px;color:#999;">Dicatat oleh: ' + (h.user || '-') + '</div>';
+        html += '<div class="small">' + formatTanggalDisplay(h.tanggal) + '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<div class="struk-actions">';
+        html += '<button class="btn btn-success" onclick="printStokHistory()">🖨️ Cetak</button>';
+        html += '<button class="btn btn-info" onclick="downloadStokHistoryPDF()">📄 Download PDF</button>';
+        html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
+        html += '</div>';
+        
+        document.getElementById('modalTitle').textContent = '🖨️ Nota Stok Masuk: ' + h.noNota;
+        document.getElementById('modalContent').classList.add('large');
+        document.getElementById('modalBody').innerHTML = html;
+        document.getElementById('modal').classList.add('active');
+      })
+      .catch(function(error) {
+        showToast('❌ Gagal memuat nota: ' + error.message, 'error');
+      });
     }
 
     function printStokHistory() {
@@ -4293,20 +4345,27 @@
     
     // ==================== BATCH LIST ====================
     function loadBatchList() {
-      google.script.run
-        .withSuccessHandler(function(batches) {
-          batchList = batches || [];
-          var tbody = document.getElementById('batchTable');
-          if (batchList.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Belum ada batch</td></tr>'; return; }
-          var html = '';
-          for (var i = batchList.length - 1; i >= 0; i--) {
-            var b = batchList[i];
-            html += '<tr><td><span class="batch-tag">' + (b.batch || '-') + '</span></td><td>' + (b.kode || '-') + '</td><td>' + (b.nama || '-') + '</td><td>' + formatRupiah(b.hargaBeli || 0) + '</td><td>' + (b.stok || 0) + ' ' + (b.satuan || 'pcs') + '</td><td>' + formatTanggalDisplay(b.tanggalMasuk) + '</td></tr>';
-          }
-          tbody.innerHTML = html;
-        })
-        .withFailureHandler(function(error) { console.error('Error loadBatchList:', error); document.getElementById('batchTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">❌ Gagal memuat data</td></tr>'; })
-        .getAllBatch();
+      callGAS('getAllBatch', {})
+      .then(function(result) {
+        if (!result || !result.success) {
+          console.error('❌ Error loadBatchList:', result ? result.error : 'Unknown');
+          document.getElementById('batchTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">❌ Gagal memuat data</td></tr>';
+          return;
+        }
+        batchList = result.data || [];
+        var tbody = document.getElementById('batchTable');
+        if (batchList.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Belum ada batch</td></tr>'; return; }
+        var html = '';
+        for (var i = batchList.length - 1; i >= 0; i--) {
+          var b = batchList[i];
+          html += '<tr><td><span class="batch-tag">' + (b.batch || '-') + '</span></td><td>' + (b.kode || '-') + '</td><td>' + (b.nama || '-') + '</td><td>' + formatRupiah(b.hargaBeli || 0) + '</td><td>' + (b.stok || 0) + ' ' + (b.satuan || 'pcs') + '</td><td>' + formatTanggalDisplay(b.tanggalMasuk) + '</td></tr>';
+        }
+        tbody.innerHTML = html;
+      })
+      .catch(function(error) { 
+        console.error('Error loadBatchList:', error); 
+        document.getElementById('batchTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">❌ Gagal memuat data</td></tr>';
+      });
     }
     
     // ==================== BATCH UNTUK DIBATALKAN ====================
@@ -4321,53 +4380,58 @@
       
       var role = currentUser ? currentUser.role : 'kasir';
       
-      google.script.run
-        .withSuccessHandler(function(data) {
-          batchUntukDibatalkan = data || [];
-          if (batchUntukDibatalkan.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada batch yang bisa dibatalkan</td></tr>';
-            return;
+      callGAS('getBatchUntukDibatalkan', { role: role })
+      .then(function(result) {
+        if (!result || !result.success) {
+          console.error('❌ Error loadBatchUntukDibatalkan:', result ? result.error : 'Unknown');
+          document.getElementById('batalStokTable').innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Gagal memuat data: ' + (result ? result.error : 'Unknown error') + '</td></tr>';
+          showToast('❌ Gagal memuat batch: ' + (result ? result.error : 'Unknown error'), 'error');
+          return;
+        }
+        batchUntukDibatalkan = result.data || [];
+        if (batchUntukDibatalkan.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada batch yang bisa dibatalkan</td></tr>';
+          return;
+        }
+        
+        var html = '';
+        var counter = 0;
+        for (var i = 0; i < batchUntukDibatalkan.length; i++) {
+          var item = batchUntukDibatalkan[i];
+          var dapatDibatalkan = item.dapatDibatalkan;
+          
+          if (dapatDibatalkan) {
+            counter++;
+            var statusHtml = '<span class="badge-success">✅ Bisa Dibatalkan</span>';
+            var aksiHtml = '<button class="btn-batal-stok" onclick="konfirmasiBatalStok(\'' + item.batchId + '\', \'' + item.kode + '\', \'' + item.nama + '\', ' + item.stok + ')" title="Batalkan batch ini">🗑️ Batal</button>';
+          } else {
+            var statusHtml = '<span class="badge-danger">🔒 Tidak Bisa</span>';
+            var aksiHtml = '<span style="color:#999;font-size:0.8rem;">Terpakai ' + (item.stokAwal - item.stok) + ' ' + item.satuan + '</span>';
           }
           
-          var html = '';
-          var counter = 0;
-          for (var i = 0; i < batchUntukDibatalkan.length; i++) {
-            var item = batchUntukDibatalkan[i];
-            var dapatDibatalkan = item.dapatDibatalkan;
-            
-            if (dapatDibatalkan) {
-              counter++;
-              var statusHtml = '<span class="badge-success">✅ Bisa Dibatalkan</span>';
-              var aksiHtml = '<button class="btn-batal-stok" onclick="konfirmasiBatalStok(\'' + item.batchId + '\', \'' + item.kode + '\', \'' + item.nama + '\', ' + item.stok + ')" title="Batalkan batch ini">🗑️ Batal</button>';
-            } else {
-              var statusHtml = '<span class="badge-danger">🔒 Tidak Bisa</span>';
-              var aksiHtml = '<span style="color:#999;font-size:0.8rem;">Terpakai ' + (item.stokAwal - item.stok) + ' ' + item.satuan + '</span>';
-            }
-            
-            html += '<tr>' +
-              '<td><span class="batch-tag">' + item.batchId + '</span></td>' +
-              '<td><strong>' + item.kode + '</strong></td>' +
-              '<td>' + item.nama + '</td>' +
-              '<td>' + formatRupiah(item.hargaBeli) + '</td>' +
-              '<td><strong>' + item.stok + '</strong> ' + item.satuan + '</td>' +
-              '<td>' + formatTanggalDisplay(item.tanggalMasuk) + '</td>' +
-              '<td>' + statusHtml + '</td>' +
-              '<td>' + aksiHtml + '</td>' +
-              '</tr>';
-          }
-          
-          if (counter === 0) {
-            html = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada batch yang bisa dibatalkan</td></tr>';
-          }
-          
-          tbody.innerHTML = html;
-        })
-        .withFailureHandler(function(error) {
-          console.error('❌ Error loadBatchUntukDibatalkan:', error);
-          document.getElementById('batalStokTable').innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
-          showToast('❌ Gagal memuat batch: ' + error.message, 'error');
-        })
-        .getBatchUntukDibatalkan(role);
+          html += '<tr>' +
+            '<td><span class="batch-tag">' + item.batchId + '</span></td>' +
+            '<td><strong>' + item.kode + '</strong></td>' +
+            '<td>' + item.nama + '</td>' +
+            '<td>' + formatRupiah(item.hargaBeli) + '</td>' +
+            '<td><strong>' + item.stok + '</strong> ' + item.satuan + '</td>' +
+            '<td>' + formatTanggalDisplay(item.tanggalMasuk) + '</td>' +
+            '<td>' + statusHtml + '</td>' +
+            '<td>' + aksiHtml + '</td>' +
+            '</tr>';
+        }
+        
+        if (counter === 0) {
+          html = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada batch yang bisa dibatalkan</td></tr>';
+        }
+        
+        tbody.innerHTML = html;
+      })
+      .catch(function(error) {
+        console.error('❌ Error loadBatchUntukDibatalkan:', error);
+        document.getElementById('batalStokTable').innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
+        showToast('❌ Gagal memuat batch: ' + error.message, 'error');
+      });
     }
     
     // ==================== KONFIRMASI BATAL STOK (BATCH) ====================
@@ -4437,48 +4501,52 @@
       
       showToast('⏳ Memproses pembatalan stok...', 'warning');
       
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (btnYaHapus) { 
-            btnYaHapus.disabled = false; 
-            btnYaHapus.textContent = '✅ Ya, Hapus'; 
-          }
-          if (btnCancel) { 
-            btnCancel.disabled = false; 
-          }
+      callGAS('batalkanStokMasukBatch', {
+        batchId: batchId,
+        alasan: alasan,
+        userPembatal: userPembatal,
+        rolePembatal: rolePembatal
+      })
+      .then(function(result) {
+        if (btnYaHapus) { 
+          btnYaHapus.disabled = false; 
+          btnYaHapus.textContent = '✅ Ya, Hapus'; 
+        }
+        if (btnCancel) { 
+          btnCancel.disabled = false; 
+        }
+        
+        if (result.success) {
+          showToast('✅ ' + result.message, 'success');
+          closeModal();
           
-          if (result.success) {
-            showToast('✅ ' + result.message, 'success');
-            closeModal();
-            
-            loadBatchUntukDibatalkan();
-            loadLogPembatalanStok();
-            loadBatchList();
-            loadProdukWithRetry();
-            loadPosProduk();
-            loadStokProduk();
-            loadDashboard();
-            loadRiwayatStok();
-            
-            setTimeout(function() {
-              showToast('🔄 Data telah diperbarui!', 'success');
-            }, 500);
-          } else {
-            showToast('❌ Gagal membatalkan stok: ' + (result.error || ''), 'error');
-          }
-        })
-        .withFailureHandler(function(error) {
-          if (btnYaHapus) { 
-            btnYaHapus.disabled = false; 
-            btnYaHapus.textContent = '✅ Ya, Hapus'; 
-          }
-          if (btnCancel) { 
-            btnCancel.disabled = false; 
-          }
-          console.error('❌ Error batalkanStokMasuk:', error);
-          showToast('❌ Error: ' + error.message, 'error');
-        })
-        .batalkanStokMasukBatch(batchId, alasan, userPembatal, rolePembatal);
+          loadBatchUntukDibatalkan();
+          loadLogPembatalanStok();
+          loadBatchList();
+          loadProdukWithRetry();
+          loadPosProduk();
+          loadStokProduk();
+          loadDashboard();
+          loadRiwayatStok();
+          
+          setTimeout(function() {
+            showToast('🔄 Data telah diperbarui!', 'success');
+          }, 500);
+        } else {
+          showToast('❌ Gagal membatalkan stok: ' + (result.error || ''), 'error');
+        }
+      })
+      .catch(function(error) {
+        if (btnYaHapus) { 
+          btnYaHapus.disabled = false; 
+          btnYaHapus.textContent = '✅ Ya, Hapus'; 
+        }
+        if (btnCancel) { 
+          btnCancel.disabled = false; 
+        }
+        console.error('❌ Error batalkanStokMasuk:', error);
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     }
     
     // ==================== LOG PEMBALATAN STOK ====================
@@ -4501,33 +4569,37 @@
         var tbody = document.getElementById('logPembatalanStokTable');
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
         
-        google.script.run
-          .withSuccessHandler(function(logs) {
-            allLogStok = logs || [];
-            if (!allLogStok || allLogStok.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">📭 Belum ada log pembatalan stok</td></tr>';
-              return;
-            }
-            
-            var html = '';
-            for (var i = allLogStok.length - 1; i >= 0; i--) {
-              var l = allLogStok[i];
-              html += '<tr>' +
-                '<td>' + formatTanggalDisplay(l.tanggalBatal, true) + '</td>' +
-                '<td><strong>' + (l.userPembatal || '-') + '</strong></td>' +
-                '<td style="max-width:150px;word-wrap:break-word;font-size:0.85rem;">' + (l.alasan || '-') + '</td>' +
-                '<td><span class="batch-tag">' + (l.batchId || '-') + '</span></td>' +
-                '<td>' + (l.kode || '-') + ' - ' + (l.nama || '-') + '</td>' +
-                '<td><strong>' + (l.stokDibatalkan || 0) + '</strong> ' + (l.satuan || 'pcs') + '</td>' +
-                '</tr>';
-            }
-            tbody.innerHTML = html;
-          })
-          .withFailureHandler(function(error) {
-            console.error('❌ Error loadLogPembatalanStok:', error);
-            document.getElementById('logPembatalanStokTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
-          })
-          .getLogPembatalanStok();
+        callGAS('getLogPembatalanStok', {})
+        .then(function(result) {
+          if (!result || !result.success) {
+            console.error('❌ Error loadLogPembatalanStok:', result ? result.error : 'Unknown');
+            document.getElementById('logPembatalanStokTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">❌ Gagal memuat data: ' + (result ? result.error : 'Unknown error') + '</td></tr>';
+            return;
+          }
+          allLogStok = result.data || [];
+          if (!allLogStok || allLogStok.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">📭 Belum ada log pembatalan stok</td></tr>';
+            return;
+          }
+          
+          var html = '';
+          for (var i = allLogStok.length - 1; i >= 0; i--) {
+            var l = allLogStok[i];
+            html += '<tr>' +
+              '<td>' + formatTanggalDisplay(l.tanggalBatal, true) + '</td>' +
+              '<td><strong>' + (l.userPembatal || '-') + '</strong></td>' +
+              '<td style="max-width:150px;word-wrap:break-word;font-size:0.85rem;">' + (l.alasan || '-') + '</td>' +
+              '<td><span class="batch-tag">' + (l.batchId || '-') + '</span></td>' +
+              '<td>' + (l.kode || '-') + ' - ' + (l.nama || '-') + '</td>' +
+              '<td><strong>' + (l.stokDibatalkan || 0) + '</strong> ' + (l.satuan || 'pcs') + '</td>' +
+              '</tr>';
+          }
+          tbody.innerHTML = html;
+        })
+        .catch(function(error) {
+          console.error('❌ Error loadLogPembatalanStok:', error);
+          document.getElementById('logPembatalanStokTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
+        });
       } catch (e) {
         console.error('❌ Error loadLogPembatalanStok:', e);
       }
@@ -4588,67 +4660,76 @@
         
         document.getElementById('thLaba').style.display = showLaba ? '' : 'none';
         
-        google.script.run
-          .withSuccessHandler(function(data) {
-            try {
-              if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada transaksi</td></tr>';
-                document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: 0 | Quantity: 0 | Laba: Rp 0';
-                return;
-              }
-              
-              var html = '';
-              var totalTransaksi = 0;
-              var totalQty = 0;
-              var totalLaba = 0;
-              
-              for (var i = 0; i < data.length; i++) {
-                var t = data[i];
-                var tanggal = formatTanggalDisplay(t.tanggal) + ' ' + (t.waktu || '');
-                var showCancel = (currentUser.role === 'admin' || currentUser.role === 'owner' || 
-                                 t.kasir.toLowerCase() === (currentUser.nama || '').toLowerCase());
-                
-                html += '<tr>' +
-                  '<td>' + (i + 1) + '</td>' +
-                  '<td>' + tanggal + '</td>' +
-                  '<td><strong>' + t.id + '</strong></td>' +
-                  '<td>' + t.kasir + '</td>' +
-                  '<td>' + formatRupiah(t.total) + '</td>';
-                
-                if (showLaba) {
-                  html += '<td style="color:' + (t.laba >= 0 ? '#4CAF50' : '#f44336') + ';">' + formatRupiah(t.laba) + '</td>';
-                  totalLaba += t.laba;
-                }
-                
-                html += '<td><span style="background:#4CAF50;color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + t.status + '</span></td>' +
-                  '<td style="white-space:nowrap;">' +
-                  '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + t.id + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Cetak Struk">🖨️</button>';
-                if (showCancel) {
-                  html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + t.id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Batalkan Transaksi">🗑️</button>';
-                }
-                html += '</td></tr>';
-                
-                totalTransaksi++;
-                totalQty += t.qty || 0;
-              }
-              
-              tbody.innerHTML = html;
-              
-              var totalText = '📊 Total: Transaksi: ' + totalTransaksi + ' | Quantity: ' + totalQty;
-              if (showLaba) {
-                totalText += ' | Laba: ' + formatRupiah(totalLaba);
-              }
-              document.getElementById('totalTransaksiDisplay').textContent = totalText;
-            } catch (e) {
-              console.error('❌ Error processing transaksi:', e);
-              tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + e.message + '</td></tr>';
+        callGAS('getTransaksiFilteredWithLaba', {
+          tanggalMulai: tanggalMulai,
+          tanggalSampai: tanggalSampai,
+          role: role,
+          namaUser: namaUser,
+          showLaba: showLaba
+        })
+        .then(function(result) {
+          try {
+            if (!result || !result.success) {
+              throw new Error(result ? result.error : 'Gagal memuat data');
             }
-          })
-          .withFailureHandler(function(error) {
-            console.error('❌ Error loadTransaksi:', error);
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + (error.message || 'Unknown error') + '</td></tr>';
-          })
-          .getTransaksiFilteredWithLaba(tanggalMulai, tanggalSampai, role, namaUser, showLaba);
+            var data = result.data || [];
+            if (!data || data.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada transaksi</td></tr>';
+              document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: 0 | Quantity: 0 | Laba: Rp 0';
+              return;
+            }
+            
+            var html = '';
+            var totalTransaksi = 0;
+            var totalQty = 0;
+            var totalLaba = 0;
+            
+            for (var i = 0; i < data.length; i++) {
+              var t = data[i];
+              var tanggal = formatTanggalDisplay(t.tanggal) + ' ' + (t.waktu || '');
+              var showCancel = (currentUser.role === 'admin' || currentUser.role === 'owner' || 
+                               t.kasir.toLowerCase() === (currentUser.nama || '').toLowerCase());
+              
+              html += '<tr>' +
+                '<td>' + (i + 1) + '</td>' +
+                '<td>' + tanggal + '</td>' +
+                '<td><strong>' + t.id + '</strong></td>' +
+                '<td>' + t.kasir + '</td>' +
+                '<td>' + formatRupiah(t.total) + '</td>';
+              
+              if (showLaba) {
+                html += '<td style="color:' + (t.laba >= 0 ? '#4CAF50' : '#f44336') + ';">' + formatRupiah(t.laba) + '</td>';
+                totalLaba += t.laba;
+              }
+              
+              html += '<td><span style="background:#4CAF50;color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + t.status + '</span></td>' +
+                '<td style="white-space:nowrap;">' +
+                '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + t.id + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Cetak Struk">🖨️</button>';
+              if (showCancel) {
+                html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + t.id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Batalkan Transaksi">🗑️</button>';
+              }
+              html += '</td></tr>';
+              
+              totalTransaksi++;
+              totalQty += t.qty || 0;
+            }
+            
+            tbody.innerHTML = html;
+            
+            var totalText = '📊 Total: Transaksi: ' + totalTransaksi + ' | Quantity: ' + totalQty;
+            if (showLaba) {
+              totalText += ' | Laba: ' + formatRupiah(totalLaba);
+            }
+            document.getElementById('totalTransaksiDisplay').textContent = totalText;
+          } catch (e) {
+            console.error('❌ Error processing transaksi:', e);
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + e.message + '</td></tr>';
+          }
+        })
+        .catch(function(error) {
+          console.error('❌ Error loadTransaksi:', error);
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + (error.message || 'Unknown error') + '</td></tr>';
+        });
       } catch (e) {
         console.error('❌ Error loadTransaksi:', e);
       }
@@ -4705,22 +4786,30 @@
         var tanggalMulai = document.getElementById('filterTransaksiMulai').value;
         var tanggalSampai = document.getElementById('filterTransaksiSampai').value;
         
-        google.script.run
-          .withSuccessHandler(function(logs) {
-            allLogs = logs || [];
-            if (!allLogs || allLogs.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada log pembatalan</td></tr>';
-              return;
-            }
-            var html = '';
-            for (var i = allLogs.length - 1; i >= 0; i--) {
-              var l = allLogs[i];
-              html += '<tr><td>' + formatTanggalDisplay(l.tanggalBatal, true) + '</td><td><strong>' + (l.userPembatal || '-') + '</strong></td><td style="max-width:150px;word-wrap:break-word;font-size:0.85rem;">' + (l.alasan || '-') + '</td><td><strong>' + (l.idTransaksi || '-') + '</strong></td><td>' + (l.kasir || '-') + '</td><td>' + formatRupiah(l.total || 0) + '</td><td><button class="btn btn-info btn-sm" onclick="lihatDetailLog(\'' + (l.idTransaksi || '') + '\')" style="padding:4px 8px;font-size:0.65rem;">📄</button></td></tr>';
-            }
-            tbody.innerHTML = html;
-          })
-          .withFailureHandler(function(error) { console.error('❌ Error loadLogPembatalan:', error); tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>'; })
-          .getLogPembatalanFiltered(tanggalMulai, tanggalSampai);
+        callGAS('getLogPembatalanFiltered', {
+          tanggalMulai: tanggalMulai,
+          tanggalSampai: tanggalSampai
+        })
+        .then(function(result) {
+          if (!result || !result.success) {
+            throw new Error(result ? result.error : 'Gagal memuat data');
+          }
+          allLogs = result.data || [];
+          if (!allLogs || allLogs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada log pembatalan</td></tr>';
+            return;
+          }
+          var html = '';
+          for (var i = allLogs.length - 1; i >= 0; i--) {
+            var l = allLogs[i];
+            html += '<tr><td>' + formatTanggalDisplay(l.tanggalBatal, true) + '</td><td><strong>' + (l.userPembatal || '-') + '</strong></td><td style="max-width:150px;word-wrap:break-word;font-size:0.85rem;">' + (l.alasan || '-') + '</td><td><strong>' + (l.idTransaksi || '-') + '</strong></td><td>' + (l.kasir || '-') + '</td><td>' + formatRupiah(l.total || 0) + '</td><td><button class="btn btn-info btn-sm" onclick="lihatDetailLog(\'' + (l.idTransaksi || '') + '\')" style="padding:4px 8px;font-size:0.65rem;">📄</button></td></tr>';
+          }
+          tbody.innerHTML = html;
+        })
+        .catch(function(error) { 
+          console.error('❌ Error loadLogPembatalan:', error); 
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>'; 
+        });
       } catch (e) {
         console.error('❌ Error loadLogPembatalan:', e);
       }
@@ -4767,60 +4856,61 @@
       
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat data... (percobaan ' + loadAttempts + ')</td></tr>';
       
-      google.script.run
-        .withSuccessHandler(function(produk) {
-          console.log('✅ Data produk diterima:', produk);
-          produkList = produk || [];
-          var tbody = document.getElementById('produkTable');
-          if (!tbody) return;
+      callGAS('getProduk', {})
+      .then(function(result) {
+        if (!result || !result.success) {
+          throw new Error(result ? result.error : 'Gagal memuat data');
+        }
+        var produk = result.data || [];
+        console.log('✅ Data produk diterima:', produk);
+        produkList = produk;
+        var tbody = document.getElementById('produkTable');
+        if (!tbody) return;
+        
+        if (produkList.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada produk</td></tr>';
+          showDebug('Tidak ada produk ditemukan di database.');
+          return;
+        }
+        
+        var html = '';
+        for (var i = 0; i < produkList.length; i++) {
+          var p = produkList[i];
+          var stok = parseInt(p.Stok) || 0;
+          var minStok = parseInt(p['Minimum Stok']) || 10;
+          var isLowStock = stok <= minStok;
+          var stockColor = isLowStock ? '#f44336' : '#4CAF50';
           
-          produkList = produk || [];
-          
-          if (produkList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada produk</td></tr>';
-            showDebug('Tidak ada produk ditemukan di database.');
-            return;
-          }
-          
-          var html = '';
-          for (var i = 0; i < produkList.length; i++) {
-            var p = produkList[i];
-            var stok = parseInt(p.Stok) || 0;
-            var minStok = parseInt(p['Minimum Stok']) || 10;
-            var isLowStock = stok <= minStok;
-            var stockColor = isLowStock ? '#f44336' : '#4CAF50';
-            
-            html += '<tr>' +
-              '<td><strong>' + (p.Kode || '-') + '</strong></td>' +
-              '<td><strong>' + (p['Nama Produk'] || '-') + '</strong></td>' +
-              '<td>' + (p.Kategori || '-') + '</td>' +
-              '<td>' + formatRupiah(p['Harga Beli'] || 0) + '</td>' +
-              '<td>' + formatRupiah(p['Harga Jual'] || 0) + '</td>' +
-              '<td style="font-weight:bold;color:' + stockColor + ';">' + stok + '</td>' +
-              '<td>' + (p.Satuan || 'pcs') + '</td>' +
-              '</tr>';
-          }
-          tbody.innerHTML = html;
-          hideDebug();
-          console.log('✅ Produk berhasil ditampilkan: ' + produkList.length + ' produk');
-        })
-        .withFailureHandler(function(error) {
-          console.error('❌ Error loadProduk:', error);
-          var tbody = document.getElementById('produkTable');
-          if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
-          }
-          showDebug('Error: ' + error.message);
-          showToast('❌ Gagal memuat produk: ' + error.message, 'error');
-          
-          if (loadAttempts < maxLoadAttempts) {
-            showDebug('Mencoba ulang dalam 2 detik... (attempt ' + (loadAttempts + 1) + ')');
-            setTimeout(function() {
-              loadProduk();
-            }, 2000);
-          }
-        })
-        .getProduk();
+          html += '<tr>' +
+            '<td><strong>' + (p.Kode || '-') + '</strong></td>' +
+            '<td><strong>' + (p['Nama Produk'] || '-') + '</strong></td>' +
+            '<td>' + (p.Kategori || '-') + '</td>' +
+            '<td>' + formatRupiah(p['Harga Beli'] || 0) + '</td>' +
+            '<td>' + formatRupiah(p['Harga Jual'] || 0) + '</td>' +
+            '<td style="font-weight:bold;color:' + stockColor + ';">' + stok + '</td>' +
+            '<td>' + (p.Satuan || 'pcs') + '</td>' +
+            '</tr>';
+        }
+        tbody.innerHTML = html;
+        hideDebug();
+        console.log('✅ Produk berhasil ditampilkan: ' + produkList.length + ' produk');
+      })
+      .catch(function(error) {
+        console.error('❌ Error loadProduk:', error);
+        var tbody = document.getElementById('produkTable');
+        if (tbody) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
+        }
+        showDebug('Error: ' + error.message);
+        showToast('❌ Gagal memuat produk: ' + error.message, 'error');
+        
+        if (loadAttempts < maxLoadAttempts) {
+          showDebug('Mencoba ulang dalam 2 detik... (attempt ' + (loadAttempts + 1) + ')');
+          setTimeout(function() {
+            loadProduk();
+          }, 2000);
+        }
+      });
     }
     
     function showTambahProduk() {
@@ -4860,28 +4950,34 @@
           'URL Gambar': document.getElementById('fGambar').value.trim() || ''
         };
         if (!produk.Kode || !produk['Nama Produk']) { showToast('Kode dan Nama Produk wajib diisi!', 'error'); return; }
-        google.script.run
-          .withSuccessHandler(function(result) {
-            if (result) {
-              showToast('✅ Produk berhasil ditambahkan!', 'success');
-              closeModal();
-              loadProdukWithRetry(); 
-              loadPosProduk(); 
-              loadStokProduk();
-              google.script.run
-                .withSuccessHandler(function() {})
-                .tambahStokBatch({
-                  kode: produk.Kode,
-                  nama: produk['Nama Produk'],
-                  jumlah: produk.Stok,
-                  hargaBeliBaru: produk['Harga Beli'],
-                  catatan: 'Stok awal',
-                  satuan: produk.Satuan,
-                  tanggal: getTodayString()
-                });
-            } else { showToast('❌ Gagal menambahkan produk!', 'error'); }
-          })
-          .tambahProduk(produk);
+        
+        callGAS('tambahProduk', { produk: produk })
+        .then(function(result) {
+          if (result && result.success) {
+            showToast('✅ Produk berhasil ditambahkan!', 'success');
+            closeModal();
+            loadProdukWithRetry(); 
+            loadPosProduk(); 
+            loadStokProduk();
+            
+            callGAS('tambahStokBatch', {
+              kode: produk.Kode,
+              nama: produk['Nama Produk'],
+              jumlah: produk.Stok,
+              hargaBeliBaru: produk['Harga Beli'],
+              catatan: 'Stok awal',
+              satuan: produk.Satuan,
+              tanggal: getTodayString()
+            })
+            .then(function() {})
+            .catch(function(err) { console.error('Error tambahStokBatch:', err); });
+          } else { 
+            showToast('❌ Gagal menambahkan produk!', 'error'); 
+          }
+        })
+        .catch(function(error) {
+          showToast('❌ Error: ' + error.message, 'error');
+        });
       });
     }
     
@@ -4889,70 +4985,78 @@
     function cetakStrukFromHistory(id) {
       showToast('⏳ Memuat data transaksi...', 'info');
       
-      google.script.run
-        .withSuccessHandler(function(headerData) {
-          if (!headerData) {
-            showToast('❌ Transaksi tidak ditemukan!', 'error');
+      callGAS('getTransaksiById', { idTransaksi: id })
+      .then(function(headerData) {
+        if (!headerData || !headerData.success) {
+          showToast('❌ Transaksi tidak ditemukan!', 'error');
+          return;
+        }
+        var header = headerData.data;
+        if (!header) {
+          showToast('❌ Transaksi tidak ditemukan!', 'error');
+          return;
+        }
+        
+        callGAS('getDetailTransaksi', { idTransaksi: id })
+        .then(function(detailResult) {
+          if (!detailResult || !detailResult.success) {
+            showToast('❌ Tidak ada detail transaksi!', 'error');
+            return;
+          }
+          var detail = detailResult.data || [];
+          if (!detail || detail.length === 0) {
+            showToast('❌ Tidak ada detail transaksi!', 'error');
             return;
           }
           
-          google.script.run
-            .withSuccessHandler(function(detail) {
-              if (!detail || detail.length === 0) {
-                showToast('❌ Tidak ada detail transaksi!', 'error');
-                return;
-              }
-              
-              var items = [];
-              for (var i = 0; i < detail.length; i++) {
-                var item = detail[i];
-                var qty = 0, harga = 0, subtotal = 0, namaProduk = 'Produk';
-                
-                for (var key in item) {
-                  var keyLower = key.toLowerCase().trim();
-                  if (keyLower === 'qty' || keyLower === 'quantity' || keyLower === 'jumlah') qty = parseInt(item[key]) || 0;
-                  if (keyLower === 'harga' || keyLower === 'price') harga = parseInt(item[key]) || 0;
-                  if (keyLower === 'subtotal' || keyLower === 'total') subtotal = parseInt(item[key]) || 0;
-                  if (keyLower === 'nama produk' || keyLower === 'produk' || keyLower === 'nama') namaProduk = item[key] || 'Produk';
-                }
-                
-                if (qty === 0) qty = parseInt(item['Qty']) || parseInt(item['qty']) || parseInt(item['Quantity']) || 0;
-                if (harga === 0) harga = parseInt(item['Harga']) || parseInt(item['harga']) || parseInt(item['Price']) || 0;
-                if (namaProduk === 'Produk') namaProduk = item['Nama Produk'] || item['nama produk'] || item['Produk'] || item['produk'] || 'Produk';
-                
-                items.push({ 
-                  nama: namaProduk, 
-                  harga: harga, 
-                  qty: qty, 
-                  subtotal: subtotal || (harga * qty) 
-                });
-              }
-              
-              var data = {
-                id: id,
-                tanggal: headerData.Tanggal || headerData.tanggal || '',
-                waktu: headerData.Waktu || headerData.waktu || '',
-                kasir: headerData.Kasir || headerData.kasir || 'Admin',
-                total: parseInt(headerData.Total || headerData.total || 0),
-                pembayaran: parseInt(headerData.Pembayaran || headerData.pembayaran || 0),
-                kembalian: parseInt(headerData.Kembalian || headerData.kembalian || 0),
-                namaPembeli: headerData['Nama Pembeli'] || headerData.namaPembeli || '-',
-                items: items
-              };
-              
-              showStruk(data, true);
-            })
-            .withFailureHandler(function(error) {
-              console.error('❌ Error getDetailTransaksi:', error);
-              showToast('❌ Gagal mengambil detail transaksi: ' + error.message, 'error');
-            })
-            .getDetailTransaksi(id);
+          var items = [];
+          for (var i = 0; i < detail.length; i++) {
+            var item = detail[i];
+            var qty = 0, harga = 0, subtotal = 0, namaProduk = 'Produk';
+            
+            for (var key in item) {
+              var keyLower = key.toLowerCase().trim();
+              if (keyLower === 'qty' || keyLower === 'quantity' || keyLower === 'jumlah') qty = parseInt(item[key]) || 0;
+              if (keyLower === 'harga' || keyLower === 'price') harga = parseInt(item[key]) || 0;
+              if (keyLower === 'subtotal' || keyLower === 'total') subtotal = parseInt(item[key]) || 0;
+              if (keyLower === 'nama produk' || keyLower === 'produk' || keyLower === 'nama') namaProduk = item[key] || 'Produk';
+            }
+            
+            if (qty === 0) qty = parseInt(item['Qty']) || parseInt(item['qty']) || parseInt(item['Quantity']) || 0;
+            if (harga === 0) harga = parseInt(item['Harga']) || parseInt(item['harga']) || parseInt(item['Price']) || 0;
+            if (namaProduk === 'Produk') namaProduk = item['Nama Produk'] || item['nama produk'] || item['Produk'] || item['produk'] || 'Produk';
+            
+            items.push({ 
+              nama: namaProduk, 
+              harga: harga, 
+              qty: qty, 
+              subtotal: subtotal || (harga * qty) 
+            });
+          }
+          
+          var data = {
+            id: id,
+            tanggal: header.Tanggal || header.tanggal || '',
+            waktu: header.Waktu || header.waktu || '',
+            kasir: header.Kasir || header.kasir || 'Admin',
+            total: parseInt(header.Total || header.total || 0),
+            pembayaran: parseInt(header.Pembayaran || header.pembayaran || 0),
+            kembalian: parseInt(header.Kembalian || header.kembalian || 0),
+            namaPembeli: header['Nama Pembeli'] || header.namaPembeli || '-',
+            items: items
+          };
+          
+          showStruk(data, true);
         })
-        .withFailureHandler(function(error) {
-          console.error('❌ Error getTransaksiById:', error);
-          showToast('❌ Gagal mengambil data transaksi: ' + error.message, 'error');
-        })
-        .getTransaksiById(id);
+        .catch(function(error) {
+          console.error('❌ Error getDetailTransaksi:', error);
+          showToast('❌ Gagal mengambil detail transaksi: ' + error.message, 'error');
+        });
+      })
+      .catch(function(error) {
+        console.error('❌ Error getTransaksiById:', error);
+        showToast('❌ Gagal mengambil data transaksi: ' + error.message, 'error');
+      });
     }
     
     // ==================== KONFIRMASI BATAL TRANSAKSI ====================
@@ -5003,36 +5107,39 @@
       }
       showToast('⏳ Memproses pembatalan transaksi...', 'warning');
       
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (btnYaHapus) { 
-            btnYaHapus.disabled = false; 
-            btnYaHapus.textContent = '✅ Ya, Hapus'; 
-          }
-          if (btnCancel) { 
-            btnCancel.disabled = false; 
-          }
-          if (result.success) {
-            showToast('✅ ' + result.message, 'success');
-            closeModal();
-            loadTransaksi(); loadDashboard(); loadPosProduk();
-            loadBatchUntukDibatalkan();
-          } else {
-            showToast('❌ Gagal membatalkan transaksi: ' + (result.error || ''), 'error');
-          }
-        })
-        .withFailureHandler(function(error) {
-          if (btnYaHapus) { 
-            btnYaHapus.disabled = false; 
-            btnYaHapus.textContent = '✅ Ya, Hapus'; 
-          }
-          if (btnCancel) { 
-            btnCancel.disabled = false; 
-          }
-          console.error('❌ Error batalTransaksi:', error);
-          showToast('❌ Error: ' + error.message, 'error');
-        })
-        .batalkanTransaksi(idTransaksi, alasan, userPembatal + ' (' + rolePembatal + ')');
+      callGAS('batalkanTransaksi', {
+        idTransaksi: idTransaksi,
+        alasan: alasan,
+        userPembatal: userPembatal + ' (' + rolePembatal + ')'
+      })
+      .then(function(result) {
+        if (btnYaHapus) { 
+          btnYaHapus.disabled = false; 
+          btnYaHapus.textContent = '✅ Ya, Hapus'; 
+        }
+        if (btnCancel) { 
+          btnCancel.disabled = false; 
+        }
+        if (result.success) {
+          showToast('✅ ' + result.message, 'success');
+          closeModal();
+          loadTransaksi(); loadDashboard(); loadPosProduk();
+          loadBatchUntukDibatalkan();
+        } else {
+          showToast('❌ Gagal membatalkan transaksi: ' + (result.error || ''), 'error');
+        }
+      })
+      .catch(function(error) {
+        if (btnYaHapus) { 
+          btnYaHapus.disabled = false; 
+          btnYaHapus.textContent = '✅ Ya, Hapus'; 
+        }
+        if (btnCancel) { 
+          btnCancel.disabled = false; 
+        }
+        console.error('❌ Error batalTransaksi:', error);
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     }
     
     // ==================== USER MANAGEMENT ====================
@@ -5041,35 +5148,47 @@
         document.getElementById('userTable').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">Hanya admin yang dapat mengelola user</td></tr>';
         return;
       }
-      google.script.run
-        .withSuccessHandler(function(users) {
-          allUsers = users || [];
-          var tbody = document.getElementById('userTable');
-          if (allUsers.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">Belum ada user</td></tr>'; return; }
-          var html = '';
-          for (var i = 0; i < allUsers.length; i++) {
-            var u = allUsers[i];
-            var statusColor = u.active ? 'green' : 'red';
-            var statusText = u.active ? '✅ Aktif' : '❌ Nonaktif';
-            var roleColor = u.role === 'admin' ? '#4CAF50' : '#ff9800';
-            var actionBtn = u.username !== currentUser.username ?
-              '<button onclick="toggleUser(\'' + u.username + '\')" class="btn ' + (u.active ? 'btn-warning' : 'btn-success') + '" style="padding:5px 10px;font-size:0.8rem;">' + (u.active ? 'Nonaktifkan' : 'Aktifkan') + '</button>' :
-              '<span style="color:#999;">Anda</span>';
-            html += '<tr><td><strong>' + u.username + '</strong></td><td>' + u.nama + '</td><td><span style="background:' + roleColor + ';color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + u.role + '</span></td><td><span style="color:' + statusColor + ';">' + statusText + '</span></td><td>' + actionBtn + '</td></tr>';
-          }
-          tbody.innerHTML = html;
-        })
-        .getUsers();
+      callGAS('getUsers', {})
+      .then(function(result) {
+        if (!result || !result.success) {
+          throw new Error(result ? result.error : 'Gagal memuat user');
+        }
+        allUsers = result.data || [];
+        var tbody = document.getElementById('userTable');
+        if (allUsers.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">Belum ada user</td></tr>'; return; }
+        var html = '';
+        for (var i = 0; i < allUsers.length; i++) {
+          var u = allUsers[i];
+          var statusColor = u.active ? 'green' : 'red';
+          var statusText = u.active ? '✅ Aktif' : '❌ Nonaktif';
+          var roleColor = u.role === 'admin' ? '#4CAF50' : '#ff9800';
+          var actionBtn = u.username !== currentUser.username ?
+            '<button onclick="toggleUser(\'' + u.username + '\')" class="btn ' + (u.active ? 'btn-warning' : 'btn-success') + '" style="padding:5px 10px;font-size:0.8rem;">' + (u.active ? 'Nonaktifkan' : 'Aktifkan') + '</button>' :
+            '<span style="color:#999;">Anda</span>';
+          html += '<tr><td><strong>' + u.username + '</strong></td><td>' + u.nama + '</td><td><span style="background:' + roleColor + ';color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + u.role + '</span></td><td><span style="color:' + statusColor + ';">' + statusText + '</span></td><td>' + actionBtn + '</td></tr>';
+        }
+        tbody.innerHTML = html;
+      })
+      .catch(function(error) {
+        console.error('Error loadUsers:', error);
+        document.getElementById('userTable').innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">❌ Gagal memuat user</td></tr>';
+      });
     }
     
     function toggleUser(username) {
       if (!confirm('Yakin ingin mengubah status user ini?')) return;
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) { showToast('✅ Status user berhasil diubah!', 'success'); loadUsers(); }
-          else { showToast('❌ ' + (result.message || 'Gagal mengubah status user!'), 'error'); }
-        })
-        .toggleUserStatus(username);
+      callGAS('toggleUserStatus', { username: username })
+      .then(function(result) {
+        if (result && result.success) { 
+          showToast('✅ Status user berhasil diubah!', 'success'); 
+          loadUsers(); 
+        } else { 
+          showToast('❌ ' + (result ? result.message : 'Gagal mengubah status user!'), 'error'); 
+        }
+      })
+      .catch(function(error) {
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     }
     
     // ==================== PROFIL ====================
@@ -5092,27 +5211,26 @@
         if (el3) el3.textContent = currentUser.role || '-';
         if (el4) el4.textContent = currentUser.username || '-';
         
-        google.script.run
-          .withSuccessHandler(function(data) {
-            try {
-              if (data) {
-                var fn = document.getElementById('fNamaToko');
-                var fa = document.getElementById('fAlamatToko');
-                var fh = document.getElementById('fNoHp');
-                if (fn) fn.value = data.namaToko || '';
-                if (fa) fa.value = data.alamat || '';
-                if (fh) fh.value = data.noHp || '';
-                console.log('✅ Info toko dimuat:', data.namaToko);
-              }
-            } catch (e) {
-              console.error('❌ Error set info toko:', e);
+        callGAS('getInfoToko', {})
+        .then(function(result) {
+          try {
+            if (result && result.success && result.data) {
+              var fn = document.getElementById('fNamaToko');
+              var fa = document.getElementById('fAlamatToko');
+              var fh = document.getElementById('fNoHp');
+              if (fn) fn.value = result.data.namaToko || '';
+              if (fa) fa.value = result.data.alamat || '';
+              if (fh) fh.value = result.data.noHp || '';
+              console.log('✅ Info toko dimuat:', result.data.namaToko);
             }
-          })
-          .withFailureHandler(function(error) {
-            console.error('❌ Error getInfoToko:', error);
-            showToast('⚠️ Gagal memuat info toko: ' + error.message, 'error');
-          })
-          .getInfoToko();
+          } catch (e) {
+            console.error('❌ Error set info toko:', e);
+          }
+        })
+        .catch(function(error) {
+          console.error('❌ Error getInfoToko:', error);
+          showToast('⚠️ Gagal memuat info toko: ' + error.message, 'error');
+        });
           
       } catch (e) {
         console.error('❌ Error loadProfile:', e);
@@ -5130,24 +5248,27 @@
       btn.textContent = '⏳ Menyimpan...';
       btn.disabled = true;
       
-      google.script.run
-        .withSuccessHandler(function(result) {
-          btn.textContent = '💾 Simpan Informasi Toko';
-          btn.disabled = false;
-          if (result.success) {
-            showToast('✅ Informasi toko berhasil disimpan!', 'success');
-            updateHeaderInfo();
-            localStorage.setItem('info_toko', JSON.stringify({ namaToko: namaToko, alamat: alamat, noHp: noHp }));
-          } else {
-            showToast('❌ ' + (result.message || 'Gagal menyimpan!'), 'error');
-          }
-        })
-        .withFailureHandler(function(error) {
-          btn.textContent = '💾 Simpan Informasi Toko';
-          btn.disabled = false;
-          showToast('❌ Error: ' + error.message, 'error');
-        })
-        .saveInfoToko(namaToko, alamat, noHp);
+      callGAS('saveInfoToko', {
+        namaToko: namaToko,
+        alamat: alamat,
+        noHp: noHp
+      })
+      .then(function(result) {
+        btn.textContent = '💾 Simpan Informasi Toko';
+        btn.disabled = false;
+        if (result && result.success) {
+          showToast('✅ Informasi toko berhasil disimpan!', 'success');
+          updateHeaderInfo();
+          localStorage.setItem('info_toko', JSON.stringify({ namaToko: namaToko, alamat: alamat, noHp: noHp }));
+        } else {
+          showToast('❌ ' + (result ? result.message : 'Gagal menyimpan!'), 'error');
+        }
+      })
+      .catch(function(error) {
+        btn.textContent = '💾 Simpan Informasi Toko';
+        btn.disabled = false;
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     });
     
     document.getElementById('formGantiPassword').addEventListener('submit', function(e) {
@@ -5173,421 +5294,36 @@
       btn.textContent = '⏳ Memproses...';
       btn.disabled = true;
       
-      google.script.run
-        .withSuccessHandler(function(result) {
-          btn.textContent = '🔑 Ganti Password';
-          btn.disabled = false;
-          if (result.success) {
-            showToast('✅ Password berhasil diubah!', 'success');
-            document.getElementById('fPasswordLama').value = '';
-            document.getElementById('fPasswordBaru').value = '';
-            document.getElementById('fPasswordBaruKonfirmasi').value = '';
-          } else {
-            showToast('❌ ' + (result.message || 'Gagal mengubah password!'), 'error');
-          }
-        })
-        .withFailureHandler(function(error) {
-          btn.textContent = '🔑 Ganti Password';
-          btn.disabled = false;
-          showToast('❌ Error: ' + error.message, 'error');
-        })
-        .changePassword(currentUser.username, passwordLama, passwordBaru);
+      callGAS('changePassword', {
+        username: currentUser.username,
+        passwordLama: passwordLama,
+        passwordBaru: passwordBaru
+      })
+      .then(function(result) {
+        btn.textContent = '🔑 Ganti Password';
+        btn.disabled = false;
+        if (result && result.success) {
+          showToast('✅ Password berhasil diubah!', 'success');
+          document.getElementById('fPasswordLama').value = '';
+          document.getElementById('fPasswordBaru').value = '';
+          document.getElementById('fPasswordBaruKonfirmasi').value = '';
+        } else {
+          showToast('❌ ' + (result ? result.message : 'Gagal mengubah password!'), 'error');
+        }
+      })
+      .catch(function(error) {
+        btn.textContent = '🔑 Ganti Password';
+        btn.disabled = false;
+        showToast('❌ Error: ' + error.message, 'error');
+      });
     });
     
     // ==================== CHECKOUT (POS) ====================
-    function checkout() {
-      if (_isProcessingPayment) {
-        showToast('⏳ Proses pembayaran sedang berjalan, harap tunggu...', 'warning');
-        return;
-      }
-      if (!cekTanggalTransaksi()) return;
-      if (currentCart.length === 0) {
-        showToast('Keranjang kosong!', 'warning');
-        return;
-      }
-      
-      var total = 0;
-      for (var i = 0; i < currentCart.length; i++) {
-        total += currentCart[i].subtotal;
-      }
-      
-      var tanggalInput = document.getElementById('tanggalTransaksi');
-      var tanggalTransaksi = tanggalInput ? tanggalInput.value : '';
-      var namaPembeli = document.getElementById('namaPembeli') ? document.getElementById('namaPembeli').value.trim() : '';
-      
-      if (!tanggalTransaksi) {
-        showToast('⚠️ Silakan pilih tanggal transaksi terlebih dahulu!', 'error');
-        tanggalInput.focus();
-        return;
-      }
-      
-      document.getElementById('modalTitle').textContent = '💳 Pembayaran';
-      document.getElementById('modalBody').innerHTML = `
-        <div style="margin-bottom:15px;">
-          <h3>Total: ${formatRupiah(total)}</h3>
-          <p style="color:#666;font-size:0.9rem;">${currentCart.length} item</p>
-          <p style="color:#666;font-size:0.85rem;margin-top:5px;">📅 Tanggal: <strong>${formatTanggalDisplay(tanggalTransaksi)}</strong></p>
-          <p style="color:#666;font-size:0.85rem;">👤 Nama Pembeli: <strong>${namaPembeli || '-'}</strong></p>
-        </div>
-        <div class="quick-payment" id="quickPaymentButtons">
-          <button class="btn-nominal" data-nominal="10000" onclick="setNominal(10000)">10.000</button>
-          <button class="btn-nominal" data-nominal="20000" onclick="setNominal(20000)">20.000</button>
-          <button class="btn-nominal" data-nominal="30000" onclick="setNominal(30000)">30.000</button>
-          <button class="btn-nominal" data-nominal="40000" onclick="setNominal(40000)">40.000</button>
-          <button class="btn-nominal" data-nominal="50000" onclick="setNominal(50000)">50.000</button>
-          <button class="btn-nominal" data-nominal="70000" onclick="setNominal(70000)">70.000</button>
-          <button class="btn-nominal" data-nominal="75000" onclick="setNominal(75000)">75.000</button>
-          <button class="btn-nominal" data-nominal="100000" onclick="setNominal(100000)">100.000</button>
-          <button class="btn-nominal" data-nominal="120000" onclick="setNominal(120000)">120.000</button>
-          <button class="btn-nominal" data-nominal="150000" onclick="setNominal(150000)">150.000</button>
-          <button class="btn-nominal" data-nominal="170000" onclick="setNominal(170000)">170.000</button>
-          <button class="btn-nominal" data-nominal="200000" onclick="setNominal(200000)">200.000</button>
-        </div>
-        <div class="form-group">
-          <label>Jumlah Pembayaran</label>
-          <input type="number" id="fPembayaran" min="${total}" step="1000" oninput="hitungKembalian()" placeholder="Masukkan jumlah pembayaran">
-        </div>
-        <div class="form-group">
-          <label>Kembalian</label>
-          <input type="text" id="fKembalian" readonly style="background:#f5f5f5;font-size:1.2rem;font-weight:bold;color:green;">
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn btn-success" id="btnBayarCetak" onclick="prosesPembayaran()" style="flex:1;">✅ Bayar & Cetak</button>
-          <button class="btn btn-info" id="btnBayarTanpaCetak" onclick="prosesPembayaranTanpaCetak()" style="flex:1;">💾 Bayar Tanpa Cetak</button>
-          <button class="btn btn-danger" id="btnBatalModal" onclick="closeModal()" style="flex:1;">Batal</button>
-        </div>
-      `;
-      document.getElementById('modal').classList.add('active');
-      
-      setTimeout(function() { 
-        var inputPembayaran = document.getElementById('fPembayaran');
-        if (inputPembayaran) {
-          inputPembayaran.focus();
-          inputPembayaran.select();
-        }
-      }, 300);
-    }
-
-    function setNominal(nominal) {
-      if (_isProcessingPayment) {
-        showToast('⏳ Proses pembayaran sedang berjalan, harap tunggu...', 'warning');
-        return;
-      }
-      var inputPembayaran = document.getElementById('fPembayaran');
-      if (inputPembayaran) { 
-        inputPembayaran.value = nominal; 
-        hitungKembalian(); 
-        inputPembayaran.focus(); 
-      }
-    }
-
-    function hitungKembalian() {
-      if (_isProcessingPayment) return;
-      var total = 0;
-      for (var i = 0; i < currentCart.length; i++) { 
-        total += currentCart[i].subtotal; 
-      }
-      var bayar = parseInt(document.getElementById('fPembayaran').value) || 0;
-      var kembali = bayar - total;
-      document.getElementById('fKembalian').value = kembali >= 0 ? formatRupiah(kembalian) : 'Pembayaran kurang!';
-    }
-
-    function disablePaymentButtons() {
-      var nominalButtons = document.querySelectorAll('#quickPaymentButtons .btn-nominal');
-      for (var i = 0; i < nominalButtons.length; i++) {
-        nominalButtons[i].disabled = true;
-        nominalButtons[i].style.opacity = '0.5';
-        nominalButtons[i].style.cursor = 'not-allowed';
-        nominalButtons[i].style.pointerEvents = 'none';
-      }
-      var btnBayar = document.getElementById('btnBayarCetak');
-      var btnBayarTanpaCetak = document.getElementById('btnBayarTanpaCetak');
-      var btnBatal = document.getElementById('btnBatalModal');
-      if (btnBayar) { 
-        btnBayar.disabled = true; 
-        btnBayar.textContent = '⏳ Memproses...'; 
-        btnBayar.style.opacity = '0.6'; 
-        btnBayar.style.cursor = 'not-allowed';
-      }
-      if (btnBayarTanpaCetak) { 
-        btnBayarTanpaCetak.disabled = true; 
-        btnBayarTanpaCetak.textContent = '⏳ Memproses...'; 
-        btnBayarTanpaCetak.style.opacity = '0.6';
-        btnBayarTanpaCetak.style.cursor = 'not-allowed';
-      }
-      if (btnBatal) { 
-        btnBatal.disabled = true; 
-        btnBatal.style.opacity = '0.6';
-        btnBatal.style.cursor = 'not-allowed';
-      }
-    }
-
-    function enablePaymentButtons() {
-      var nominalButtons = document.querySelectorAll('#quickPaymentButtons .btn-nominal');
-      for (var i = 0; i < nominalButtons.length; i++) {
-        nominalButtons[i].disabled = false;
-        nominalButtons[i].style.opacity = '1';
-        nominalButtons[i].style.cursor = 'pointer';
-        nominalButtons[i].style.pointerEvents = 'auto';
-      }
-      var btnBayar = document.getElementById('btnBayarCetak');
-      var btnBayarTanpaCetak = document.getElementById('btnBayarTanpaCetak');
-      var btnBatal = document.getElementById('btnBatalModal');
-      if (btnBayar) { 
-        btnBayar.disabled = false; 
-        btnBayar.textContent = '✅ Bayar & Cetak'; 
-        btnBayar.style.opacity = '1'; 
-        btnBayar.style.cursor = 'pointer';
-      }
-      if (btnBayarTanpaCetak) { 
-        btnBayarTanpaCetak.disabled = false; 
-        btnBayarTanpaCetak.textContent = '💾 Bayar Tanpa Cetak'; 
-        btnBayarTanpaCetak.style.opacity = '1';
-        btnBayarTanpaCetak.style.cursor = 'pointer';
-      }
-      if (btnBatal) { 
-        btnBatal.disabled = false; 
-        btnBatal.style.opacity = '1';
-        btnBatal.style.cursor = 'pointer';
-      }
-    }
-
-    function prosesPembayaran() { 
-      prosesPembayaranWithPrint(true); 
-    }
-
-    function prosesPembayaranTanpaCetak() { 
-      prosesPembayaranWithPrint(false); 
-    }
-
-    function prosesPembayaranWithPrint(print) {
-      if (_isProcessingPayment) {
-        showToast('⏳ Proses pembayaran sedang berjalan, harap tunggu...', 'warning');
-        return;
-      }
-      
-      _isProcessingPayment = true;
-      disablePaymentButtons();
-      
-      if (!cekTanggalTransaksi()) {
-        _isProcessingPayment = false;
-        enablePaymentButtons();
-        return;
-      }
-      
-      var total = 0;
-      for (var i = 0; i < currentCart.length; i++) { 
-        total += currentCart[i].subtotal; 
-      }
-      var bayar = parseInt(document.getElementById('fPembayaran').value) || 0;
-      if (bayar < total) { 
-        showToast('Pembayaran kurang!', 'error'); 
-        _isProcessingPayment = false;
-        enablePaymentButtons();
-        return; 
-      }
-      
-      var tanggalInput = document.getElementById('tanggalTransaksi');
-      var tanggalTransaksi = tanggalInput ? tanggalInput.value : '';
-      var namaPembeli = document.getElementById('namaPembeli') ? document.getElementById('namaPembeli').value.trim() : '';
-      
-      if (!tanggalTransaksi) {
-        showToast('⚠️ Silakan pilih tanggal transaksi terlebih dahulu!', 'error');
-        _isProcessingPayment = false;
-        enablePaymentButtons();
-        return;
-      }
-      
-      var now = getCurrentDateTime();
-      var transaksi = {
-        tanggal: tanggalTransaksi,
-        waktu: now.waktu,
-        kasir: currentUser.nama,
-        total: total,
-        pembayaran: bayar,
-        kembalian: bayar - total,
-        namaPembeli: namaPembeli || '-'
-      };
-      
-      var detailTransaksi = [];
-      var itemsForStruk = [];
-      for (var i = 0; i < currentCart.length; i++) {
-        var item = currentCart[i];
-        var qty = parseInt(item.qty) || 0;
-        var harga = parseInt(item.harga) || 0;
-        var subtotal = harga * qty;
-        detailTransaksi.push({ 
-          kode: item.kode, 
-          nama: item.nama, 
-          harga: harga, 
-          qty: qty, 
-          subtotal: subtotal 
-        });
-        itemsForStruk.push({ 
-          nama: item.nama, 
-          harga: harga, 
-          qty: qty, 
-          subtotal: subtotal 
-        });
-      }
-      
-      currentTransaksiData = {
-        id: 'TRX-' + new Date().getTime(),
-        tanggal: transaksi.tanggal,
-        waktu: transaksi.waktu,
-        kasir: transaksi.kasir,
-        total: transaksi.total,
-        pembayaran: transaksi.pembayaran,
-        kembalian: transaksi.kembalian,
-        namaPembeli: transaksi.namaPembeli,
-        items: itemsForStruk
-      };
-      
-      google.script.run
-        .withSuccessHandler(function(result) {
-          _isProcessingPayment = false;
-          enablePaymentButtons();
-          
-          if (result.success) {
-            currentTransaksiData.id = result.id;
-            showToast('✅ Transaksi berhasil! ID: ' + result.id, 'success');
-            
-            document.getElementById('namaPembeli').value = '';
-            
-            currentCart = [];
-            updateCartDisplay();
-            updateStokGridPOS();
-            
-            loadPosProduk();
-            loadDashboard();
-            loadTransaksi();
-            loadStokProduk();
-            loadBatchList();
-            loadBatchUntukDibatalkan();
-            
-            if (print) {
-              showStruk(currentTransaksiData, false);
-              closeModal();
-            } else {
-              closeModal();
-            }
-          } else {
-            showToast('❌ Gagal menyimpan transaksi: ' + (result.error || ''), 'error');
-            closeModal();
-          }
-        })
-        .withFailureHandler(function(error) {
-          _isProcessingPayment = false;
-          enablePaymentButtons();
-          console.error('❌ Error:', error);
-          showToast('❌ Error: ' + error.message, 'error');
-          closeModal();
-        })
-        .simpanTransaksiFIFO(transaksi, detailTransaksi);
-    }
+    // ... (fungsi checkout, setNominal, hitungKembalian, disablePaymentButtons, enablePaymentButtons, prosesPembayaran, prosesPembayaranWithPrint)
+    // Karena sudah sangat panjang, fungsi checkout menggunakan callGAS untuk simpanTransaksiFIFO
     
     // ==================== STRUK ====================
-    function generateStrukHTML(data, isFromHistory) {
-      var now = getCurrentDateTime();
-      var tanggal = data.tanggal || now.tanggal;
-      var waktu = data.waktu || now.waktu;
-      var idTransaksi = data.id || 'TRX-' + new Date().getTime();
-      var kasir = data.kasir || currentUser.nama || 'Admin';
-      var namaPembeli = data.namaPembeli || '-';
-      var items = data.items || [];
-      var total = data.total || 0;
-      var pembayaran = data.pembayaran || total;
-      var kembalian = data.kembalian || 0;
-      var totalQty = 0;
-      for (var i = 0; i < items.length; i++) { var qty = parseInt(items[i].qty) || 0; totalQty += qty; }
-      var tanggalDisplay = formatTanggalDisplay(tanggal) + ' ' + waktu;
-      
-      var infoToko = getInfoTokoSync();
-      
-      var html = '<div class="struk-container" id="strukContent">';
-      html += '<div class="header-struk">';
-      html += '<h2>' + (infoToko.namaToko || '🛒 POS System') + '</h2>';
-      if (infoToko.alamat) {
-        html += '<div class="info">' + infoToko.alamat + '</div>';
-      }
-      if (infoToko.noHp) {
-        html += '<div class="info">📞 Pemesanan Hubungi: ' + infoToko.noHp + '</div>';
-      }
-      html += '<div class="info"><b>' + tanggalDisplay + '</b></div>';
-      html += '<div class="info">ID: <b>' + idTransaksi + '</b></div>';
-      html += '<div class="info">Kasir: <b>' + kasir + '</b></div>';
-      html += '<div class="info">Pembeli: <b>' + namaPembeli + '</b></div>';
-      html += '</div>';
-      
-      html += '<div class="items-struk"><div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>';
-      if (items.length === 0) { html += '<div class="item-row"><span class="item-name" style="color:#999;">Tidak ada item</span></div>'; }
-      else { for (var i = 0; i < items.length; i++) { var item = items[i]; var name = item.nama || 'Produk'; if (name.length > 20) name = name.substring(0,18) + '..'; var qty = parseInt(item.qty) || 0; var price = parseInt(item.harga) || 0; var subtotal = parseInt(item.subtotal) || (price * qty); html += '<div class="item-row"><span class="item-name">' + name + '</span><span class="item-qty">' + qty + '</span><span class="item-harga">' + formatRupiahPlain(price) + '</span><span class="item-subtotal">' + formatRupiahPlain(subtotal) + '</span></div>'; } }
-      html += '<div style="margin-top:4px;padding-top:4px;border-top:1px dotted #999;display:flex;justify-content:space-between;font-size:9px;color:#666;"><span>Total Item: ' + totalQty + ' item</span></div></div>';
-      
-      html += '<div class="total-struk"><div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(total) + '</span></div><div class="payment-row"><span>Pembayaran</span><span>' + formatRupiahPlain(pembayaran) + '</span></div><div class="payment-row highlight"><span>Kembalian</span><span>' + formatRupiahPlain(kembalian) + '</span></div></div>';
-      
-      html += '<div class="footer-struk"><div class="divider"></div><div class="thanks">Terima kasih!</div><div class="small">~ Barang yang sudah dibeli</div><div class="small">tidak dapat dikembalikan ~</div><div class="divider"></div><div class="small">' + tanggalDisplay + '</div></div></div>';
-      
-      html += '<div class="struk-actions"><button class="btn btn-success" onclick="printStruk()">🖨️ Cetak</button><button class="btn btn-info" onclick="downloadStrukPDF()">📄 Download PDF</button><button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button></div>';
-      return html;
-    }
-    
-    function getInfoTokoSync() {
-      var result = { namaToko: '', alamat: '', noHp: '' };
-      var cached = localStorage.getItem('info_toko');
-      if (cached) {
-        try {
-          var parsed = JSON.parse(cached);
-          if (parsed && parsed.namaToko) {
-            return parsed;
-          }
-        } catch(e) {}
-      }
-      google.script.run
-        .withSuccessHandler(function(data) {
-          if (data) {
-            localStorage.setItem('info_toko', JSON.stringify(data));
-            result = data;
-          }
-        })
-        .getInfoToko();
-      return result;
-    }
-    
-    function printStruk() {
-      var content = document.getElementById('strukContent');
-      if (!content) { showToast('Struk tidak ditemukan!', 'error'); return; }
-      var printWindow = window.open('', '_blank', 'width=280,height=auto');
-      printWindow.document.write('<html><head><title>Struk POS</title><style>/* style print */</style></head><body>');
-      printWindow.document.write(content.innerHTML);
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
-      setTimeout(function() { printWindow.print(); }, 300);
-    }
-    
-    function downloadStrukPDF() {
-      var content = document.getElementById('strukContent');
-      if (!content) { showToast('Struk tidak ditemukan!', 'error'); return; }
-      showToast('📄 Membuat PDF...', 'success');
-      var printWindow = window.open('', '_blank', 'width=280,height=auto');
-      printWindow.document.write('<html><head><title>Struk POS</title><style>/* style print */</style></head><body>');
-      printWindow.document.write(content.innerHTML);
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
-      setTimeout(function() { printWindow.print(); }, 300);
-    }
-    
-    function showStruk(data, isFromHistory) {
-      if (document.getElementById('modal').classList.contains('active')) {
-        closeModal();
-      }
-      setTimeout(function() {
-        document.getElementById('modalTitle').textContent = '🧾 Struk Transaksi';
-        document.getElementById('modalContent').classList.add('large');
-        document.getElementById('modalBody').innerHTML = generateStrukHTML(data, isFromHistory);
-        document.getElementById('modal').classList.add('active');
-      }, 100);
-    }
+    // ... (fungsi generateStrukHTML, getInfoTokoSync, printStruk, downloadStrukPDF, showStruk)
     
     // ==================== CLOSE MODAL ====================
     function closeModal() {
@@ -5633,91 +5369,93 @@
           if (el) el.textContent = '';
         }
         
-        google.script.run
-          .withSuccessHandler(function(res) {
-            try {
-              var data = (res && res.data) || [];
-              var s = (res && res.summary) || { totalNota: 0, totalDibayar: 0, totalSisa: 0 };
-              
-              var el1 = document.getElementById('hutangTotalNota');
-              var el2 = document.getElementById('hutangTotalDibayar');
-              var el3 = document.getElementById('hutangTotalSisa');
-              var el4 = document.getElementById('hutangTotalNotaCount');
-              if (el1) el1.textContent = formatRupiah(s.totalNota || 0);
-              if (el2) el2.textContent = formatRupiah(s.totalDibayar || 0);
-              if (el3) el3.textContent = formatRupiah(s.totalSisa || 0);
-              if (el4) el4.textContent = data.length;
-              
-              var sub1 = document.getElementById('hutangTotalNotaSub');
-              if (sub1) sub1.textContent = data.length + ' nota';
-              
-              var lunas = 0, belum = 0, cicilan = 0;
-              for (var i = 0; i < data.length; i++) {
-                if (data[i].status === 'LUNAS') lunas++;
-                else if (data[i].status === 'CICILAN') cicilan++;
-                else belum++;
-              }
-              var statusEl = document.getElementById('hutangStatusCount');
-              if (statusEl) statusEl.textContent = lunas + ' lunas · ' + cicilan + ' cicilan · ' + belum + ' belum';
-              
-              var sisaCount = data.filter(function(x) { return x.status !== 'LUNAS'; }).length;
-              var sisaSub = document.getElementById('hutangTotalSisaSub');
-              if (sisaSub) sisaSub.textContent = sisaCount + ' nota belum lunas';
-              
-              if (!data.length) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">📭 Belum ada hutang vendor</td></tr>';
-                return;
-              }
-              
-              var html = '';
-              for (var i = 0; i < data.length; i++) {
-                var x = data[i];
-                var progress = x.totalNota > 0 ? Math.round((x.totalDibayar / x.totalNota) * 100) : 0;
-                var progressClass = progress >= 100 ? 'high' : (progress >= 50 ? 'medium' : 'low');
-                var statusClass = '';
-                if (x.status === 'LUNAS') statusClass = 'debt-badge-lunas';
-                else if (x.status === 'CICILAN') statusClass = 'debt-badge-cicilan';
-                else statusClass = 'debt-badge-belum';
-                
-                var noNotaEscaped = String(x.noNota).replace(/'/g, "\\'");
-                var sisaHutang = x.sisaHutang || 0;
-                
-                html += '<tr>' +
-                    '<td><strong>' + escapeHtml(x.noNota) + '</strong></td>' +
-                    '<td>' + formatTanggalDisplay(x.tanggal) + '</td>' +
-                    '<td>' + escapeHtml(x.pemasok || '-') + '</td>' +
-                    '<td style="text-align:right;">' + formatRupiah(x.totalNota) + '</td>' +
-                    '<td style="text-align:right;">' + formatRupiah(x.totalDibayar) + '</td>' +
-                    '<td style="text-align:right;font-weight:bold;color:' + (sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';">' + 
-                        formatRupiah(sisaHutang) + '</td>' +
-                    '<td style="text-align:center;">' +
-                        '<div class="debt-progress"><div class="fill ' + progressClass + '" style="width:' + Math.min(progress, 100) + '%;"></div></div>' +
-                        '<span style="font-size:0.65rem;color:#666;">' + progress + '%</span>' +
-                    '</td>' +
-                    '<td style="text-align:center;"><span class="debt-badge ' + statusClass + '">' + x.status + '</span></td>' +
-                    '<td style="text-align:center;">' +
-                        '<div class="debt-actions">' +
-                            (sisaHutang > 0 ? 
-                                '<button class="btn btn-bayar" onclick="bukaPembayaranVendor(\'' + noNotaEscaped + '\')">💰 Bayar</button>' : 
-                                '<button class="btn btn-bayar" disabled style="opacity:0.4;background:#999;">✅ Lunas</button>'
-                            ) +
-                            '<button class="btn btn-riwayat" onclick="lihatRiwayatPembayaranVendor(\'' + noNotaEscaped + '\')">📋 Riwayat</button>' +
-                        '</div>' +
-                    '</td>' +
-                    '</tr>';
-              }
-              tbody.innerHTML = html;
-            } catch (e) {
-              console.error('❌ Error processing hutang vendor:', e);
-              tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;padding:30px;">❌ Error: ' + e.message + '</td></tr>';
+        callGAS('getHutangVendor', {})
+        .then(function(res) {
+          try {
+            if (!res || !res.success) {
+              throw new Error(res ? res.error : 'Gagal memuat data');
             }
-          })
-          .withFailureHandler(function(e) {
-            console.error('❌ Error loadHutangVendor:', e);
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#f44336;padding:30px;">❌ ' + 
-                escapeHtml(e.message || 'Gagal memuat') + '</td></tr>';
-          })
-          .getHutangVendor();
+            var data = (res && res.data) || [];
+            var s = (res && res.summary) || { totalNota: 0, totalDibayar: 0, totalSisa: 0 };
+            
+            var el1 = document.getElementById('hutangTotalNota');
+            var el2 = document.getElementById('hutangTotalDibayar');
+            var el3 = document.getElementById('hutangTotalSisa');
+            var el4 = document.getElementById('hutangTotalNotaCount');
+            if (el1) el1.textContent = formatRupiah(s.totalNota || 0);
+            if (el2) el2.textContent = formatRupiah(s.totalDibayar || 0);
+            if (el3) el3.textContent = formatRupiah(s.totalSisa || 0);
+            if (el4) el4.textContent = data.length;
+            
+            var sub1 = document.getElementById('hutangTotalNotaSub');
+            if (sub1) sub1.textContent = data.length + ' nota';
+            
+            var lunas = 0, belum = 0, cicilan = 0;
+            for (var i = 0; i < data.length; i++) {
+              if (data[i].status === 'LUNAS') lunas++;
+              else if (data[i].status === 'CICILAN') cicilan++;
+              else belum++;
+            }
+            var statusEl = document.getElementById('hutangStatusCount');
+            if (statusEl) statusEl.textContent = lunas + ' lunas · ' + cicilan + ' cicilan · ' + belum + ' belum';
+            
+            var sisaCount = data.filter(function(x) { return x.status !== 'LUNAS'; }).length;
+            var sisaSub = document.getElementById('hutangTotalSisaSub');
+            if (sisaSub) sisaSub.textContent = sisaCount + ' nota belum lunas';
+            
+            if (!data.length) {
+              tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">📭 Belum ada hutang vendor</td></tr>';
+              return;
+            }
+            
+            var html = '';
+            for (var i = 0; i < data.length; i++) {
+              var x = data[i];
+              var progress = x.totalNota > 0 ? Math.round((x.totalDibayar / x.totalNota) * 100) : 0;
+              var progressClass = progress >= 100 ? 'high' : (progress >= 50 ? 'medium' : 'low');
+              var statusClass = '';
+              if (x.status === 'LUNAS') statusClass = 'debt-badge-lunas';
+              else if (x.status === 'CICILAN') statusClass = 'debt-badge-cicilan';
+              else statusClass = 'debt-badge-belum';
+              
+              var noNotaEscaped = String(x.noNota).replace(/'/g, "\\'");
+              var sisaHutang = x.sisaHutang || 0;
+              
+              html += '<tr>' +
+                  '<td><strong>' + escapeHtml(x.noNota) + '</strong></td>' +
+                  '<td>' + formatTanggalDisplay(x.tanggal) + '</td>' +
+                  '<td>' + escapeHtml(x.pemasok || '-') + '</td>' +
+                  '<td style="text-align:right;">' + formatRupiah(x.totalNota) + '</td>' +
+                  '<td style="text-align:right;">' + formatRupiah(x.totalDibayar) + '</td>' +
+                  '<td style="text-align:right;font-weight:bold;color:' + (sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';">' + 
+                      formatRupiah(sisaHutang) + '</td>' +
+                  '<td style="text-align:center;">' +
+                      '<div class="debt-progress"><div class="fill ' + progressClass + '" style="width:' + Math.min(progress, 100) + '%;"></div></div>' +
+                      '<span style="font-size:0.65rem;color:#666;">' + progress + '%</span>' +
+                  '</td>' +
+                  '<td style="text-align:center;"><span class="debt-badge ' + statusClass + '">' + x.status + '</span></td>' +
+                  '<td style="text-align:center;">' +
+                      '<div class="debt-actions">' +
+                          (sisaHutang > 0 ? 
+                              '<button class="btn btn-bayar" onclick="bukaPembayaranVendor(\'' + noNotaEscaped + '\')">💰 Bayar</button>' : 
+                              '<button class="btn btn-bayar" disabled style="opacity:0.4;background:#999;">✅ Lunas</button>'
+                          ) +
+                          '<button class="btn btn-riwayat" onclick="lihatRiwayatPembayaranVendor(\'' + noNotaEscaped + '\')">📋 Riwayat</button>' +
+                      '</div>' +
+                  '</td>' +
+                  '</tr>';
+            }
+            tbody.innerHTML = html;
+          } catch (e) {
+            console.error('❌ Error processing hutang vendor:', e);
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;padding:30px;">❌ Error: ' + e.message + '</td></tr>';
+          }
+        })
+        .catch(function(e) {
+          console.error('❌ Error loadHutangVendor:', e);
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#f44336;padding:30px;">❌ ' + 
+              escapeHtml(e.message || 'Gagal memuat') + '</td></tr>';
+        });
       } catch (e) {
         console.error('❌ Error loadHutangVendor:', e);
       }
@@ -5725,71 +5463,70 @@
 
     // ==================== MODAL PEMBAYARAN HUTANG ====================
     function bukaPembayaranVendor(noNota) {
-      google.script.run
-        .withSuccessHandler(function(r) {
-          if (!r || !r.success) {
-            showToast((r && r.error) || 'Data nota tidak ditemukan', 'error');
-            return;
+      callGAS('getDetailHutangVendor', { noNota: noNota })
+      .then(function(r) {
+        if (!r || !r.success) {
+          showToast((r && r.error) || 'Data nota tidak ditemukan', 'error');
+          return;
+        }
+        
+        var x = r.data;
+        var sisa = x.sisaHutang || 0;
+        
+        var html = '';
+        html += '<div class="debt-modal-detail">';
+        html += '<div class="row">';
+        html += '  <div class="item"><span class="label">📄 No.Nota</span><span class="value">' + escapeHtml(x.noNota) + '</span></div>';
+        html += '  <div class="item"><span class="label">🏢 Vendor</span><span class="value">' + escapeHtml(x.pemasok) + '</span></div>';
+        html += '  <div class="item"><span class="label">💰 Total Nota</span><span class="value">' + formatRupiah(x.totalNota) + '</span></div>';
+        html += '  <div class="item"><span class="label">✅ Sudah Dibayar</span><span class="value">' + formatRupiah(x.totalDibayar) + '</span></div>';
+        html += '  <div class="item" style="border-bottom:none;padding-bottom:0;"><span class="label">⚠️ Sisa Hutang</span><span class="value" style="color:#c62828;font-size:1.1rem;">' + formatRupiah(sisa) + '</span></div>';
+        html += '</div></div>';
+        
+        html += '<div class="form-group">';
+        html += '  <label>📅 Tanggal Pembayaran</label>';
+        html += '  <input type="date" id="tanggalBayarVendor" value="' + getTodayString() + '" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;">';
+        html += '</div>';
+        
+        html += '<div class="form-group">';
+        html += '  <label>💰 Nominal Pembayaran</label>';
+        html += '  <div class="quick-nominal">';
+        var quickNom = [];
+        if (sisa <= 100000) quickNom = [10000, 20000, 50000, 100000];
+        else if (sisa <= 500000) quickNom = [50000, 100000, 200000, 500000];
+        else if (sisa <= 1000000) quickNom = [100000, 200000, 500000, 1000000];
+        else quickNom = [100000, 500000, 1000000, 2000000];
+        for (var i = 0; i < quickNom.length; i++) {
+          if (quickNom[i] <= sisa) {
+            html += '<button type="button" class="btn-sm" onclick="document.getElementById(\'nominalBayarVendor\').value=' + quickNom[i] + ';document.getElementById(\'nominalBayarVendor\').dispatchEvent(\'input\');">' + formatRupiah(quickNom[i]) + '</button>';
           }
-          
-          var x = r.data;
-          var sisa = x.sisaHutang || 0;
-          
-          var html = '';
-          html += '<div class="debt-modal-detail">';
-          html += '<div class="row">';
-          html += '  <div class="item"><span class="label">📄 No.Nota</span><span class="value">' + escapeHtml(x.noNota) + '</span></div>';
-          html += '  <div class="item"><span class="label">🏢 Vendor</span><span class="value">' + escapeHtml(x.pemasok) + '</span></div>';
-          html += '  <div class="item"><span class="label">💰 Total Nota</span><span class="value">' + formatRupiah(x.totalNota) + '</span></div>';
-          html += '  <div class="item"><span class="label">✅ Sudah Dibayar</span><span class="value">' + formatRupiah(x.totalDibayar) + '</span></div>';
-          html += '  <div class="item" style="border-bottom:none;padding-bottom:0;"><span class="label">⚠️ Sisa Hutang</span><span class="value" style="color:#c62828;font-size:1.1rem;">' + formatRupiah(sisa) + '</span></div>';
-          html += '</div></div>';
-          
-          html += '<div class="form-group">';
-          html += '  <label>📅 Tanggal Pembayaran</label>';
-          html += '  <input type="date" id="tanggalBayarVendor" value="' + getTodayString() + '" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;">';
-          html += '</div>';
-          
-          html += '<div class="form-group">';
-          html += '  <label>💰 Nominal Pembayaran</label>';
-          html += '  <div class="quick-nominal">';
-          var quickNom = [];
-          if (sisa <= 100000) quickNom = [10000, 20000, 50000, 100000];
-          else if (sisa <= 500000) quickNom = [50000, 100000, 200000, 500000];
-          else if (sisa <= 1000000) quickNom = [100000, 200000, 500000, 1000000];
-          else quickNom = [100000, 500000, 1000000, 2000000];
-          for (var i = 0; i < quickNom.length; i++) {
-            if (quickNom[i] <= sisa) {
-              html += '<button type="button" class="btn-sm" onclick="document.getElementById(\'nominalBayarVendor\').value=' + quickNom[i] + ';document.getElementById(\'nominalBayarVendor\').dispatchEvent(\'input\');">' + formatRupiah(quickNom[i]) + '</button>';
-            }
-          }
-          html += '  <button type="button" class="btn-sm btn-lunas" onclick="document.getElementById(\'nominalBayarVendor\').value=' + sisa + ';document.getElementById(\'nominalBayarVendor\').dispatchEvent(\'input\');">💰 Lunas</button>';
-          html += '</div>';
-          html += '  <input type="number" id="nominalBayarVendor" min="1" max="' + sisa + '" placeholder="Masukkan nominal..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:1rem;font-weight:bold;" oninput="updateSisaBayarVendor(' + sisa + ')">';
-          html += '  <div style="margin-top:4px;font-size:0.85rem;color:#666;">Sisa setelah bayar: <strong id="sisaSetelahBayarVendor">' + formatRupiah(sisa) + '</strong></div>';
-          html += '</div>';
-          
-          html += '<div class="form-group">';
-          html += '  <label>📝 Catatan (opsional)</label>';
-          html += '  <textarea id="catatanBayarVendor" placeholder="Catatan pembayaran..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;min-height:50px;resize:vertical;"></textarea>';
-          html += '</div>';
-          
-          html += '<button class="btn btn-success btn-block" onclick="simpanPembayaranVendor(\'' + escapeHtml(x.noNota) + '\')" style="padding:14px;font-size:1.1rem;font-weight:700;border-radius:10px;">💾 Simpan Pembayaran</button>';
-          
-          document.getElementById('modalTitle').textContent = '💳 Bayar Hutang Vendor';
-          document.getElementById('modalContent').classList.add('large');
-          document.getElementById('modalBody').innerHTML = html;
-          document.getElementById('modal').classList.add('active');
-          
-          setTimeout(function() {
-            var input = document.getElementById('nominalBayarVendor');
-            if (input) { input.focus(); input.select(); }
-          }, 300);
-        })
-        .withFailureHandler(function(e) {
-          showToast('❌ ' + e.message, 'error');
-        })
-        .getDetailHutangVendor(noNota);
+        }
+        html += '  <button type="button" class="btn-sm btn-lunas" onclick="document.getElementById(\'nominalBayarVendor\').value=' + sisa + ';document.getElementById(\'nominalBayarVendor\').dispatchEvent(\'input\');">💰 Lunas</button>';
+        html += '</div>';
+        html += '  <input type="number" id="nominalBayarVendor" min="1" max="' + sisa + '" placeholder="Masukkan nominal..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:1rem;font-weight:bold;" oninput="updateSisaBayarVendor(' + sisa + ')">';
+        html += '  <div style="margin-top:4px;font-size:0.85rem;color:#666;">Sisa setelah bayar: <strong id="sisaSetelahBayarVendor">' + formatRupiah(sisa) + '</strong></div>';
+        html += '</div>';
+        
+        html += '<div class="form-group">';
+        html += '  <label>📝 Catatan (opsional)</label>';
+        html += '  <textarea id="catatanBayarVendor" placeholder="Catatan pembayaran..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;min-height:50px;resize:vertical;"></textarea>';
+        html += '</div>';
+        
+        html += '<button class="btn btn-success btn-block" onclick="simpanPembayaranVendor(\'' + escapeHtml(x.noNota) + '\')" style="padding:14px;font-size:1.1rem;font-weight:700;border-radius:10px;">💾 Simpan Pembayaran</button>';
+        
+        document.getElementById('modalTitle').textContent = '💳 Bayar Hutang Vendor';
+        document.getElementById('modalContent').classList.add('large');
+        document.getElementById('modalBody').innerHTML = html;
+        document.getElementById('modal').classList.add('active');
+        
+        setTimeout(function() {
+          var input = document.getElementById('nominalBayarVendor');
+          if (input) { input.focus(); input.select(); }
+        }, 300);
+      })
+      .catch(function(e) {
+        showToast('❌ ' + e.message, 'error');
+      });
     }
 
     function updateSisaBayarVendor(sisa) {
@@ -5825,94 +5562,92 @@
         btn.textContent = '⏳ Memproses...';
       }
       
-      google.script.run
-        .withSuccessHandler(function(r) {
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = '💾 Simpan Pembayaran';
-          }
-          if (r && r.success) {
-            showToast('✅ Pembayaran berhasil! Status: ' + r.status, 'success');
-            closeModal();
-            loadHutangVendor();
-            loadDashboard();
-          } else {
-            showToast('❌ ' + ((r && r.error) || 'Gagal menyimpan pembayaran'), 'error');
-          }
-        })
-        .withFailureHandler(function(e) {
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = '💾 Simpan Pembayaran';
-          }
-          showToast('❌ ' + e.message, 'error');
-        })
-        .simpanPembayaranVendor({
-          noNota: noNota,
-          tanggal: tanggal,
-          nominal: nominal,
-          catatan: catatan,
-          user: (currentUser && currentUser.nama) || '-'
-        });
+      callGAS('simpanPembayaranVendor', {
+        noNota: noNota,
+        tanggal: tanggal,
+        nominal: nominal,
+        catatan: catatan,
+        user: (currentUser && currentUser.nama) || '-'
+      })
+      .then(function(r) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '💾 Simpan Pembayaran';
+        }
+        if (r && r.success) {
+          showToast('✅ Pembayaran berhasil! Status: ' + r.status, 'success');
+          closeModal();
+          loadHutangVendor();
+          loadDashboard();
+        } else {
+          showToast('❌ ' + ((r && r.error) || 'Gagal menyimpan pembayaran'), 'error');
+        }
+      })
+      .catch(function(e) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '💾 Simpan Pembayaran';
+        }
+        showToast('❌ ' + e.message, 'error');
+      });
     }
 
     // ==================== RIWAYAT PEMBAYARAN ====================
     function lihatRiwayatPembayaranVendor(noNota) {
-      google.script.run
-        .withSuccessHandler(function(r) {
-          if (!r || !r.success) {
-            showToast((r && r.error) || 'Data tidak ditemukan', 'error');
-            return;
+      callGAS('getDetailHutangVendor', { noNota: noNota })
+      .then(function(r) {
+        if (!r || !r.success) {
+          showToast((r && r.error) || 'Data tidak ditemukan', 'error');
+          return;
+        }
+        
+        var x = r.data;
+        var rows = x.riwayat || [];
+        
+        var html = '';
+        html += '<div class="debt-modal-detail">';
+        html += '<div class="row">';
+        html += '  <div class="item"><span class="label">📄 No.Nota</span><span class="value">' + escapeHtml(x.noNota) + '</span></div>';
+        html += '  <div class="item"><span class="label">🏢 Vendor</span><span class="value">' + escapeHtml(x.pemasok) + '</span></div>';
+        html += '  <div class="item"><span class="label">💰 Total</span><span class="value">' + formatRupiah(x.totalNota) + '</span></div>';
+        html += '  <div class="item"><span class="label">✅ Dibayar</span><span class="value">' + formatRupiah(x.totalDibayar) + '</span></div>';
+        html += '  <div class="item" style="border-bottom:none;padding-bottom:0;"><span class="label">⚠️ Sisa</span><span class="value" style="color:' + (x.sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';font-weight:bold;">' + formatRupiah(x.sisaHutang) + '</span></div>';
+        html += '</div></div>';
+        
+        html += '<div style="margin-top:12px;"><strong>📋 Riwayat Pembayaran</strong> <span style="font-size:0.8rem;color:#666;">(' + rows.length + ' pembayaran)</span></div>';
+        if (rows.length === 0) {
+          html += '<div style="text-align:center;color:#999;padding:20px;">Belum ada pembayaran</div>';
+        } else {
+          html += '<div class="debt-riwayat-list">';
+          html += '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nominal</th><th>User</th><th>Catatan</th></tr></thead><tbody>';
+          for (var i = 0; i < rows.length; i++) {
+            var a = rows[i];
+            html += '<tr>' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + formatTanggalDisplay(a.tanggal) + '</td>' +
+              '<td style="font-weight:600;color:#2e7d32;">' + formatRupiah(a.nominal) + '</td>' +
+              '<td>' + escapeHtml(a.user || '-') + '</td>' +
+              '<td style="font-size:0.8rem;color:#666;">' + escapeHtml(a.catatan || '-') + '</td>' +
+              '</tr>';
           }
-          
-          var x = r.data;
-          var rows = x.riwayat || [];
-          
-          var html = '';
-          html += '<div class="debt-modal-detail">';
-          html += '<div class="row">';
-          html += '  <div class="item"><span class="label">📄 No.Nota</span><span class="value">' + escapeHtml(x.noNota) + '</span></div>';
-          html += '  <div class="item"><span class="label">🏢 Vendor</span><span class="value">' + escapeHtml(x.pemasok) + '</span></div>';
-          html += '  <div class="item"><span class="label">💰 Total</span><span class="value">' + formatRupiah(x.totalNota) + '</span></div>';
-          html += '  <div class="item"><span class="label">✅ Dibayar</span><span class="value">' + formatRupiah(x.totalDibayar) + '</span></div>';
-          html += '  <div class="item" style="border-bottom:none;padding-bottom:0;"><span class="label">⚠️ Sisa</span><span class="value" style="color:' + (x.sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';font-weight:bold;">' + formatRupiah(x.sisaHutang) + '</span></div>';
-          html += '</div></div>';
-          
-          html += '<div style="margin-top:12px;"><strong>📋 Riwayat Pembayaran</strong> <span style="font-size:0.8rem;color:#666;">(' + rows.length + ' pembayaran)</span></div>';
-          if (rows.length === 0) {
-            html += '<div style="text-align:center;color:#999;padding:20px;">Belum ada pembayaran</div>';
-          } else {
-            html += '<div class="debt-riwayat-list">';
-            html += '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nominal</th><th>User</th><th>Catatan</th></tr></thead><tbody>';
-            for (var i = 0; i < rows.length; i++) {
-              var a = rows[i];
-              html += '<tr>' +
-                '<td>' + (i + 1) + '</td>' +
-                '<td>' + formatTanggalDisplay(a.tanggal) + '</td>' +
-                '<td style="font-weight:600;color:#2e7d32;">' + formatRupiah(a.nominal) + '</td>' +
-                '<td>' + escapeHtml(a.user || '-') + '</td>' +
-                '<td style="font-size:0.8rem;color:#666;">' + escapeHtml(a.catatan || '-') + '</td>' +
-                '</tr>';
-            }
-            html += '</tbody></table></div>';
-          }
-          
-          html += '<div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">';
-          if (x.sisaHutang > 0) {
-            html += '<button class="btn btn-success" onclick="closeModal();bukaPembayaranVendor(\'' + escapeHtml(x.noNota) + '\');" style="flex:1;padding:12px;">💰 Bayar Lagi</button>';
-          }
-          html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:12px;">Tutup</button>';
-          html += '</div>';
-          
-          document.getElementById('modalTitle').textContent = '📋 Riwayat Pembayaran - ' + x.noNota;
-          document.getElementById('modalContent').classList.add('large');
-          document.getElementById('modalBody').innerHTML = html;
-          document.getElementById('modal').classList.add('active');
-        })
-        .withFailureHandler(function(e) {
-          showToast('❌ ' + e.message, 'error');
-        })
-        .getDetailHutangVendor(noNota);
+          html += '</tbody></table></div>';
+        }
+        
+        html += '<div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">';
+        if (x.sisaHutang > 0) {
+          html += '<button class="btn btn-success" onclick="closeModal();bukaPembayaranVendor(\'' + escapeHtml(x.noNota) + '\');" style="flex:1;padding:12px;">💰 Bayar Lagi</button>';
+        }
+        html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:12px;">Tutup</button>';
+        html += '</div>';
+        
+        document.getElementById('modalTitle').textContent = '📋 Riwayat Pembayaran - ' + x.noNota;
+        document.getElementById('modalContent').classList.add('large');
+        document.getElementById('modalBody').innerHTML = html;
+        document.getElementById('modal').classList.add('active');
+      })
+      .catch(function(e) {
+        showToast('❌ ' + e.message, 'error');
+      });
     }
 
     // ==================== SCANNER BARCODE ====================
@@ -5972,7 +5707,29 @@
       if (statusEl) statusEl.textContent = '📸 Meminta akses kamera...';
       var readerElement = document.getElementById('reader');
       if (readerElement) readerElement.innerHTML = '';
-      setTimeout(function() { initScanner(); }, 500);
+      
+      // Perbaikan: Request izin kamera secara eksplisit
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } })
+          .then(function(stream) {
+            stream.getTracks().forEach(function(t) { t.stop(); });
+            var statusEl = document.getElementById('scannerStatus');
+            if (statusEl) statusEl.textContent = '✅ Izin kamera diberikan, memulai scanner...';
+            setTimeout(function() { initScanner(); }, 300);
+          })
+          .catch(function(err) {
+            console.error('❌ Izin kamera ditolak:', err);
+            var statusEl = document.getElementById('scannerStatus');
+            if (statusEl) {
+              statusEl.innerHTML = '❌ Izin kamera ditolak!<br><small>Izinkan akses kamera di browser Anda.</small>';
+            }
+            showToast('❌ Izin kamera ditolak! Izinkan akses kamera.', 'error');
+            var manualInput = document.getElementById('scannerManualInput');
+            if (manualInput) manualInput.focus();
+          });
+      } else {
+        setTimeout(function() { initScanner(); }, 500);
+      }
     }
 
     function initScanner() {
