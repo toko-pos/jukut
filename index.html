@@ -1273,16 +1273,12 @@
               Dengan Laba
             </label>
           </div>
+
           <div class="filter-actions">
-            <div class="dropdown-excel">
-              <button class="btn btn-excel" onclick="toggleExcelDropdown()">📊 Excel ▼</button>
-              <div class="dropdown-content" id="excelDropdown">
-                <a onclick="exportTransaksiCSV('summary')">📊 Ringkasan (per Nota)</a>
-                <a onclick="exportTransaksiCSV('detail')">📋 Detail (per Item)</a>
-              </div>
-            </div>
+            <button class="btn btn-excel" onclick="exportTransaksiCSV()">📊 Excel</button>
             <button class="btn btn-orange" onclick="printTransaksiPreview()">🖨️ Print</button>
           </div>
+          
           <div class="filter-total" id="totalTransaksiDisplay">
             📊 Total: Transaksi: 0 | Quantity: 0 | Laba: Rp 0
           </div>
@@ -1351,16 +1347,12 @@
         <div class="vendor-debt-container">
           <div class="debt-header-actions">
             <h3>💳 Hutang Belanja ke Vendor</h3>
+            
             <div class="btn-group">
-              <button class="btn btn-info" onclick="loadHutangVendor()" style="padding:8px 16px;border-radius:8px;">🔄 Refresh</button>
-              <div class="dropdown-excel">
-                <button class="btn btn-excel" onclick="toggleExcelDropdownVendor()" style="padding:8px 16px;border-radius:8px;">📊 Excel ▼</button>
-                <div class="dropdown-content" id="excelDropdownVendor">
-                  <a onclick="exportHutangVendorCSV('summary')">📊 Ringkasan (per Nota)</a>
-                  <a onclick="exportHutangVendorCSV('detail')">📋 Detail (per Item)</a>
-                </div>
-              </div>
+                <button class="btn btn-info" onclick="loadHutangVendor()" style="padding:8px 16px;border-radius:8px;">🔄 Refresh</button>
+                <button class="btn btn-excel" onclick="exportHutangVendorCSV()" style="padding:8px 16px;border-radius:8px;">📊 Excel</button>
             </div>
+            
           </div>
           <div style="font-size:0.8rem;color:#6d86aa;margin-bottom:12px;">
             💡 Setiap Nota <strong>BELANJA PRODUK</strong> dapat dibayar berkali-kali sampai lunas
@@ -1936,27 +1928,7 @@ function loadAppLogo() {
 }
 
 // ==================== DROPDOWN EXCEL TOGGLE ====================
-function toggleExcelDropdown() {
-  var dropdown = document.getElementById('excelDropdown');
-  if (dropdown) {
-    dropdown.classList.toggle('show');
-    var other = document.getElementById('excelDropdownVendor');
-    if (other && other !== dropdown) other.classList.remove('show');
-    var otherStok = document.getElementById('excelDropdownStok');
-    if (otherStok && otherStok !== dropdown) otherStok.classList.remove('show');
-  }
-}
 
-function toggleExcelDropdownVendor() {
-  var dropdown = document.getElementById('excelDropdownVendor');
-  if (dropdown) {
-    dropdown.classList.toggle('show');
-    var other = document.getElementById('excelDropdown');
-    if (other) other.classList.remove('show');
-    var otherStok = document.getElementById('excelDropdownStok');
-    if (otherStok) otherStok.classList.remove('show');
-  }
-}
 
 function toggleExcelDropdownStok() {
   var dropdown = document.getElementById('excelDropdownStok');
@@ -2042,9 +2014,6 @@ function exportTransaksiCSV(type) {
     var role = currentUser ? currentUser.role : 'kasir';
     var namaUser = currentUser ? currentUser.nama : '';
     
-    var dropdown = document.getElementById('excelDropdown');
-    if (dropdown) dropdown.classList.remove('show');
-    
     callGAS('getTransaksiFilteredWithLaba', {
       tanggalMulai: tanggalMulai,
       tanggalSampai: tanggalSampai,
@@ -2064,49 +2033,59 @@ function exportTransaksiCSV(type) {
         return;
       }
       
-      var headers, exportData = [];
+      // HEADER - SEMUA DATA DALAM 1 FILE
+      var headers = ['No', 'Tanggal', 'Waktu', 'ID Transaksi', 'Kasir', 'Nama Pembeli', 'Total', 'Qty'];
+      if (showLaba) headers.push('Laba');
+      headers.push('Status', 'Pembayaran', 'Kembalian');
       
-      if (type === 'summary') {
-        headers = ['No', 'Tanggal', 'ID Transaksi', 'Kasir', 'Nama Pembeli', 'Total', 'Quantity'];
-        if (showLaba) headers.push('Laba');
-        headers.push('Status', 'Pembayaran', 'Kembalian');
+      var exportData = [];
+      var totalTransaksi = 0;
+      var totalQty = 0;
+      var totalLaba = 0;
+      
+      for (var i = 0; i < data.length; i++) {
+        var item = data[i];
+        var row = {
+          'No': i + 1,
+          'Tanggal': item.tanggal || '',
+          'Waktu': item.waktu || '',
+          'ID Transaksi': item.id || '',
+          'Kasir': item.kasir || '',
+          'Nama Pembeli': item.namaPembeli || '',
+          'Total': item.total || 0,
+          'Qty': item.qty || 0
+        };
+        if (showLaba) {
+          row['Laba'] = item.laba || 0;
+          totalLaba += item.laba;
+        }
+        row['Status'] = item.status || 'Selesai';
+        row['Pembayaran'] = item.pembayaran || 0;
+        row['Kembalian'] = item.kembalian || 0;
+        exportData.push(row);
         
-        for (var i = 0; i < data.length; i++) {
-          var item = data[i];
-          var row = {
-            'No': i + 1,
-            'Tanggal': item.tanggal || '',
-            'ID Transaksi': item.id || '',
-            'Kasir': item.kasir || '',
-            'Nama Pembeli': item.namaPembeli || '',
-            'Total': item.total || 0,
-            'Quantity': item.qty || 0
-          };
-          if (showLaba) row['Laba'] = item.laba || 0;
-          row['Status'] = item.status || 'Selesai';
-          row['Pembayaran'] = item.pembayaran || 0;
-          row['Kembalian'] = item.kembalian || 0;
-          exportData.push(row);
-        }
-      } else {
-        headers = ['No', 'Tanggal', 'ID Transaksi', 'Kasir', 'Nama Pembeli', 'Produk', 'Qty', 'Harga', 'Subtotal'];
-        for (var i = 0; i < data.length; i++) {
-          var item = data[i];
-          exportData.push({
-            'No': i + 1,
-            'Tanggal': item.tanggal || '',
-            'ID Transaksi': item.id || '',
-            'Kasir': item.kasir || '',
-            'Nama Pembeli': item.namaPembeli || '',
-            'Produk': '-',
-            'Qty': item.qty || 0,
-            'Harga': 0,
-            'Subtotal': item.total || 0
-          });
-        }
+        totalTransaksi++;
+        totalQty += item.qty || 0;
       }
       
-      var filename = 'Laporan_Transaksi_' + tanggalMulai + '_sampai_' + tanggalSampai + '_' + type;
+      // TAMBAHKAN BARIS TOTAL
+      var totalRow = {
+        'No': '',
+        'Tanggal': '',
+        'Waktu': '',
+        'ID Transaksi': 'TOTAL',
+        'Kasir': '',
+        'Nama Pembeli': '',
+        'Total': '',
+        'Qty': totalQty
+      };
+      if (showLaba) totalRow['Laba'] = totalLaba;
+      totalRow['Status'] = 'Transaksi: ' + totalTransaksi;
+      totalRow['Pembayaran'] = '';
+      totalRow['Kembalian'] = '';
+      exportData.push(totalRow);
+      
+      var filename = 'Laporan_Transaksi_' + tanggalMulai + '_sampai_' + tanggalSampai;
       downloadCSV(exportData, headers, filename);
     })
     .catch(function(error) {
@@ -2119,12 +2098,9 @@ function exportTransaksiCSV(type) {
   }
 }
 
-function exportHutangVendorCSV(type) {
+function exportHutangVendorCSV() {
   try {
     showToast('⏳ Memproses ekspor hutang vendor...', 'info');
-    
-    var dropdown = document.getElementById('excelDropdownVendor');
-    if (dropdown) dropdown.classList.remove('show');
     
     callGAS('getHutangVendor', {})
     .then(function(res) {
@@ -2138,43 +2114,133 @@ function exportHutangVendorCSV(type) {
         showToast('⚠️ Tidak ada data hutang vendor!', 'warning');
         return;
       }
+      var s = (res && res.summary) || { totalNota: 0, totalDibayar: 0, totalSisa: 0 };
       
-      var headers, exportData = [];
+      // ===== BAGIAN 1: SUMMARY =====
+      var summaryHeaders = ['Total Belanja', 'Total Dibayar', 'Total Sisa', 'Jumlah Nota', 'Lunas', 'Cicilan', 'Belum Bayar'];
+      var summaryData = [{
+        'Total Belanja': s.totalNota || 0,
+        'Total Dibayar': s.totalDibayar || 0,
+        'Total Sisa': s.totalSisa || 0,
+        'Jumlah Nota': data.length,
+        'Lunas': data.filter(function(x) { return x.status === 'LUNAS'; }).length,
+        'Cicilan': data.filter(function(x) { return x.status === 'CICILAN'; }).length,
+        'Belum Bayar': data.filter(function(x) { return x.status === 'BELUM BAYAR'; }).length
+      }];
       
-      if (type === 'summary') {
-        headers = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total Hutang', 'Total Dibayar', 'Sisa Hutang', 'Status', 'Persentase'];
-        for (var i = 0; i < data.length; i++) {
-          var x = data[i];
-          var progress = x.totalNota > 0 ? Math.round((x.totalDibayar / x.totalNota) * 100) : 0;
-          exportData.push({
-            'No': i + 1,
-            'No.Nota': x.noNota || '',
-            'Tanggal': x.tanggal || '',
-            'Vendor': x.pemasok || '',
-            'Total Hutang': x.totalNota || 0,
-            'Total Dibayar': x.totalDibayar || 0,
-            'Sisa Hutang': x.sisaHutang || 0,
-            'Status': x.status || '',
-            'Persentase': progress + '%'
-          });
-        }
-      } else {
-        headers = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total Hutang', 'Status'];
-        for (var i = 0; i < data.length; i++) {
-          var x = data[i];
-          exportData.push({
-            'No': i + 1,
-            'No.Nota': x.noNota || '',
-            'Tanggal': x.tanggal || '',
-            'Vendor': x.pemasok || '',
-            'Total Hutang': x.totalNota || 0,
-            'Status': x.status || ''
-          });
-        }
+      // ===== BAGIAN 2: DATA PER NOTA + RIWAYAT =====
+      var detailHeaders = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total', 'Dibayar', 'Sisa', 'Status', 'Tgl Bayar', 'Nominal Bayar', 'User', 'Catatan'];
+      var detailData = [];
+      var counter = 1;
+      
+      // Ambil riwayat untuk setiap nota
+      var riwayatPromises = [];
+      for (var i = 0; i < data.length; i++) {
+        var x = data[i];
+        // Gunakan closure untuk menyimpan data
+        (function(nota, index) {
+          riwayatPromises.push(
+            callGAS('getDetailHutangVendor', { noNota: nota.noNota })
+            .then(function(riwayatResult) {
+              var riwayat = (riwayatResult && riwayatResult.success && riwayatResult.data) ? 
+                            (riwayatResult.data.riwayatPembayaran || []) : [];
+              
+              // Jika tidak ada riwayat, tambahkan 1 baris
+              if (riwayat.length === 0) {
+                detailData.push({
+                  'No': index + 1,
+                  'No.Nota': nota.noNota,
+                  'Tanggal': nota.tanggal || '',
+                  'Vendor': nota.vendor || nota.pemasok || '-',
+                  'Total': nota.totalNota || 0,
+                  'Dibayar': nota.totalDibayar || 0,
+                  'Sisa': nota.sisaHutang || 0,
+                  'Status': nota.status || '',
+                  'Tgl Bayar': '',
+                  'Nominal Bayar': '',
+                  'User': '',
+                  'Catatan': ''
+                });
+              } else {
+                // Tampilkan nota + riwayat di bawahnya
+                for (var r = 0; r < riwayat.length; r++) {
+                  var row = {
+                    'No': (r === 0) ? (index + 1) : '',
+                    'No.Nota': (r === 0) ? nota.noNota : '',
+                    'Tanggal': (r === 0) ? (nota.tanggal || '') : '',
+                    'Vendor': (r === 0) ? (nota.vendor || nota.pemasok || '-') : '',
+                    'Total': (r === 0) ? (nota.totalNota || 0) : '',
+                    'Dibayar': (r === 0) ? (nota.totalDibayar || 0) : '',
+                    'Sisa': (r === 0) ? (nota.sisaHutang || 0) : '',
+                    'Status': (r === 0) ? (nota.status || '') : '',
+                    'Tgl Bayar': riwayat[r].tanggal || '',
+                    'Nominal Bayar': riwayat[r].nominal || 0,
+                    'User': riwayat[r].user || '',
+                    'Catatan': riwayat[r].catatan || ''
+                  };
+                  detailData.push(row);
+                }
+              }
+            })
+          );
+        })(x, i);
       }
       
-      var filename = 'Laporan_Hutang_Vendor_' + getTodayString() + '_' + type;
-      downloadCSV(exportData, headers, filename);
+      // Tunggu semua riwayat selesai
+      Promise.all(riwayatPromises)
+      .then(function() {
+        // Urutkan berdasarkan No
+        detailData.sort(function(a, b) {
+          var noA = parseInt(a['No']) || 0;
+          var noB = parseInt(b['No']) || 0;
+          return noA - noB;
+        });
+        
+        // Gabungkan data
+        var allData = [];
+        
+        // Tambahkan SUMMARY
+        var summaryRow = {};
+        for (var i = 0; i < summaryHeaders.length; i++) {
+          summaryRow[summaryHeaders[i]] = summaryData[0][summaryHeaders[i]] || '';
+        }
+        allData.push(summaryRow);
+        
+        // Tambahkan baris kosong sebagai pemisah
+        var emptyRow = {};
+        for (var i = 0; i < summaryHeaders.length; i++) {
+          emptyRow[summaryHeaders[i]] = '';
+        }
+        allData.push(emptyRow);
+        
+        // Tambahkan DATA PER NOTA + RIWAYAT
+        var detailHeadersWithPrefix = ['No', 'No.Nota', 'Tanggal', 'Vendor', 'Total', 'Dibayar', 'Sisa', 'Status', 'Tgl Bayar', 'Nominal Bayar', 'User', 'Catatan'];
+        
+        // Tambahkan header detail
+        var headerRow = {};
+        for (var i = 0; i < detailHeadersWithPrefix.length; i++) {
+          headerRow[detailHeadersWithPrefix[i]] = detailHeadersWithPrefix[i];
+        }
+        allData.push(headerRow);
+        
+        // Tambahkan data detail
+        for (var i = 0; i < detailData.length; i++) {
+          var row = {};
+          for (var j = 0; j < detailHeadersWithPrefix.length; j++) {
+            var key = detailHeadersWithPrefix[j];
+            row[key] = detailData[i][key] !== undefined ? detailData[i][key] : '';
+          }
+          allData.push(row);
+        }
+        
+        // Tentukan headers gabungan
+        var allHeaders = summaryHeaders.concat(detailHeadersWithPrefix);
+        
+        var filename = 'Laporan_Hutang_Vendor_' + getTodayString();
+        downloadCSV(allData, allHeaders, filename);
+        
+        showToast('✅ Laporan Hutang Vendor berhasil diunduh!', 'success');
+      });
     })
     .catch(function(error) {
       console.error('❌ Error exportHutangVendorCSV:', error);
