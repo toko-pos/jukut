@@ -2,12 +2,14 @@
 // SERVICE WORKER - PWA POS SYSTEM
 // ============================================================
 
-const CACHE_NAME = 'pos-app-v1';
+const CACHE_NAME = 'pos-app-v2';
+const BASE_PATH = '/jukut/'; // GANTI DENGAN NAMA REPO ANDA
+
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './iconbayamtabur.png',
+  BASE_PATH,
+  BASE_PATH + 'index.html',
+  BASE_PATH + 'manifest.json',
+  BASE_PATH + 'iconbayamtabur.png',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
   'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
 ];
@@ -66,22 +68,18 @@ self.addEventListener('fetch', function(event) {
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
-        // Return cached response if found
         if (response) {
           return response;
         }
         
-        // Clone the request
         var fetchRequest = event.request.clone();
         
         return fetch(fetchRequest)
           .then(function(response) {
-            // Check if we received a valid response
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
             
-            // Clone the response for caching
             var responseToCache = response.clone();
             
             caches.open(CACHE_NAME)
@@ -93,7 +91,8 @@ self.addEventListener('fetch', function(event) {
           })
           .catch(function(error) {
             console.log('❌ Fetch failed:', error);
-            return caches.match('./index.html');
+            // Coba ambil dari cache root
+            return caches.match(BASE_PATH + 'index.html');
           });
       })
   );
