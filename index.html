@@ -63,9 +63,10 @@
   box-shadow: 0 5px 25px rgba(0,0,0,0.12); 
   text-align: center;
 }
+/* ===== LOGIN LOGO - TANPA BACKGROUND, BAYANGAN, BORDER ===== */
 .login-container .app-logo {
-  width: 150px;
-  height: 150px;
+  width: 160px;
+  height: 160px;
   margin: 0 auto 15px;
   display: flex;
   align-items: center;
@@ -73,16 +74,22 @@
   background: transparent !important;
   border-radius: 0 !important;
   box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
   transition: transform 0.3s ease;
-  overflow: hidden;
+  overflow: visible;
 }
 .login-container .app-logo:hover {
   transform: scale(1.05);
 }
 .login-container .app-logo img {
-  width: 140px;
-  height: 140px;
+  width: 150px;
+  height: 150px;
   object-fit: contain;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 .login-container .app-logo .logo-text {
   display: none;
@@ -218,25 +225,35 @@
     /* ===== HEADER WITH LOGO ===== */
     .header { background: white; padding: 15px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .header .header-brand { display: flex; align-items: center; gap: 12px; }
-    .header .header-brand .brand-icon { 
-      width: 40px; 
-      height: 40px; 
-      border-radius: 10px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      background: linear-gradient(135deg, #4CAF50, #388E3C); 
-      color: white; 
-      font-size: 22px; 
-      font-weight: bold; 
-      flex-shrink: 0; 
-      overflow: hidden;
-    }
-    .header .header-brand .brand-icon img {
-      width: 32px;
-      height: 32px;
-      object-fit: contain;
-    }
+    /* ===== HEADER BRAND - TANPA BACKGROUND, BAYANGAN, BORDER ===== */
+.header .header-brand .brand-icon { 
+  width: 42px; 
+  height: 42px; 
+  border-radius: 0 !important; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  background: transparent !important;
+  color: white; 
+  font-size: 22px; 
+  font-weight: bold; 
+  flex-shrink: 0; 
+  overflow: visible;
+  border: none !important;
+  box-shadow: none !important;
+}
+.header .header-brand .brand-icon img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.header .header-brand .brand-icon .logo-text {
+  display: none;
+}
     .header h1 { font-size: 1.3rem; color: var(--primary); margin: 0; }
     .header-info { display: flex; align-items: center; gap: 15px; font-size: 0.9rem; flex-wrap: wrap; }
     .header-info .user-name { font-weight: bold; color: var(--primary); }
