@@ -1843,6 +1843,23 @@ function showToast(message, type) {
   }, 1500);
 }
 
+function showDebug(message) {
+  var debugEl = document.getElementById('debugInfo');
+  if (debugEl) {
+    debugEl.textContent = '🔍 ' + message;
+    debugEl.classList.add('show');
+    console.log('🔍 DEBUG:', message);
+  }
+}
+
+function hideDebug() {
+  var debugEl = document.getElementById('debugInfo');
+  if (debugEl) {
+    debugEl.classList.remove('show');
+  }
+}
+
+  
 function togglePasswordVisibility(inputId, button) {
   var input = document.getElementById(inputId);
   if (!input) return;
@@ -4916,7 +4933,7 @@ function lihatDetailLog(idTransaksi) {
 // ==================== PRODUK ====================
 function loadProdukWithRetry() {
   loadAttempts = 0;
-  hideDebug();
+  // Hapus panggilan hideDebug()
   loadProduk();
 }
 
@@ -4944,7 +4961,6 @@ function loadProduk() {
     
     if (produkList.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada produk</td></tr>';
-      showDebug('Tidak ada produk ditemukan di database.');
       return;
     }
     
@@ -4967,7 +4983,6 @@ function loadProduk() {
         '</tr>';
     }
     tbody.innerHTML = html;
-    hideDebug();
     console.log('✅ Produk berhasil ditampilkan: ' + produkList.length + ' produk');
   })
   .catch(function(error) {
@@ -4976,11 +4991,10 @@ function loadProduk() {
     if (tbody) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
     }
-    showDebug('Error: ' + error.message);
     showToast('❌ Gagal memuat produk: ' + error.message, 'error');
     
     if (loadAttempts < maxLoadAttempts) {
-      showDebug('Mencoba ulang dalam 2 detik... (attempt ' + (loadAttempts + 1) + ')');
+      console.log('Mencoba ulang dalam 2 detik... (attempt ' + (loadAttempts + 1) + ')');
       setTimeout(function() {
         loadProduk();
       }, 2000);
@@ -5992,6 +6006,13 @@ function simpanPembayaranVendor(noNota) {
 
 // ==================== RIWAYAT PEMBAYARAN ====================
 function lihatRiwayatPembayaranVendor(noNota) {
+  if (!noNota) {
+    showToast('⚠️ No.Nota tidak valid!', 'error');
+    return;
+  }
+  
+  showToast('⏳ Memuat riwayat pembayaran...', 'info');
+  
   callGAS('getDetailHutangVendor', { noNota: noNota })
   .then(function(r) {
     if (!r || !r.success) {
@@ -6000,32 +6021,41 @@ function lihatRiwayatPembayaranVendor(noNota) {
     }
     
     var x = r.data;
-    var rows = x.riwayat || [];
+    var rows = x.riwayatPembayaran || x.riwayat || [];
     
     var html = '';
     html += '<div class="debt-modal-detail">';
     html += '<div class="row">';
     html += '  <div class="item"><span class="label">📄 No.Nota</span><span class="value">' + escapeHtml(x.noNota) + '</span></div>';
-    html += '  <div class="item"><span class="label">🏢 Vendor</span><span class="value">' + escapeHtml(x.pemasok) + '</span></div>';
+    html += '  <div class="item"><span class="label">🏢 Vendor</span><span class="value">' + escapeHtml(x.vendor || x.pemasok || '-') + '</span></div>';
     html += '  <div class="item"><span class="label">💰 Total</span><span class="value">' + formatRupiah(x.totalNota) + '</span></div>';
     html += '  <div class="item"><span class="label">✅ Dibayar</span><span class="value">' + formatRupiah(x.totalDibayar) + '</span></div>';
     html += '  <div class="item" style="border-bottom:none;padding-bottom:0;"><span class="label">⚠️ Sisa</span><span class="value" style="color:' + (x.sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';font-weight:bold;">' + formatRupiah(x.sisaHutang) + '</span></div>';
     html += '</div></div>';
     
     html += '<div style="margin-top:12px;"><strong>📋 Riwayat Pembayaran</strong> <span style="font-size:0.8rem;color:#666;">(' + rows.length + ' pembayaran)</span></div>';
-    if (rows.length === 0) {
-      html += '<div style="text-align:center;color:#999;padding:20px;">Belum ada pembayaran</div>';
+    
+    if (!rows || rows.length === 0) {
+      html += '<div style="text-align:center;color:#999;padding:20px;border:1px solid #eee;border-radius:8px;margin-top:8px;">📭 Belum ada pembayaran</div>';
     } else {
-      html += '<div class="debt-riwayat-list">';
-      html += '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nominal</th><th>User</th><th>Catatan</th></tr></thead><tbody>';
+      html += '<div class="debt-riwayat-list" style="max-height:300px;overflow-y:auto;border:1px solid #e8ecf4;border-radius:8px;margin-top:8px;">';
+      html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
+      html += '<thead><tr style="background:#f0f4ff;">';
+      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">No</th>';
+      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Tanggal</th>';
+      html += '  <th style="padding:8px 12px;text-align:right;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Nominal</th>';
+      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">User</th>';
+      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Catatan</th>';
+      html += '</tr></thead><tbody>';
+      
       for (var i = 0; i < rows.length; i++) {
         var a = rows[i];
         html += '<tr>' +
-          '<td>' + (i + 1) + '</td>' +
-          '<td>' + formatTanggalDisplay(a.tanggal) + '</td>' +
-          '<td style="font-weight:600;color:#2e7d32;">' + formatRupiah(a.nominal) + '</td>' +
-          '<td>' + escapeHtml(a.user || '-') + '</td>' +
-          '<td style="font-size:0.8rem;color:#666;">' + escapeHtml(a.catatan || '-') + '</td>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + (i + 1) + '</td>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + formatTanggalDisplay(a.tanggal) + '</td>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;text-align:right;font-weight:600;color:#2e7d32;">' + formatRupiah(a.nominal || 0) + '</td>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + escapeHtml(a.user || '-') + '</td>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;font-size:0.8rem;color:#666;">' + escapeHtml(a.catatan || '-') + '</td>' +
           '</tr>';
       }
       html += '</tbody></table></div>';
@@ -6033,9 +6063,9 @@ function lihatRiwayatPembayaranVendor(noNota) {
     
     html += '<div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">';
     if (x.sisaHutang > 0) {
-      html += '<button class="btn btn-success" onclick="closeModal();bukaPembayaranVendor(\'' + escapeHtml(x.noNota) + '\');" style="flex:1;padding:12px;">💰 Bayar Lagi</button>';
+      html += '<button class="btn btn-success" onclick="closeModal();bukaPembayaranVendor(\'' + escapeHtml(x.noNota) + '\');" style="flex:1;padding:12px;font-weight:700;border-radius:8px;border:none;cursor:pointer;">💰 Bayar Lagi</button>';
     }
-    html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:12px;">Tutup</button>';
+    html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:12px;font-weight:700;border-radius:8px;border:none;cursor:pointer;background:#2196F3;color:white;">Tutup</button>';
     html += '</div>';
     
     document.getElementById('modalTitle').textContent = '📋 Riwayat Pembayaran - ' + x.noNota;
@@ -6044,6 +6074,7 @@ function lihatRiwayatPembayaranVendor(noNota) {
     document.getElementById('modal').classList.add('active');
   })
   .catch(function(e) {
+    console.error('❌ Error lihatRiwayatPembayaranVendor:', e);
     showToast('❌ ' + e.message, 'error');
   });
 }
