@@ -39,6 +39,10 @@ self.addEventListener('activate', function(event) {
 
 // ===== FETCH =====
 self.addEventListener('fetch', function(event) {
+
+if (event.request.url.indexOf('script.google.com') > -1) return;
+  if (event.request.url.indexOf('chrome-extension') > -1) return;
+  
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
