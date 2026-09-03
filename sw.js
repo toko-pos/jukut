@@ -2,7 +2,7 @@
 // SERVICE WORKER - PWA POS SYSTEM
 // ============================================================
 
-const CACHE_NAME = 'pos-app-v2';
+const CACHE_NAME = 'pos-app-v1';
 const urlsToCache = [
   './',
   './index.html',
@@ -63,14 +63,6 @@ self.addEventListener('fetch', function(event) {
     return;
   }
   
-  // Skip external requests (CDN)
-  if (event.request.url.indexOf('cdn.jsdelivr.net') > -1) {
-    return;
-  }
-  if (event.request.url.indexOf('unpkg.com') > -1) {
-    return;
-  }
-  
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
@@ -89,7 +81,7 @@ self.addEventListener('fetch', function(event) {
               return response;
             }
             
-            // Clone the response
+            // Clone the response for caching
             var responseToCache = response.clone();
             
             caches.open(CACHE_NAME)
@@ -101,35 +93,9 @@ self.addEventListener('fetch', function(event) {
           })
           .catch(function(error) {
             console.log('❌ Fetch failed:', error);
-            // Return offline page if available
             return caches.match('./index.html');
           });
       })
-  );
-});
-
-// ===== PUSH NOTIFICATION =====
-self.addEventListener('push', function(event) {
-  var options = {
-    body: event.data ? event.data.text() : 'Ada notifikasi baru!',
-    icon: './iconbayamtabur.png',
-    badge: './iconbayamtabur.png',
-    vibrate: [200, 100, 200],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    }
-  };
-  event.waitUntil(
-    self.registration.showNotification('POS System', options)
-  );
-});
-
-// ===== NOTIFICATION CLICK =====
-self.addEventListener('notificationclick', function(event) {
-  event.notification.close();
-  event.waitUntil(
-    clients.openWindow('./')
   );
 });
 
