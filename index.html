@@ -53,7 +53,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxUczlAyAwrf30GGz8ZN9AqOKdjYeM1KrAmM4sSs0hrjVzpKwA5zXc1ACeIeX9osMj0qQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyH4PEiut5m4QxzyX5HZwhkffjuqYf7OL3VJp0G8tH-n1UnbbVw6Zfij7PggcsQXvEz8g/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -3146,9 +3146,16 @@ function loadDashboard() {
 // ==================== LOAD CHART ====================
 function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
   try {
-    // AMBIL TAHUN DARI TANGGAL
-    var dateParts = tanggal.split('-');
-    var tahun = dateParts[0] || '2026';
+    // AMBIL TAHUN DARI TANGGAL (atau gunakan tahun sekarang)
+    var tahun = new Date().getFullYear().toString();
+    
+    // Jika ada tanggal, ambil tahun dari tanggal
+    if (tanggal && tanggal !== '') {
+      var dateParts = tanggal.split('-');
+      if (dateParts.length === 3) {
+        tahun = dateParts[0];
+      }
+    }
     
     var legendEl = document.getElementById('bulananLegend');
     var totalEl = document.getElementById('bulananTotal');
@@ -3158,9 +3165,8 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
     
     console.log('📊 loadBulananChart - Tahun:', tahun, 'Kasir:', kasirFilter);
     
-    // KIRIM TAHUN, BULAN TIDAK DIPAKAI (KARENA AMBIL SEMUA BULAN)
     callGAS('getPenjualanBulananPerKasir', {
-      bulan: '01', // TIDAK DIPAKAI
+      bulan: '01', // Tidak dipakai
       tahun: tahun,
       kasirFilter: kasirFilter,
       namaUser: namaUser,
