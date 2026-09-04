@@ -3315,25 +3315,32 @@ function loadKasirList() {
 
 // ==================== UPDATE HEADER INFO ====================
 function updateHeaderInfo() {
+  console.log('🔄 updateHeaderInfo() dipanggil');
+  
   callGAS('getInfoToko', {})
   .then(function(result) {
-    console.log('📥 updateHeaderInfo result:', result);
+    console.log('📥 Result updateHeaderInfo:', JSON.stringify(result));
+    
     if (result && result.success && result.data && result.data.namaToko) {
       var header = document.getElementById('headerTitle');
       if (header) {
         header.textContent = '🛒 ' + result.data.namaToko;
+        console.log('✅ Header diupdate:', header.textContent);
       }
+      
       var loginTitle = document.getElementById('loginTitle');
       if (loginTitle) {
         loginTitle.textContent = '🛒 ' + result.data.namaToko;
       }
-      // 🔥 TAMBAHKAN: update juga form di profile
+      
+      // 🔥 UPDATE FORM DI PROFILE JUGA
       var fn = document.getElementById('fNamaToko');
       var fa = document.getElementById('fAlamatToko');
       var fh = document.getElementById('fNoHp');
       if (fn && result.data.namaToko) fn.value = result.data.namaToko;
       if (fa && result.data.alamat) fa.value = result.data.alamat;
       if (fh && result.data.noHp) fh.value = result.data.noHp;
+      
     } else {
       console.warn('⚠️ Tidak ada data toko dari server');
     }
@@ -5864,6 +5871,7 @@ function loadProfile() {
     
     console.log('🔄 Memuat profil untuk user:', currentUser.username);
     
+    // Isi data user
     var el1 = document.getElementById('profileUsernameDisplay');
     var el2 = document.getElementById('profileNamaDisplay');
     var el3 = document.getElementById('profileRoleDisplay');
@@ -5874,24 +5882,45 @@ function loadProfile() {
     if (el3) el3.textContent = currentUser.role || '-';
     if (el4) el4.textContent = currentUser.username || '-';
     
-    // 🔥 PERBAIKI: Panggil getInfoToko dan isi form
+    // 🔥 AMBIL DATA TOKO DARI SERVER
+    console.log('🔄 Memanggil getInfoToko...');
     callGAS('getInfoToko', {})
     .then(function(result) {
-      console.log('📥 Result getInfoToko:', result);
+      console.log('📥 Result getInfoToko:', JSON.stringify(result));
+      
       if (result && result.success && result.data) {
         var fn = document.getElementById('fNamaToko');
         var fa = document.getElementById('fAlamatToko');
         var fh = document.getElementById('fNoHp');
-        if (fn) fn.value = result.data.namaToko || '';
-        if (fa) fa.value = result.data.alamat || '';
-        if (fh) fh.value = result.data.noHp || '';
-        console.log('✅ Info toko dimuat:', {
-          namaToko: result.data.namaToko,
-          alamat: result.data.alamat,
-          noHp: result.data.noHp
-        });
+        
+        if (fn) {
+          fn.value = result.data.namaToko || '';
+          console.log('✅ fNamaToko diisi:', result.data.namaToko);
+        }
+        if (fa) {
+          fa.value = result.data.alamat || '';
+          console.log('✅ fAlamatToko diisi:', result.data.alamat);
+        }
+        if (fh) {
+          fh.value = result.data.noHp || '';
+          console.log('✅ fNoHp diisi:', result.data.noHp);
+        }
+        
+        // 🔥 UPDATE HEADER JUGA
+        var headerTitle = document.getElementById('headerTitle');
+        if (headerTitle && result.data.namaToko) {
+          headerTitle.textContent = '🛒 ' + result.data.namaToko;
+        }
+        
+        var loginTitle = document.getElementById('loginTitle');
+        if (loginTitle && result.data.namaToko) {
+          loginTitle.textContent = '🛒 ' + result.data.namaToko;
+        }
+        
+        showToast('✅ Data toko dimuat!', 'success');
       } else {
         console.warn('⚠️ Tidak ada data toko:', result);
+        showToast('⚠️ Data toko kosong', 'warning');
       }
     })
     .catch(function(error) {
@@ -5904,86 +5933,6 @@ function loadProfile() {
     showToast('❌ Gagal memuat profil: ' + e.message, 'error');
   }
 }
-
-document.getElementById('formToko').addEventListener('submit', function(e) {
-  e.preventDefault();
-  var namaToko = document.getElementById('fNamaToko').value.trim();
-  var alamat = document.getElementById('fAlamatToko').value.trim();
-  var noHp = document.getElementById('fNoHp').value.trim();
-  
-  var btn = this.querySelector('button[type="submit"]');
-  btn.textContent = '⏳ Menyimpan...';
-  btn.disabled = true;
-  
-  callGAS('saveInfoToko', {
-    namaToko: namaToko,
-    alamat: alamat,
-    noHp: noHp
-  })
-  .then(function(result) {
-    btn.textContent = '💾 Simpan Informasi Toko';
-    btn.disabled = false;
-    if (result && result.success) {
-      showToast('✅ Informasi toko berhasil disimpan!', 'success');
-      updateHeaderInfo();
-      localStorage.setItem('info_toko', JSON.stringify({ namaToko: namaToko, alamat: alamat, noHp: noHp }));
-    } else {
-      showToast('❌ ' + (result ? result.message : 'Gagal menyimpan!'), 'error');
-    }
-  })
-  .catch(function(error) {
-    btn.textContent = '💾 Simpan Informasi Toko';
-    btn.disabled = false;
-    showToast('❌ Error: ' + error.message, 'error');
-  });
-});
-
-document.getElementById('formGantiPassword').addEventListener('submit', function(e) {
-  e.preventDefault();
-  var passwordLama = document.getElementById('fPasswordLama').value.trim();
-  var passwordBaru = document.getElementById('fPasswordBaru').value.trim();
-  var passwordBaruKonfirmasi = document.getElementById('fPasswordBaruKonfirmasi').value.trim();
-  
-  if (!passwordLama || !passwordBaru || !passwordBaruKonfirmasi) {
-    showToast('Semua field wajib diisi!', 'error');
-    return;
-  }
-  if (passwordBaru.length < 6) {
-    showToast('Password baru minimal 6 karakter!', 'error');
-    return;
-  }
-  if (passwordBaru !== passwordBaruKonfirmasi) {
-    showToast('Konfirmasi password tidak cocok!', 'error');
-    return;
-  }
-  
-  var btn = this.querySelector('button[type="submit"]');
-  btn.textContent = '⏳ Memproses...';
-  btn.disabled = true;
-  
-  callGAS('changePassword', {
-    username: currentUser.username,
-    passwordLama: passwordLama,
-    passwordBaru: passwordBaru
-  })
-  .then(function(result) {
-    btn.textContent = '🔑 Ganti Password';
-    btn.disabled = false;
-    if (result && result.success) {
-      showToast('✅ Password berhasil diubah!', 'success');
-      document.getElementById('fPasswordLama').value = '';
-      document.getElementById('fPasswordBaru').value = '';
-      document.getElementById('fPasswordBaruKonfirmasi').value = '';
-    } else {
-      showToast('❌ ' + (result ? result.message : 'Gagal mengubah password!'), 'error');
-    }
-  })
-  .catch(function(error) {
-    btn.textContent = '🔑 Ganti Password';
-    btn.disabled = false;
-    showToast('❌ Error: ' + error.message, 'error');
-  });
-});
 
 // ==================== CHECKOUT (POS) ====================
 function checkout() {
