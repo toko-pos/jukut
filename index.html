@@ -39,7 +39,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbz7urFEjW2UgwyJjrzY75uD48whO6mFj4oDP3IsPGzPX6Iev2IQICWMuAEOYnBVUEjUSw/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycby2HDq6dORnEeGyJrSOHNxXu5-VZmXHOUxuIzh47oo2px4_I69qhDR5LALt9871dvLBMQ/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -5869,68 +5869,77 @@ function loadProfile() {
       return;
     }
     
-    console.log('🔄 Memuat profil untuk user:', currentUser.username);
+    console.log('🔄 loadProfile() dipanggil');
     
     // Isi data user
-    var el1 = document.getElementById('profileUsernameDisplay');
-    var el2 = document.getElementById('profileNamaDisplay');
-    var el3 = document.getElementById('profileRoleDisplay');
-    var el4 = document.getElementById('profileUsername');
+    document.getElementById('profileUsernameDisplay').textContent = currentUser.username || '-';
+    document.getElementById('profileNamaDisplay').textContent = currentUser.nama || '-';
+    document.getElementById('profileRoleDisplay').textContent = currentUser.role || '-';
+    document.getElementById('profileUsername').textContent = currentUser.username || '-';
     
-    if (el1) el1.textContent = currentUser.username || '-';
-    if (el2) el2.textContent = currentUser.nama || '-';
-    if (el3) el3.textContent = currentUser.role || '-';
-    if (el4) el4.textContent = currentUser.username || '-';
-    
-    // 🔥 AMBIL DATA TOKO DARI SERVER
-    console.log('🔄 Memanggil getInfoToko...');
+    // 🔥 AMBIL DATA TOKO
     callGAS('getInfoToko', {})
     .then(function(result) {
-      console.log('📥 Result getInfoToko:', JSON.stringify(result));
+      console.log('📥 Result:', result);
       
-      if (result && result.success && result.data) {
+      // 🔥 CEK APAKAH result.data ADALAH STRING JSON
+      var data = result.data;
+      if (typeof data === 'string') {
+        console.log('⚠️ data adalah string, parsing...');
+        data = JSON.parse(data);
+      }
+      
+      console.log('📊 Data setelah parsing:', data);
+      
+      if (result && result.success && data) {
+        // 🔥 AMBIL DATA
+        var namaToko = data.namaToko || data.NamaToko || data.nama || data['Nama Toko'] || '';
+        var alamat = data.alamat || data.Alamat || data['Alamat'] || '';
+        var noHp = data.noHp || data.NoHP || data.noHP || data['No HP'] || data.telepon || '';
+        
+        console.log('📝 Hasil:');
+        console.log('  Nama Toko:', namaToko);
+        console.log('  Alamat:', alamat);
+        console.log('  No HP:', noHp);
+        
+        // Isi form
         var fn = document.getElementById('fNamaToko');
         var fa = document.getElementById('fAlamatToko');
         var fh = document.getElementById('fNoHp');
         
         if (fn) {
-          fn.value = result.data.namaToko || '';
-          console.log('✅ fNamaToko diisi:', result.data.namaToko);
+          fn.value = namaToko;
+          console.log('✅ fNamaToko diisi:', fn.value);
         }
         if (fa) {
-          fa.value = result.data.alamat || '';
-          console.log('✅ fAlamatToko diisi:', result.data.alamat);
+          fa.value = alamat;
+          console.log('✅ fAlamatToko diisi:', fa.value);
         }
         if (fh) {
-          fh.value = result.data.noHp || '';
-          console.log('✅ fNoHp diisi:', result.data.noHp);
+          fh.value = noHp;
+          console.log('✅ fNoHp diisi:', fh.value);
         }
         
-        // 🔥 UPDATE HEADER JUGA
-        var headerTitle = document.getElementById('headerTitle');
-        if (headerTitle && result.data.namaToko) {
-          headerTitle.textContent = '🛒 ' + result.data.namaToko;
+        // Update header
+        if (namaToko) {
+          var headerTitle = document.getElementById('headerTitle');
+          if (headerTitle) headerTitle.textContent = '🛒 ' + namaToko;
         }
         
-        var loginTitle = document.getElementById('loginTitle');
-        if (loginTitle && result.data.namaToko) {
-          loginTitle.textContent = '🛒 ' + result.data.namaToko;
+        if (fn && fn.value) {
+          showToast('✅ Data toko dimuat: ' + fn.value, 'success');
         }
-        
-        showToast('✅ Data toko dimuat!', 'success');
       } else {
-        console.warn('⚠️ Tidak ada data toko:', result);
         showToast('⚠️ Data toko kosong', 'warning');
       }
     })
     .catch(function(error) {
-      console.error('❌ Error getInfoToko:', error);
-      showToast('⚠️ Gagal memuat info toko: ' + error.message, 'error');
+      console.error('❌ Error:', error);
+      showToast('⚠️ Gagal memuat data toko', 'error');
     });
-      
+    
   } catch (e) {
     console.error('❌ Error loadProfile:', e);
-    showToast('❌ Gagal memuat profil: ' + e.message, 'error');
   }
 }
 
