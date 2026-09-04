@@ -3319,30 +3319,32 @@ function updateHeaderInfo() {
   
   callGAS('getInfoToko', {})
   .then(function(result) {
-    console.log('📥 Result updateHeaderInfo:', JSON.stringify(result));
+    console.log('📥 Result updateHeaderInfo:', result);
     
-    if (result && result.success && result.data && result.data.namaToko) {
-      var header = document.getElementById('headerTitle');
-      if (header) {
-        header.textContent = '🛒 ' + result.data.namaToko;
-        console.log('✅ Header diupdate:', header.textContent);
+    if (result && result.success) {
+      // 🔥 AMBIL DARI result.data.data
+      var data = result.data.data || result.data;
+      
+      if (data && data.namaToko) {
+        var header = document.getElementById('headerTitle');
+        if (header) {
+          header.textContent = '🛒 ' + data.namaToko;
+          console.log('✅ Header diupdate:', header.textContent);
+        }
+        
+        var loginTitle = document.getElementById('loginTitle');
+        if (loginTitle) {
+          loginTitle.textContent = '🛒 ' + data.namaToko;
+        }
+        
+        // 🔥 UPDATE FORM DI PROFILE (jika sudah terbuka)
+        var fn = document.getElementById('fNamaToko');
+        var fa = document.getElementById('fAlamatToko');
+        var fh = document.getElementById('fNoHp');
+        if (fn) fn.value = data.namaToko || '';
+        if (fa) fa.value = data.alamat || '';
+        if (fh) fh.value = data.noHp || '';
       }
-      
-      var loginTitle = document.getElementById('loginTitle');
-      if (loginTitle) {
-        loginTitle.textContent = '🛒 ' + result.data.namaToko;
-      }
-      
-      // 🔥 UPDATE FORM DI PROFILE JUGA
-      var fn = document.getElementById('fNamaToko');
-      var fa = document.getElementById('fAlamatToko');
-      var fh = document.getElementById('fNoHp');
-      if (fn && result.data.namaToko) fn.value = result.data.namaToko;
-      if (fa && result.data.alamat) fa.value = result.data.alamat;
-      if (fh && result.data.noHp) fh.value = result.data.noHp;
-      
-    } else {
-      console.warn('⚠️ Tidak ada data toko dari server');
     }
   })
   .catch(function(error) {
@@ -5869,77 +5871,88 @@ function loadProfile() {
       return;
     }
     
-    console.log('🔄 loadProfile() dipanggil');
+    console.log('🔄 loadProfile() dipanggil untuk:', currentUser.username);
     
     // Isi data user
-    document.getElementById('profileUsernameDisplay').textContent = currentUser.username || '-';
-    document.getElementById('profileNamaDisplay').textContent = currentUser.nama || '-';
-    document.getElementById('profileRoleDisplay').textContent = currentUser.role || '-';
-    document.getElementById('profileUsername').textContent = currentUser.username || '-';
+    var el1 = document.getElementById('profileUsernameDisplay');
+    var el2 = document.getElementById('profileNamaDisplay');
+    var el3 = document.getElementById('profileRoleDisplay');
+    var el4 = document.getElementById('profileUsername');
+    
+    if (el1) el1.textContent = currentUser.username || '-';
+    if (el2) el2.textContent = currentUser.nama || '-';
+    if (el3) el3.textContent = currentUser.role || '-';
+    if (el4) el4.textContent = currentUser.username || '-';
     
     // 🔥 AMBIL DATA TOKO
+    console.log('🔄 Memanggil getInfoToko...');
+    
     callGAS('getInfoToko', {})
     .then(function(result) {
       console.log('📥 Result:', result);
       
-      // 🔥 CEK APAKAH result.data ADALAH STRING JSON
-      var data = result.data;
-      if (typeof data === 'string') {
-        console.log('⚠️ data adalah string, parsing...');
-        data = JSON.parse(data);
-      }
-      
-      console.log('📊 Data setelah parsing:', data);
-      
-      if (result && result.success && data) {
-        // 🔥 AMBIL DATA
-        var namaToko = data.namaToko || data.NamaToko || data.nama || data['Nama Toko'] || '';
-        var alamat = data.alamat || data.Alamat || data['Alamat'] || '';
-        var noHp = data.noHp || data.NoHP || data.noHP || data['No HP'] || data.telepon || '';
+      if (result && result.success) {
+        // 🔥 AMBIL DARI result.data.data
+        var data = result.data.data || result.data;
         
-        console.log('📝 Hasil:');
-        console.log('  Nama Toko:', namaToko);
-        console.log('  Alamat:', alamat);
-        console.log('  No HP:', noHp);
+        console.log('📊 Data toko:', data);
         
-        // Isi form
+        // Ambil elemen form
         var fn = document.getElementById('fNamaToko');
         var fa = document.getElementById('fAlamatToko');
         var fh = document.getElementById('fNoHp');
         
+        // 🔥 ISI FORM
+        var namaToko = data.namaToko || '';
+        var alamat = data.alamat || '';
+        var noHp = data.noHp || '';
+        
+        console.log('📝 Data yang akan diisi:');
+        console.log('  Nama Toko:', namaToko);
+        console.log('  Alamat:', alamat);
+        console.log('  No HP:', noHp);
+        
         if (fn) {
           fn.value = namaToko;
-          console.log('✅ fNamaToko diisi:', fn.value);
+          console.log('✅ fNamaToko diisi: "' + fn.value + '"');
         }
         if (fa) {
           fa.value = alamat;
-          console.log('✅ fAlamatToko diisi:', fa.value);
+          console.log('✅ fAlamatToko diisi: "' + fa.value + '"');
         }
         if (fh) {
           fh.value = noHp;
-          console.log('✅ fNoHp diisi:', fh.value);
+          console.log('✅ fNoHp diisi: "' + fh.value + '"');
         }
         
-        // Update header
+        // 🔥 UPDATE HEADER
         if (namaToko) {
           var headerTitle = document.getElementById('headerTitle');
           if (headerTitle) headerTitle.textContent = '🛒 ' + namaToko;
+          
+          var loginTitle = document.getElementById('loginTitle');
+          if (loginTitle) loginTitle.textContent = '🛒 ' + namaToko;
         }
         
+        // 🔥 TAMPILKAN NOTIFIKASI
         if (fn && fn.value) {
           showToast('✅ Data toko dimuat: ' + fn.value, 'success');
+        } else {
+          showToast('⚠️ Data toko kosong', 'warning');
         }
       } else {
-        showToast('⚠️ Data toko kosong', 'warning');
+        console.error('❌ Result error:', result);
+        showToast('⚠️ Gagal memuat data toko', 'error');
       }
     })
     .catch(function(error) {
-      console.error('❌ Error:', error);
-      showToast('⚠️ Gagal memuat data toko', 'error');
+      console.error('❌ Error getInfoToko:', error);
+      showToast('⚠️ Gagal memuat info toko: ' + error.message, 'error');
     });
-    
+      
   } catch (e) {
     console.error('❌ Error loadProfile:', e);
+    showToast('❌ Gagal memuat profil: ' + e.message, 'error');
   }
 }
 
