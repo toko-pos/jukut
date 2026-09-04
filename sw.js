@@ -1,9 +1,9 @@
 // ============================================================
-// SERVICE WORKER - PWA POS SYSTEM
+// SERVICE WORKER - PWA POS SYSTEM (TOKO + RESELLER)
 // ============================================================
 
 const CACHE_NAME = 'pos-app-v2';
-const BASE_PATH = '/jukut/'; // GANTI DENGAN NAMA REPO ANDA
+const BASE_PATH = '/'; // GANTI DENGAN PATH APLIKASI ANDA
 
 const urlsToCache = [
   BASE_PATH,
@@ -29,6 +29,7 @@ self.addEventListener('install', function(event) {
       })
       .catch(function(err) {
         console.error('❌ Cache failed:', err);
+        return self.skipWaiting();
       })
   );
 });
@@ -59,39 +60,43 @@ self.addEventListener('fetch', function(event) {
   if (event.request.url.indexOf('script.google.com') > -1) {
     return;
   }
-  
+
   // Skip chrome-extension requests
   if (event.request.url.indexOf('chrome-extension') > -1) {
     return;
   }
-  
+
+  // Skip POST requests (API calls)
+  if (event.request.method === 'POST') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
         if (response) {
           return response;
         }
-        
+
         var fetchRequest = event.request.clone();
-        
+
         return fetch(fetchRequest)
           .then(function(response) {
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-            
+
             var responseToCache = response.clone();
-            
+
             caches.open(CACHE_NAME)
               .then(function(cache) {
                 cache.put(event.request, responseToCache);
               });
-            
+
             return response;
           })
           .catch(function(error) {
             console.log('❌ Fetch failed:', error);
-            // Coba ambil dari cache root
             return caches.match(BASE_PATH + 'index.html');
           });
       })
