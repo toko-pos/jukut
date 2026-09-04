@@ -4086,53 +4086,43 @@ function updateStokGridPOS() {
         stockEl.className = 'stock ' + stockClass;
       }
       
-      // Hapus badge "HABIS" lama (kecuali badge tanggal)
+      // Hapus semua badge lama
       var badges = item.querySelectorAll('.badge-out-of-stock');
       for (var b = 0; b < badges.length; b++) {
-        if (badges[b].textContent !== '📅 Pilih Tanggal') {
-          badges[b].remove();
-        }
+        badges[b].remove();
       }
       
-      var hasDateBadge = item.querySelector('.badge-out-of-stock');
-      
       // ============================================================
-      // ⭐ LOGIKA DISABLE - SAMA SEPERTI TAB STOK
+      // ⭐ LOGIKA DISABLE UNTUK TAB POS
       // ============================================================
       
-      // CEK 1: Jika stok habis
-      if (stokTampil <= 0) {
-        if (!hasDateBadge || hasDateBadge.textContent !== '📅 Pilih Tanggal') {
-          var newBadge = document.createElement('div');
-          newBadge.className = 'badge-out-of-stock';
-          newBadge.textContent = '⛔ HABIS';
-          item.appendChild(newBadge);
-        }
-        item.classList.add('disabled');
-        item.classList.add('pos-disabled');
-        item.style.pointerEvents = 'none';
-        item.style.cursor = 'not-allowed';
-      } 
-      // ⭐ CEK 2: Jika BELUM pilih tanggal (TAMBAHKAN INI!)
-      else if (!hasDate) {
-        if (!hasDateBadge || hasDateBadge.textContent !== '📅 Pilih Tanggal') {
-          var dateBadge = document.createElement('div');
-          dateBadge.className = 'badge-out-of-stock';
-          dateBadge.textContent = '📅 Pilih Tanggal';
-          dateBadge.style.background = '#ff9800';
-          item.appendChild(dateBadge);
-        }
+      // CEK 1: Jika BELUM pilih tanggal -> DISABLED (prioritas utama)
+      if (!hasDate) {
+        var dateBadge = document.createElement('div');
+        dateBadge.className = 'badge-out-of-stock';
+        dateBadge.textContent = '📅 Pilih Tanggal';
+        dateBadge.style.background = '#ff9800';
+        item.appendChild(dateBadge);
+        
         item.classList.add('pos-disabled');
         item.style.pointerEvents = 'none';
         item.style.cursor = 'not-allowed';
         item.classList.remove('disabled');
       } 
+      // CEK 2: Jika stok habis (dan sudah pilih tanggal) -> DISABLED
+      else if (stokTampil <= 0) {
+        var newBadge = document.createElement('div');
+        newBadge.className = 'badge-out-of-stock';
+        newBadge.textContent = '⛔ HABIS';
+        item.appendChild(newBadge);
+        
+        item.classList.add('disabled');
+        item.classList.add('pos-disabled');
+        item.style.pointerEvents = 'none';
+        item.style.cursor = 'not-allowed';
+      } 
       // CEK 3: Stok > 0 DAN sudah pilih tanggal -> AKTIF
       else {
-        var habisBadges = item.querySelectorAll('.badge-out-of-stock');
-        for (var b = 0; b < habisBadges.length; b++) {
-          habisBadges[b].remove();
-        }
         item.classList.remove('disabled');
         item.classList.remove('pos-disabled');
         item.style.pointerEvents = '';
