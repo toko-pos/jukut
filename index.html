@@ -4027,6 +4027,9 @@ function updateStokGridPOS() {
       return;
     }
     
+    // ⭐ AMBIL STATUS TANGGAL
+    var hasDate = getTanggalTransaksi() !== '';
+    
     var productItems = container.querySelectorAll('.product-item');
     if (!productItems || productItems.length === 0) {
       console.log('❌ Tidak ada produk di grid');
@@ -4035,6 +4038,7 @@ function updateStokGridPOS() {
     
     console.log('📦 Jumlah produk di grid:', productItems.length);
     console.log('🛒 Isi keranjang:', currentCart);
+    console.log('📅 hasDate:', hasDate);
     
     var cartStokMap = {};
     for (var i = 0; i < currentCart.length; i++) {
@@ -4072,6 +4076,7 @@ function updateStokGridPOS() {
       
       console.log('📊 ' + kode + ': stokAsli=' + stokAsli + ', qtyCart=' + qtyDiCart + ', stokTampil=' + stokTampil);
       
+      // Update stok display
       var stockEl = item.querySelector('.stock');
       if (stockEl) {
         var isOutOfStock = stokTampil <= 0;
@@ -4081,6 +4086,7 @@ function updateStokGridPOS() {
         stockEl.className = 'stock ' + stockClass;
       }
       
+      // Hapus badge "HABIS" lama (kecuali badge tanggal)
       var badges = item.querySelectorAll('.badge-out-of-stock');
       for (var b = 0; b < badges.length; b++) {
         if (badges[b].textContent !== '📅 Pilih Tanggal') {
@@ -4090,6 +4096,11 @@ function updateStokGridPOS() {
       
       var hasDateBadge = item.querySelector('.badge-out-of-stock');
       
+      // ============================================================
+      // ⭐ LOGIKA DISABLE - SAMA SEPERTI TAB STOK
+      // ============================================================
+      
+      // CEK 1: Jika stok habis
       if (stokTampil <= 0) {
         if (!hasDateBadge || hasDateBadge.textContent !== '📅 Pilih Tanggal') {
           var newBadge = document.createElement('div');
@@ -4101,17 +4112,35 @@ function updateStokGridPOS() {
         item.classList.add('pos-disabled');
         item.style.pointerEvents = 'none';
         item.style.cursor = 'not-allowed';
-      } else {
+      } 
+      // ⭐ CEK 2: Jika BELUM pilih tanggal (TAMBAHKAN INI!)
+      else if (!hasDate) {
+        if (!hasDateBadge || hasDateBadge.textContent !== '📅 Pilih Tanggal') {
+          var dateBadge = document.createElement('div');
+          dateBadge.className = 'badge-out-of-stock';
+          dateBadge.textContent = '📅 Pilih Tanggal';
+          dateBadge.style.background = '#ff9800';
+          item.appendChild(dateBadge);
+        }
+        item.classList.add('pos-disabled');
+        item.style.pointerEvents = 'none';
+        item.style.cursor = 'not-allowed';
+        item.classList.remove('disabled');
+      } 
+      // CEK 3: Stok > 0 DAN sudah pilih tanggal -> AKTIF
+      else {
         var habisBadges = item.querySelectorAll('.badge-out-of-stock');
         for (var b = 0; b < habisBadges.length; b++) {
-          if (habisBadges[b].textContent !== '📅 Pilih Tanggal') {
-            habisBadges[b].remove();
-          }
+          habisBadges[b].remove();
         }
         item.classList.remove('disabled');
         item.classList.remove('pos-disabled');
         item.style.pointerEvents = '';
         item.style.cursor = '';
+        // Pastikan onclick tersambung
+        if (!item.getAttribute('onclick')) {
+          item.setAttribute('onclick', "addToCart('" + kode + "')");
+        }
       }
     }
     
