@@ -6866,6 +6866,8 @@ function populateEditHargaDropdown() {
     return;
   }
   
+  console.log('📊 populateEditHargaDropdown - produkList:', produkList);
+  
   // Sort produk by nama
   var sorted = [...produkList].sort(function(a, b) {
     return (a['Nama Produk'] || '').localeCompare(b['Nama Produk'] || '');
@@ -6875,13 +6877,93 @@ function populateEditHargaDropdown() {
     var p = sorted[i];
     var option = document.createElement('option');
     option.value = p.Kode;
+    var hargaJual = p['Harga Jual'] || 0;
     var stokInfo = (parseInt(p.Stok) || 0) > 0 ? ' ✅' : ' ⛔';
-    option.textContent = p.Kode + ' - ' + p['Nama Produk'] + ' (' + formatRupiah(p['Harga Jual'] || 0) + ')' + stokInfo;
+    option.textContent = p.Kode + ' - ' + p['Nama Produk'] + ' (' + formatRupiah(hargaJual) + ')' + stokInfo;
     if (selectedValue && selectedValue === p.Kode) {
       option.selected = true;
     }
     dropdown.appendChild(option);
   }
+
+
+  // ==================== RELOAD LENGKAP SETELAH UPDATE ====================
+function reloadAllDataAfterUpdate(kode, hargaBaru) {
+  console.log('🔄 Reload semua data setelah update...');
+  
+  // 1. Load produk dari server (yang paling penting)
+  callGAS('getProduk', {})
+  .then(function(result) {
+    if (result && result.success) {
+      produkList = result.data || [];
+      console.log('✅ produkList terbaru dari server:', produkList);
+      
+      // 2. Refresh tabel produk
+      renderProdukTable();
+      
+      // 3. Refresh POS
+      loadPosProduk();
+      
+      // 4. Refresh dropdown
+      populateEditHargaDropdown();
+      
+      // 5. Pilih produk yang sama di dropdown
+      var dropdown = document.getElementById('editHargaDropdown');
+      if (dropdown) {
+        dropdown.value = kode;
+        onEditHargaDropdownChange();
+      }
+      
+      // 6. Refresh dashboard
+      loadDashboard();
+      
+      // 7. Update result div
+      var resultDiv = document.getElementById('editHargaResult');
+      if (resultDiv) {
+        resultDiv.innerHTML = '✅ Harga jual berhasil diupdate menjadi: <strong>' + formatRupiah(hargaBaru) + '</strong>';
+        resultDiv.style.color = '#4CAF50';
+      }
+      
+      showToast('✅ Semua data telah diperbarui!', 'success');
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error reload data:', error);
+  });
+}
+
+// Fungsi render tabel produk (dipisahkan agar reusable)
+function renderProdukTable() {
+  var tbody = document.getElementById('produkTable');
+  if (!tbody) return;
+  
+  if (!produkList || produkList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada produk</td></tr>';
+    return;
+  }
+  
+  var html = '';
+  for (var i = 0; i < produkList.length; i++) {
+    var p = produkList[i];
+    var stok = parseInt(p.Stok) || 0;
+    var minStok = parseInt(p['Minimum Stok']) || 10;
+    var isLowStock = stok <= minStok;
+    var stockColor = isLowStock ? '#f44336' : '#4CAF50';
+    
+    html += '<tr>' +
+      '<td><strong>' + (p.Kode || '-') + '</strong></td>' +
+      '<td><strong>' + (p['Nama Produk'] || '-') + '</strong></td>' +
+      '<td>' + (p.Kategori || '-') + '</td>' +
+      '<td>' + formatRupiah(p['Harga Beli'] || 0) + '</td>' +
+      '<td>' + formatRupiah(p['Harga Jual'] || 0) + '</td>' +
+      '<td style="font-weight:bold;color:' + stockColor + ';">' + stok + '</td>' +
+      '<td>' + (p.Satuan || 'pcs') + '</td>' +
+      '</tr>';
+  }
+  tbody.innerHTML = html;
+  console.log('✅ Tabel produk dirender:', produkList.length, 'produk');
+}
+
   
   // Auto select first product if available
   if (!selectedValue && sorted.length > 0) {
@@ -7065,28 +7147,14 @@ function prosesEditHargaJual() {
   console.log('🔍 prosesEditHargaJual dipanggil');
   console.log('📊 editHargaData:', editHargaData);
   
-  // 🔥 CEK APAKAH DATA ADA
-  if (!editHargaData) {
-    console.error('❌ editHargaData adalah null/undefined!');
-    showToast('❌ Data tidak valid! Silakan pilih produk lagi.', 'error');
-    closeEditHargaModal();
-    return;
-  }
-  
-  // 🔥 CEK APAKAH KODE ADA
-  if (!editHargaData.kode) {
-    console.error('❌ editHargaData.kode tidak ditemukan!');
-    showToast('❌ Kode produk tidak ditemukan!', 'error');
+  if (!editHargaData || !editHargaData.kode) {
+    showToast('❌ Data tidak valid!', 'error');
     closeEditHargaModal();
     return;
   }
   
   var btn = document.getElementById('btnConfirmEditHarga');
-  if (!btn) {
-    console.error('❌ Tombol konfirmasi tidak ditemukan!');
-    showToast('❌ Error: Tombol tidak ditemukan', 'error');
-    return;
-  }
+  if (!btn) return;
   
   var originalText = btn.textContent;
   btn.textContent = '⏳ Memproses...';
@@ -7099,15 +7167,6 @@ function prosesEditHargaJual() {
   
   console.log('📤 Mengirim request update harga ke GAS:', dataToSend);
   
-  // PASTIKAN GAS_URL terdefinisi
-  if (typeof GAS_URL === 'undefined') {
-    console.error('❌ GAS_URL tidak terdefinisi!');
-    showToast('❌ Error: GAS_URL tidak terdefinisi', 'error');
-    btn.textContent = originalText;
-    btn.disabled = false;
-    return;
-  }
-  
   callGAS('updateHargaJual', dataToSend)
   .then(function(result) {
     console.log('📥 Response dari server:', result);
@@ -7119,7 +7178,27 @@ function prosesEditHargaJual() {
       showToast('✅ Harga jual berhasil diupdate!', 'success');
       closeEditHargaModal();
       
-      // Update produkList di frontend
+      var updatedKode = editHargaData.kode;
+      var updatedHarga = editHargaData.hargaBaru;
+      
+      // 🔥 RELOAD SEMUA DATA DENGAN URUTAN YANG BENAR
+      reloadAllDataAfterUpdate(updatedKode, updatedHarga);
+      
+      editHargaData = null;
+    } else {
+      var errorMsg = result && result.error ? result.error : 'Terjadi kesalahan';
+      showToast('❌ Gagal update harga: ' + errorMsg, 'error');
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error prosesEditHargaJual:', error);
+    btn.textContent = originalText;
+    btn.disabled = false;
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+      
+      // 🔥 UPDATE PRODUKLIST DI FRONTEND
       var updatedKode = editHargaData.kode;
       var updatedHarga = editHargaData.hargaBaru;
       
@@ -7131,24 +7210,36 @@ function prosesEditHargaJual() {
         }
       }
       
-      // 🔥 REFRESH SEMUA TAMPILAN
+      // 🔥 REFRESH SEMUA TAMPILAN DENGAN URUTAN YANG BENAR
       console.log('🔄 REFRESH SEMUA TAMPILAN...');
       
-      // 1. Refresh tabel produk
+      // Step 1: Refresh tabel produk (load dari server)
       loadProdukWithRetry();
       
-      // 2. Refresh POS
+      // Step 2: Refresh POS (load dari server)
       loadPosProduk();
       
-      // 3. Refresh dropdown
+      // Step 3: Refresh dropdown - TUNGGU SAMPAI PRODUKLIST TERUPDATE
       setTimeout(function() {
+        console.log('🔄 Refresh dropdown dengan produkList terbaru...');
+        console.log('📊 produkList saat ini:', produkList);
         populateEditHargaDropdown();
-      }, 500);
+        
+        // Step 4: Pilih produk yang sama di dropdown
+        var dropdown = document.getElementById('editHargaDropdown');
+        if (dropdown) {
+          dropdown.value = updatedKode;
+          // Trigger onchange untuk update tampilan
+          onEditHargaDropdownChange();
+        }
+      }, 1000); // Tunggu 1 detik agar loadProdukWithRetry selesai
       
-      // 4. Refresh dashboard (jika terbuka)
-      loadDashboard();
+      // Step 5: Refresh dashboard
+      setTimeout(function() {
+        loadDashboard();
+      }, 1500);
       
-      // 5. Update result div
+      // Update result div
       var resultDiv = document.getElementById('editHargaResult');
       if (resultDiv) {
         resultDiv.innerHTML = '✅ Harga jual berhasil diupdate menjadi: <strong>' + formatRupiah(updatedHarga) + '</strong>';
