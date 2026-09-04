@@ -6852,7 +6852,6 @@ setTimeout(function() {
 // Variabel untuk menyimpan data yang akan di-edit
 var editHargaData = null;
 
-// Populate dropdown produk
 function populateEditHargaDropdown() {
   var dropdown = document.getElementById('editHargaDropdown');
   if (!dropdown) return;
@@ -6886,7 +6885,7 @@ function populateEditHargaDropdown() {
     dropdown.appendChild(option);
   }
   
-  // 🔥 PERTAHANKAN SELECTED VALUE
+  // PERTAHANKAN SELECTED VALUE
   if (selectedValue) {
     dropdown.value = selectedValue;
   } else if (sorted.length > 0) {
@@ -6986,17 +6985,17 @@ function renderProdukTable() {
 
   
   // Auto select first product if available
-  if (!selectedValue && sorted.length > 0) {
+
     dropdown.value = sorted[0].Kode;
   }
   
   // Trigger onchange untuk update harga otomatis
-  if (dropdown.value) {
+
     onEditHargaDropdownChange();
   }
   
   console.log('✅ Dropdown diisi dengan', sorted.length, 'produk');
-}
+
 
 // Fungsi yang dipanggil saat dropdown berubah
 function onEditHargaDropdownChange() {
@@ -7236,7 +7235,7 @@ function prosesEditHargaJual() {
   });
 }
       
-      // 🔥 UPDATE PRODUKLIST DI FRONTEND
+            // 🔥 UPDATE PRODUKLIST DI FRONTEND
       var updatedKode = editHargaData.kode;
       var updatedHarga = editHargaData.hargaBaru;
       
