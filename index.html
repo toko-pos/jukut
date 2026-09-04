@@ -5889,28 +5889,35 @@ function loadProfile() {
     
     callGAS('getInfoToko', {})
     .then(function(result) {
-      console.log('📥 Result:', result);
+      console.log('📥 Result LENGKAP:', JSON.stringify(result));
       
       if (result && result.success) {
-        // 🔥 AMBIL DARI result.data.data
-        var data = result.data.data || result.data;
+        // 🔥🔥🔥 PERBAIKAN: Ambil dari result.data.data
+        var data = result.data;
         
-        console.log('📊 Data toko:', data);
+        // Jika data masih punya property 'data', ambil dari situ
+        if (data && data.data) {
+          console.log('📊 Data ada di result.data.data, mengambil dari situ');
+          data = data.data;
+        }
+        
+        console.log('📊 Data setelah parsing:', data);
+        console.log('📊 Keys:', Object.keys(data || {}));
         
         // Ambil elemen form
         var fn = document.getElementById('fNamaToko');
         var fa = document.getElementById('fAlamatToko');
         var fh = document.getElementById('fNoHp');
         
-        // 🔥 ISI FORM
+        // 🔥 AMBIL DATA
         var namaToko = data.namaToko || '';
         var alamat = data.alamat || '';
         var noHp = data.noHp || '';
         
         console.log('📝 Data yang akan diisi:');
-        console.log('  Nama Toko:', namaToko);
-        console.log('  Alamat:', alamat);
-        console.log('  No HP:', noHp);
+        console.log('  Nama Toko: "' + namaToko + '"');
+        console.log('  Alamat: "' + alamat + '"');
+        console.log('  No HP: "' + noHp + '"');
         
         if (fn) {
           fn.value = namaToko;
@@ -5925,7 +5932,7 @@ function loadProfile() {
           console.log('✅ fNoHp diisi: "' + fh.value + '"');
         }
         
-        // 🔥 UPDATE HEADER
+        // Update header
         if (namaToko) {
           var headerTitle = document.getElementById('headerTitle');
           if (headerTitle) headerTitle.textContent = '🛒 ' + namaToko;
@@ -5934,7 +5941,6 @@ function loadProfile() {
           if (loginTitle) loginTitle.textContent = '🛒 ' + namaToko;
         }
         
-        // 🔥 TAMPILKAN NOTIFIKASI
         if (fn && fn.value) {
           showToast('✅ Data toko dimuat: ' + fn.value, 'success');
         } else {
