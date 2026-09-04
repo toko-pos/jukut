@@ -3317,6 +3317,7 @@ function loadKasirList() {
 function updateHeaderInfo() {
   callGAS('getInfoToko', {})
   .then(function(result) {
+    console.log('📥 updateHeaderInfo result:', result);
     if (result && result.success && result.data && result.data.namaToko) {
       var header = document.getElementById('headerTitle');
       if (header) {
@@ -3326,12 +3327,42 @@ function updateHeaderInfo() {
       if (loginTitle) {
         loginTitle.textContent = '🛒 ' + result.data.namaToko;
       }
+      // 🔥 TAMBAHKAN: update juga form di profile
+      var fn = document.getElementById('fNamaToko');
+      var fa = document.getElementById('fAlamatToko');
+      var fh = document.getElementById('fNoHp');
+      if (fn && result.data.namaToko) fn.value = result.data.namaToko;
+      if (fa && result.data.alamat) fa.value = result.data.alamat;
+      if (fh && result.data.noHp) fh.value = result.data.noHp;
+    } else {
+      console.warn('⚠️ Tidak ada data toko dari server');
     }
   })
   .catch(function(error) {
     console.error('❌ Error updateHeaderInfo:', error);
   });
 }
+
+
+function debugInfoToko() {
+  console.log('🔍 Mengecek data Info Toko...');
+  callGAS('getInfoToko', {})
+  .then(function(result) {
+    console.log('📊 Hasil getInfoToko:', JSON.stringify(result));
+    if (result && result.success) {
+      showToast('✅ Data Info Toko: ' + JSON.stringify(result.data), 'info');
+    } else {
+      showToast('❌ Data Info Toko kosong atau error: ' + (result ? result.error : 'Unknown'), 'error');
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error debugInfoToko:', error);
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+  
+  
 
 // ==================== LOAD ALL DATA ====================
 function loadAllData() {
@@ -5843,20 +5874,24 @@ function loadProfile() {
     if (el3) el3.textContent = currentUser.role || '-';
     if (el4) el4.textContent = currentUser.username || '-';
     
+    // 🔥 PERBAIKI: Panggil getInfoToko dan isi form
     callGAS('getInfoToko', {})
     .then(function(result) {
-      try {
-        if (result && result.success && result.data) {
-          var fn = document.getElementById('fNamaToko');
-          var fa = document.getElementById('fAlamatToko');
-          var fh = document.getElementById('fNoHp');
-          if (fn) fn.value = result.data.namaToko || '';
-          if (fa) fa.value = result.data.alamat || '';
-          if (fh) fh.value = result.data.noHp || '';
-          console.log('✅ Info toko dimuat:', result.data.namaToko);
-        }
-      } catch (e) {
-        console.error('❌ Error set info toko:', e);
+      console.log('📥 Result getInfoToko:', result);
+      if (result && result.success && result.data) {
+        var fn = document.getElementById('fNamaToko');
+        var fa = document.getElementById('fAlamatToko');
+        var fh = document.getElementById('fNoHp');
+        if (fn) fn.value = result.data.namaToko || '';
+        if (fa) fa.value = result.data.alamat || '';
+        if (fh) fh.value = result.data.noHp || '';
+        console.log('✅ Info toko dimuat:', {
+          namaToko: result.data.namaToko,
+          alamat: result.data.alamat,
+          noHp: result.data.noHp
+        });
+      } else {
+        console.warn('⚠️ Tidak ada data toko:', result);
       }
     })
     .catch(function(error) {
