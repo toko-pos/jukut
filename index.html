@@ -543,7 +543,7 @@
     .pos-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .pos-cart { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-height: 600px; display: flex; flex-direction: column; }
     .pos-cart #cartItems { flex: 1; overflow-y: auto; }
-    .pos-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; max-height: 600px; overflow-y: auto; align-content: start; }
+    .pos-products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-height: 600px; overflow-y: auto; align-content: start; }
     .product-item { background: white; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative; }
     .product-item:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
     .product-item.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); border-color: #ccc; pointer-events: none; }
@@ -1052,7 +1052,7 @@
       .header h1 { font-size: 1rem; }
       .header-info { font-size: 0.8rem; gap: 10px; }
       .pos-products { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-      .stok-products { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+      .stok-products { grid-template-columns: repeat(3, 1fr); gap: 10px;}
       .product-item img, .product-item .no-image { height: 80px; }
       .stok-product-item img, .stok-product-item .no-image { height: 80px; }
       .filter-dashboard { flex-direction: column; align-items: stretch; }
@@ -1065,7 +1065,7 @@
     @media (max-width: 480px) {
       .header { flex-direction: column; gap: 10px; }
       .pos-products { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
-      .stok-products { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+      .stok-products { grid-template-columns: repeat(3, 1fr); gap: 6px; }
       .product-item img, .product-item .no-image { height: 60px; }
       .stok-product-item img, .stok-product-item .no-image { height: 60px; }
       .chart-container { height: 150px; }
