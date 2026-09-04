@@ -39,7 +39,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxMYR0R4jqJl_UXY6q3DTYfEXxXCj3rMKkOtbGLj3Dlmexm94Dlw4dS2w7wPgtUfK-jNQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyrBenqCklQtUUAp2rUvVtD5h_soiiQg1pqrBGw1LYlzuFERtqEdnPGS1FuizIrC0ACcA/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -1435,16 +1435,15 @@
           <button class="tab-refresh-produk" onclick="loadProdukWithRetry()">🔄 Refresh</button>
         </div>
 
-        <!-- FORM EDIT HARGA JUAL -->
+
+        <!-- FORM EDIT HARGA JUAL - DROPDOWN & AUTO REFRESH -->
 <div style="background: #f9f9f9; padding: 15px 20px; border-radius: 10px; margin: 15px 0; border: 1px solid #e0e0e0;">
-  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
-    <div style="flex: 1; min-width: 150px;">
-      <label style="font-weight: 600; font-size: 0.85rem; color: #555; display: block; margin-bottom: 4px;">🔍 Cari Produk</label>
-      <input type="text" id="editHargaCari" placeholder="Kode atau Nama Produk..." 
-             style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.9rem; height: 38px;">
-    </div>
-    <div style="flex: 0 0 auto;">
-      <button class="btn btn-primary" onclick="cariProdukUntukEditHarga()" style="height: 38px; padding: 0 20px; margin-top: 18px;">🔍 Cari</button>
+  <div style="display: flex; flex-wrap: wrap; align-items: end; gap: 12px;">
+    <div style="flex: 2; min-width: 200px;">
+      <label style="font-weight: 600; font-size: 0.85rem; color: #555; display: block; margin-bottom: 4px;">🔍 Pilih Produk</label>
+      <select id="editHargaDropdown" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.9rem; height: 38px; background: white;">
+        <option value="">-- Pilih Produk --</option>
+      </select>
     </div>
     <div style="flex: 1; min-width: 150px;">
       <label style="font-weight: 600; font-size: 0.85rem; color: #555; display: block; margin-bottom: 4px;">💰 Harga Jual Baru</label>
@@ -1452,11 +1451,12 @@
              style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.9rem; height: 38px;" min="0">
     </div>
     <div style="flex: 0 0 auto;">
-      <button class="btn btn-success" onclick="simpanEditHargaJual()" style="height: 38px; padding: 0 20px; margin-top: 18px;">💾 Update Harga</button>
+      <button class="btn btn-success" onclick="simpanEditHargaJual()" style="height: 38px; padding: 0 20px;">💾 Update Harga</button>
     </div>
   </div>
   <div id="editHargaResult" style="margin-top: 10px; font-size: 0.9rem; color: #666;"></div>
 </div>
+
         
         
         <div id="debugInfo" class="debug-info"></div>
@@ -6731,50 +6731,99 @@ setTimeout(function() {
 }, 1000);
 
 
-    // ==================== EDIT HARGA JUAL ====================
-function cariProdukUntukEditHarga() {
-  var keyword = document.getElementById('editHargaCari').value.trim();
-  var resultDiv = document.getElementById('editHargaResult');
+   // ==================== EDIT HARGA JUAL - DROPDOWN & AUTO REFRESH ====================
+
+// Populate dropdown produk
+function populateEditHargaDropdown() {
+  var dropdown = document.getElementById('editHargaDropdown');
+  if (!dropdown) return;
   
-  if (!keyword) {
-    resultDiv.innerHTML = '⚠️ Masukkan kode atau nama produk!';
-    resultDiv.style.color = '#f44336';
+  var selectedValue = dropdown.value;
+  
+  dropdown.innerHTML = '<option value="">-- Pilih Produk --</option>';
+  
+  if (!produkList || produkList.length === 0) {
+    dropdown.innerHTML = '<option value="">-- Belum ada produk --</option>';
     return;
   }
   
-  var found = null;
-  var keyLower = keyword.toLowerCase();
+  // Sort produk by nama
+  var sorted = [...produkList].sort(function(a, b) {
+    return (a['Nama Produk'] || '').localeCompare(b['Nama Produk'] || '');
+  });
   
+  for (var i = 0; i < sorted.length; i++) {
+    var p = sorted[i];
+    var option = document.createElement('option');
+    option.value = p.Kode;
+    option.textContent = p.Kode + ' - ' + p['Nama Produk'] + ' (' + formatRupiah(p['Harga Jual'] || 0) + ')';
+    if (selectedValue && selectedValue === p.Kode) {
+      option.selected = true;
+    }
+    dropdown.appendChild(option);
+  }
+  
+  // Auto select first product if available
+  if (!selectedValue && sorted.length > 0) {
+    dropdown.value = sorted[0].Kode;
+  }
+  
+  // Trigger onchange untuk update harga otomatis
+  if (dropdown.value) {
+    onEditHargaDropdownChange();
+  }
+}
+
+// Fungsi yang dipanggil saat dropdown berubah
+function onEditHargaDropdownChange() {
+  var dropdown = document.getElementById('editHargaDropdown');
+  var resultDiv = document.getElementById('editHargaResult');
+  var hargaInput = document.getElementById('editHargaJualBaru');
+  
+  var kode = dropdown.value;
+  
+  if (!kode) {
+    resultDiv.innerHTML = '⚠️ Silakan pilih produk';
+    resultDiv.style.color = '#666';
+    if (hargaInput) hargaInput.value = '';
+    delete resultDiv.dataset.kode;
+    return;
+  }
+  
+  // Cari produk di produkList
+  var found = null;
   for (var i = 0; i < produkList.length; i++) {
-    var p = produkList[i];
-    var kode = String(p.Kode || '').trim();
-    var nama = String(p['Nama Produk'] || '').trim();
-    if (kode === keyword || nama.toLowerCase() === keyLower || kode.toLowerCase() === keyLower) {
-      found = p;
+    if (produkList[i].Kode === kode) {
+      found = produkList[i];
       break;
     }
   }
   
   if (!found) {
-    resultDiv.innerHTML = '⚠️ Produk dengan kode/nama "' + keyword + '" tidak ditemukan!';
+    resultDiv.innerHTML = '⚠️ Produk tidak ditemukan!';
     resultDiv.style.color = '#f44336';
+    if (hargaInput) hargaInput.value = '';
+    delete resultDiv.dataset.kode;
     return;
   }
   
-  // Tampilkan informasi produk
-  resultDiv.innerHTML = '✅ Produk ditemukan: <strong>' + found['Nama Produk'] + '</strong> (Kode: ' + found.Kode + ') | Harga Jual saat ini: <strong>' + formatRupiah(found['Harga Jual'] || 0) + '</strong>';
+  // Tampilkan info produk
+  resultDiv.innerHTML = '✅ <strong>' + found['Nama Produk'] + '</strong> (Kode: ' + found.Kode + ') | Harga Jual saat ini: <strong>' + formatRupiah(found['Harga Jual'] || 0) + '</strong>';
   resultDiv.style.color = '#4CAF50';
   
-  // Set harga baru ke input
-  var hargaInput = document.getElementById('editHargaJualBaru');
+  // Set harga baru ke input (isi dengan harga saat ini)
   if (hargaInput) {
     hargaInput.value = found['Harga Jual'] || 0;
     hargaInput.focus();
-    hargaInput.select();
   }
   
-  // Simpan kode produk yang ditemukan untuk digunakan saat update
-  document.getElementById('editHargaResult').dataset.kode = found.Kode;
+  // Simpan kode produk
+  resultDiv.dataset.kode = found.Kode;
+  
+  // Refresh tampilan produk di tab lain jika perlu
+  if (typeof updateStokGridPOS === 'function') {
+    updateStokGridPOS();
+  }
 }
 
 function simpanEditHargaJual() {
@@ -6783,7 +6832,7 @@ function simpanEditHargaJual() {
   var hargaBaru = parseInt(document.getElementById('editHargaJualBaru').value) || 0;
   
   if (!kode) {
-    showToast('⚠️ Cari produk terlebih dahulu!', 'warning');
+    showToast('⚠️ Pilih produk terlebih dahulu!', 'warning');
     return;
   }
   
@@ -6793,8 +6842,22 @@ function simpanEditHargaJual() {
     return;
   }
   
+  // Cek apakah harga berubah
+  var produk = null;
+  for (var i = 0; i < produkList.length; i++) {
+    if (produkList[i].Kode === kode) {
+      produk = produkList[i];
+      break;
+    }
+  }
+  
+  if (produk && produk['Harga Jual'] === hargaBaru) {
+    showToast('ℹ️ Harga tidak berubah', 'info');
+    return;
+  }
+  
   // Konfirmasi
-  if (!confirm('Yakin ingin mengubah harga jual produk ini menjadi ' + formatRupiah(hargaBaru) + '?')) {
+  if (!confirm('Yakin ingin mengubah harga jual ' + (produk ? produk['Nama Produk'] : '') + ' menjadi ' + formatRupiah(hargaBaru) + '?')) {
     return;
   }
   
@@ -6825,13 +6888,10 @@ function simpanEditHargaJual() {
       // Refresh tampilan
       loadProdukWithRetry();
       loadPosProduk();
+      populateEditHargaDropdown(); // Refresh dropdown
       
       resultDiv.innerHTML = '✅ Harga jual berhasil diupdate menjadi: <strong>' + formatRupiah(hargaBaru) + '</strong>';
       resultDiv.style.color = '#4CAF50';
-      
-      document.getElementById('editHargaCari').value = '';
-      document.getElementById('editHargaJualBaru').value = '';
-      delete resultDiv.dataset.kode;
     } else {
       showToast('❌ Gagal update harga: ' + (result ? result.error : 'Terjadi kesalahan'), 'error');
     }
@@ -6843,27 +6903,35 @@ function simpanEditHargaJual() {
   });
 }
 
-// Enter key support untuk form edit harga
-document.addEventListener('DOMContentLoaded', function() {
-  var cariInput = document.getElementById('editHargaCari');
-  if (cariInput) {
-    cariInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        cariProdukUntukEditHarga();
-      }
-    });
-  }
+// ==================== INISIALISASI DROPDOWN ====================
+// Panggil setelah produkList terisi
+function initEditHargaDropdown() {
+  populateEditHargaDropdown();
   
-  var hargaInput = document.getElementById('editHargaJualBaru');
-  if (hargaInput) {
-    hargaInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        simpanEditHargaJual();
-      }
-    });
+  // Event listener untuk dropdown
+  var dropdown = document.getElementById('editHargaDropdown');
+  if (dropdown) {
+    dropdown.addEventListener('change', onEditHargaDropdownChange);
   }
+}
+
+// Override loadProduk untuk inisialisasi dropdown
+var originalLoadProduk = loadProduk;
+loadProduk = function() {
+  originalLoadProduk();
+  // Setelah produk dimuat, inisialisasi dropdown
+  setTimeout(function() {
+    initEditHargaDropdown();
+  }, 500);
+};
+
+// Panggil inisialisasi saat DOM siap
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    if (produkList && produkList.length > 0) {
+      initEditHargaDropdown();
+    }
+  }, 1000);
 });
 
   
