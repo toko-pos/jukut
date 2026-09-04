@@ -598,7 +598,37 @@
     .stok-tanggal-wrapper .field-opsional { font-size: 0.7rem; color: #999; white-space: nowrap; }
     .stok-cart-total { margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee; font-size: 1.4rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     .stok-cart-total span:last-child { color: var(--primary); }
-    
+
+    /* Tambahkan agar card STOK sama persis dengan POS */
+.stok-product-item {
+  border-radius: 10px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.stok-product-item:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Badge "Pilih Tanggal" di STOK */
+.stok-product-item .badge-out-of-stock {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff9800;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.6rem;
+  font-weight: bold;
+}
+  
+
+           
     /* ===== STOK HEADER GRID ===== */
     .stok-header-grid { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; align-items: end; }
     .stok-header-item { display: flex; flex-direction: column; gap: 4px; }
