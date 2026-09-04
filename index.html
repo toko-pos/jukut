@@ -6244,7 +6244,7 @@ function closeModal() {
   }
 }
 
-// ==================== HUTANG VENDOR ENHANCED ====================
+// ==================== HUTANG VENDOR (TAMPILAN TABEL) ====================
 function loadHutangVendor() {
   try {
     var tbody = document.getElementById('hutangVendorTable');
@@ -6252,6 +6252,7 @@ function loadHutangVendor() {
     
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">⏳ Memuat hutang...</td></tr>';
     
+    // Update summary
     var summaryIds = ['hutangTotalNota', 'hutangTotalDibayar', 'hutangTotalSisa', 'hutangTotalNotaCount'];
     for (var i = 0; i < summaryIds.length; i++) {
       var el = document.getElementById(summaryIds[i]);
@@ -6265,7 +6266,6 @@ function loadHutangVendor() {
         var data = (res && res.data) || [];
         var s = (res && res.summary) || { totalNota: 0, totalDibayar: 0, totalSisa: 0 };
         
-        // Update Summary
         document.getElementById('hutangTotalNota').textContent = formatRupiah(s.totalNota || 0);
         document.getElementById('hutangTotalDibayar').textContent = formatRupiah(s.totalDibayar || 0);
         document.getElementById('hutangTotalSisa').textContent = formatRupiah(s.totalSisa || 0);
@@ -6297,9 +6297,9 @@ function loadHutangVendor() {
           var noNotaEscaped = String(x.noNota).replace(/'/g, "\\'");
           var sisaHutang = x.sisaHutang || 0;
           
-          // Baris Utama (Master)
-          html += '<tr class="debt-master" onclick="toggleDebtDetail(this)" data-nota="' + escapeHtml(x.noNota) + '">' +
-              '<td><span class="expand-icon">▶</span> <strong>' + escapeHtml(x.noNota) + '</strong></td>' +
+          // Baris tabel normal (tanpa expandable agar tombol riwayat tidak bentrok)
+          html += '<tr>' +
+              '<td><strong>' + escapeHtml(x.noNota) + '</strong></td>' +
               '<td>' + formatTanggalDisplay(x.tanggal) + '</td>' +
               '<td>' + escapeHtml(x.pemasok || '-') + '</td>' +
               '<td style="text-align:right;">' + formatRupiah(x.totalNota) + '</td>' +
@@ -6313,19 +6313,10 @@ function loadHutangVendor() {
               '<td style="text-align:center;">' +
                   '<div class="debt-actions">' +
                       (sisaHutang > 0 ? 
-                          '<button class="btn btn-bayar" onclick="event.stopPropagation();bukaPembayaranVendor(\'' + noNotaEscaped + '\')">💰 Bayar</button>' : 
+                          '<button class="btn btn-bayar" onclick="bukaPembayaranVendor(\'' + noNotaEscaped + '\')">💰 Bayar</button>' : 
                           '<button class="btn btn-bayar" disabled style="opacity:0.4;background:#999;">✅ Lunas</button>'
                       ) +
-                      '<button class="btn btn-riwayat" onclick="event.stopPropagation();lihatRiwayatPembayaranVendor(\'' + noNotaEscaped + '\')">📋 Riwayat</button>' +
-                  '</div>' +
-              '</td>' +
-              '</tr>';
-          
-          // Baris Detail (Expandable)
-          html += '<tr class="debt-detail-row" style="display:none;">' +
-              '<td colspan="9">' +
-                  '<div class="debt-detail-inner" id="debt-detail-' + escapeHtml(x.noNota) + '">' +
-                      '<div style="text-align:center; padding: 10px;">Memuat riwayat...</div>' +
+                      '<button class="btn btn-riwayat" onclick="lihatRiwayatPembayaranVendor(\'' + noNotaEscaped + '\')">📋 Riwayat</button>' +
                   '</div>' +
               '</td>' +
               '</tr>';
@@ -6342,59 +6333,6 @@ function loadHutangVendor() {
   } catch (e) {
     console.error('❌ Error loadHutangVendor:', e);
   }
-}
-
-// ==================== TOGGLE DETAIL HUTANG ====================
-function toggleDebtDetail(row) {
-  var detailRow = row.nextElementSibling;
-  var icon = row.querySelector('.expand-icon');
-  
-  if (detailRow && detailRow.classList.contains('debt-detail-row')) {
-    var isVisible = detailRow.style.display !== 'none';
-    detailRow.style.display = isVisible ? 'none' : 'table-row';
-    if (icon) {
-      icon.textContent = isVisible ? '▶' : '▼';
-      icon.classList.toggle('expanded', !isVisible);
-    }
-    
-    // Jika baru dibuka dan belum ada isi, panggil API
-    if (!isVisible) {
-      var noNota = row.getAttribute('data-nota');
-      var container = document.getElementById('debt-detail-' + noNota);
-      if (container && container.innerHTML.includes('Memuat riwayat...')) {
-        loadDebtDetailToTable(noNota, container);
-      }
-    }
-  }
-}
-
-function loadDebtDetailToTable(noNota, container) {
-  callGAS('getDetailHutangVendor', { noNota: noNota })
-  .then(function(r) {
-    if (r && r.success) {
-      var x = r.data;
-      var rows = x.riwayatPembayaran || [];
-      
-      var html = '<div style="font-weight:bold; margin-bottom:10px; color:#1a2332;">📋 Riwayat Pembayaran (Total ' + rows.length + ')</div>';
-      if (!rows || rows.length === 0) {
-        html += '<div style="color:#999; padding:10px;">Belum ada pembayaran.</div>';
-      } else {
-        html += '<table style="width:100%; border-collapse:collapse; font-size:0.85rem;">';
-        html += '<thead><tr style="background:#f0f4ff;"><th style="padding:6px;">Tgl</th><th style="padding:6px; text-align:right;">Nominal</th><th style="padding:6px;">User</th></tr></thead><tbody>';
-        for (var i = 0; i < rows.length; i++) {
-          var a = rows[i];
-          html += '<tr><td>' + formatTanggalDisplay(a.tanggal) + '</td><td style="text-align:right;">' + formatRupiah(a.nominal || 0) + '</td><td>' + escapeHtml(a.user || '-') + '</td></tr>';
-        }
-        html += '</tbody></table>';
-      }
-      container.innerHTML = html;
-    } else {
-      container.innerHTML = '<div style="color:red;">Gagal memuat riwayat.</div>';
-    }
-  })
-  .catch(function(e) {
-    container.innerHTML = '<div style="color:red;">Error: ' + e.message + '</div>';
-  });
 }
 
 // ==================== MODAL PEMBAYARAN HUTANG ====================
@@ -6434,10 +6372,10 @@ function bukaPembayaranVendor(noNota) {
     else quickNom = [100000, 500000, 1000000, 2000000];
     for (var i = 0; i < quickNom.length; i++) {
       if (quickNom[i] <= sisa) {
-        html += '<button type="button" class="btn-sm" onclick="document.getElementById(\'nominalBayarVendor\').value=' + quickNom[i] + ';document.getElementById(\'nominalBayarVendor\').dispatchEvent(\'input\');">' + formatRupiah(quickNom[i]) + '</button>';
+        html += '<button type="button" class="btn-sm" onclick="document.getElementById(\'nominalBayarVendor\').value=' + quickNom[i] + ';">' + formatRupiah(quickNom[i]) + '</button>';
       }
     }
-    html += '  <button type="button" class="btn-sm btn-lunas" onclick="document.getElementById(\'nominalBayarVendor\').value=' + sisa + ';document.getElementById(\'nominalBayarVendor\').dispatchEvent(\'input\');">💰 Lunas</button>';
+    html += '  <button type="button" class="btn-sm btn-lunas" onclick="document.getElementById(\'nominalBayarVendor\').value=' + sisa + ';">💰 Lunas</button>';
     html += '</div>';
     html += '  <input type="number" id="nominalBayarVendor" min="1" max="' + sisa + '" placeholder="Masukkan nominal..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:1rem;font-weight:bold;" oninput="updateSisaBayarVendor(' + sisa + ')">';
     html += '  <div style="margin-top:4px;font-size:0.85rem;color:#666;">Sisa setelah bayar: <strong id="sisaSetelahBayarVendor">' + formatRupiah(sisa) + '</strong></div>';
@@ -6476,6 +6414,7 @@ function updateSisaBayarVendor(sisa) {
   }
 }
 
+// ==================== SIMPAN + PREVIEW PEMBAYARAN (58MM) ====================
 function simpanPembayaranVendor(noNota) {
   var nominal = parseInt(document.getElementById('nominalBayarVendor').value) || 0;
   var tanggal = document.getElementById('tanggalBayarVendor').value;
@@ -6495,8 +6434,6 @@ function simpanPembayaranVendor(noNota) {
     if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan Pembayaran'; }
     if (r && r.success) {
       showToast('✅ Pembayaran berhasil! Status: ' + r.status, 'success');
-      
-      // 🔥 Panggil fungsi preview nota pembayaran
       showNotaPembayaranVendor(noNota, nominal, tanggal, r.status, r.sisaHutang, catatan);
       
       loadHutangVendor();
@@ -6511,7 +6448,6 @@ function simpanPembayaranVendor(noNota) {
   });
 }
 
-// ==================== PREVIEW NOTA PEMBAYARAN (58MM) ====================
 function showNotaPembayaranVendor(noNota, nominal, tanggal, status, sisa, catatan) {
   var html = '<div class="struk-58mm" id="strukNotaPembayaran">';
   html += '<div class="header"><strong style="font-size:14px;">NOTA PEMBAYARAN</strong><br>';
@@ -6531,7 +6467,6 @@ function showNotaPembayaranVendor(noNota, nominal, tanggal, status, sisa, catata
   html += '<div class="footer">Terima Kasih</div>';
   html += '</div>';
   
-  // Tampilkan preview di modal
   document.getElementById('modalTitle').textContent = '🧾 Preview Nota Pembayaran';
   document.getElementById('modalContent').classList.remove('large'); 
   document.getElementById('modalBody').innerHTML = html + 
@@ -6551,6 +6486,74 @@ function printNotaPembayaranVendor() {
   printWindow.document.write('</body></html>');
   printWindow.document.close();
   setTimeout(function() { printWindow.print(); }, 300);
+}
+
+// ==================== MODAL RIWAYAT + TOMBOL CETAK ====================
+function lihatRiwayatPembayaranVendor(noNota) {
+  if (!noNota) { showToast('⚠️ No.Nota tidak valid!', 'error'); return; }
+  
+  showToast('⏳ Memuat riwayat pembayaran...', 'info');
+  
+  callGAS('getDetailHutangVendor', { noNota: noNota })
+  .then(function(r) {
+    if (!r || !r.success) { showToast((r && r.error) || 'Data tidak ditemukan', 'error'); return; }
+    
+    var x = r.data;
+    var rows = x.riwayatPembayaran || x.riwayat || [];
+    
+    var html = '';
+    html += '<div class="debt-modal-detail">';
+    html += '<div class="row">';
+    html += '  <div class="item"><span class="label">📄 No.Nota</span><span class="value">' + escapeHtml(x.noNota) + '</span></div>';
+    html += '  <div class="item"><span class="label">🏢 Vendor</span><span class="value">' + escapeHtml(x.vendor || x.pemasok || '-') + '</span></div>';
+    html += '  <div class="item"><span class="label">💰 Total</span><span class="value">' + formatRupiah(x.totalNota) + '</span></div>';
+    html += '  <div class="item"><span class="label">✅ Dibayar</span><span class="value">' + formatRupiah(x.totalDibayar) + '</span></div>';
+    html += '  <div class="item" style="border-bottom:none;padding-bottom:0;"><span class="label">⚠️ Sisa</span><span class="value" style="color:' + (x.sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';font-weight:bold;">' + formatRupiah(x.sisaHutang) + '</span></div>';
+    html += '</div></div>';
+    
+    html += '<div style="margin-top:12px;"><strong>📋 Riwayat Pembayaran</strong> <span style="font-size:0.8rem;color:#666;">(' + rows.length + ' pembayaran)</span></div>';
+    
+    if (!rows || rows.length === 0) {
+      html += '<div style="text-align:center;color:#999;padding:20px;border:1px solid #eee;border-radius:8px;margin-top:8px;">📭 Belum ada pembayaran</div>';
+    } else {
+      html += '<div class="debt-riwayat-list" style="max-height:300px;overflow-y:auto;border:1px solid #e8ecf4;border-radius:8px;margin-top:8px;">';
+      html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
+      html += '<thead><tr style="background:#f0f4ff;">';
+      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">No</th>';
+      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Tanggal</th>';
+      html += '  <th style="padding:8px 12px;text-align:right;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Nominal</th>';
+      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">User</th>';
+      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Catatan</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (var i = 0; i < rows.length; i++) {
+        var a = rows[i];
+        html += '<tr>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + (i + 1) + '</td>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + formatTanggalDisplay(a.tanggal) + '</td>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;text-align:right;font-weight:600;color:#2e7d32;">' + formatRupiah(a.nominal || 0) + '</td>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + escapeHtml(a.user || '-') + '</td>' +
+          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;font-size:0.8rem;color:#666;">' + escapeHtml(a.catatan || '-') + '</td>' +
+          '</tr>';
+      }
+      html += '</tbody></table></div>';
+    }
+    
+    // Tambahkan tombol Cetak di dalam Popup
+    html += '<div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">';
+    html += '<button class="btn btn-info" onclick="cetakRiwayatVendor(\'' + escapeHtml(x.noNota) + '\')" style="flex:1;padding:10px;background:#03A9F4;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Cetak Riwayat</button>';
+    html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:10px;background:#2196F3;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">Tutup</button>';
+    html += '</div>';
+    
+    document.getElementById('modalTitle').textContent = '📋 Riwayat Pembayaran - ' + x.noNota;
+    document.getElementById('modalContent').classList.add('large');
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('modal').classList.add('active');
+  })
+  .catch(function(e) {
+    console.error('❌ Error lihatRiwayatPembayaranVendor:', e);
+    showToast('❌ ' + e.message, 'error');
+  });
 }
 
 // ==================== CETAK RIWAYAT VENDOR (58MM) ====================
@@ -6588,9 +6591,8 @@ function cetakRiwayatVendor(noNota) {
     html += '<div class="footer">Terima Kasih</div>';
     html += '</div>';
     
-    // Tampilkan di modal (untuk preview), lalu cetak
     document.getElementById('modalTitle').textContent = '🖨️ Preview Cetak Riwayat';
-    document.getElementById('modalContent').classList.remove('large'); // Gunakan lebar standar
+    document.getElementById('modalContent').classList.remove('large'); 
     document.getElementById('modalBody').innerHTML = html + 
       '<div class="struk-actions"><button class="btn btn-success" onclick="printRiwayatVendor()">🖨️ Cetak</button><button class="btn btn-danger" onclick="closeModal()">Tutup</button></div>';
     document.getElementById('modal').classList.add('active');
@@ -6608,6 +6610,7 @@ function printRiwayatVendor() {
   setTimeout(function() { printWindow.print(); }, 300);
 }
 
+  
 // ==================== SCANNER BARCODE ====================
 var html5QrCode = null;
 var isScanning = false;
