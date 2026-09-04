@@ -7026,9 +7026,11 @@ function simpanEditHargaJual() {
 
 // 🔥🔥🔥 FUNGSI INI YANG DIPERBAIKI 🔥🔥🔥
 function prosesEditHargaJual() {
-  if (!editHargaData) {
-    showToast('❌ Data tidak valid!', 'error');
+  if (!editHargaData || !editHargaData.kode) {
+    showToast('❌ Data produk tidak valid atau sudah terhapus!', 'error');
     closeEditHargaModal();
+    // Refresh ulang agar dropdown terisi kembali
+    setTimeout(() => { loadProdukWithRetry(); }, 500);
     return;
   }
   
@@ -7047,44 +7049,41 @@ function prosesEditHargaJual() {
     btn.textContent = originalText;
     btn.disabled = false;
     
-    console.log('📥 Response update harga:', result);
-    
     if (result && result.success) {
       showToast('✅ Harga jual berhasil diupdate!', 'success');
       closeEditHargaModal();
       
-      // 🔥 UPDATE produkList di memory
+      // 🔥 Simpan data ke variabel lokal TERLEBIH DAHULU
       var updatedKode = editHargaData.kode;
       var updatedHarga = editHargaData.hargaBaru;
       
+      // 🔥 Update produkList di memory
       for (var i = 0; i < produkList.length; i++) {
         if (produkList[i].Kode === updatedKode) {
           produkList[i]['Harga Jual'] = updatedHarga;
-          console.log('✅ produkList updated:', produkList[i]['Nama Produk'], '->', updatedHarga);
           break;
         }
       }
       
-      // 🔥 Refresh semua tampilan yang menggunakan produkList
+      // 🔥 Reset editHargaData SEBELUM refresh
+      editHargaData = null; 
+      
+      // 🔥 Refresh semua tampilan
       refreshAllProductViews();
       
-      // 🔥 Update result div
+      // 🔥 Update div info
       var resultDiv = document.getElementById('editHargaResult');
       resultDiv.innerHTML = '✅ Harga jual berhasil diupdate menjadi: <strong>' + formatRupiah(updatedHarga) + '</strong>';
       resultDiv.style.color = '#4CAF50';
       
-      editHargaData = null;
-      
     } else {
       var errorMsg = result ? (result.error || 'Terjadi kesalahan') : 'Terjadi kesalahan';
       showToast('❌ Gagal update harga: ' + errorMsg, 'error');
-      console.error('❌ Error dari server:', errorMsg);
     }
   })
   .catch(function(error) {
     btn.textContent = originalText;
     btn.disabled = false;
-    console.error('❌ Error prosesEditHargaJual:', error);
     showToast('❌ Error: ' + error.message, 'error');
   });
 }
