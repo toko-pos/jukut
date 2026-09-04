@@ -384,6 +384,15 @@
     @media (max-width: 480px) {
       #btnSimpanStok, #btnCheckout { padding: 14px 16px !important; font-size: 0.95rem !important; height: 48px !important; border-radius: 10px !important; }
     }
+
+
+    /* Agar header h2 di tab STOK rapi seperti POS */
+#page-stok > h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: var(--dark);
+}
+    
     
     /* ===== FILTER DASHBOARD ===== */
     .filter-dashboard { background: white; padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
@@ -1694,177 +1703,177 @@
     </div>
     
     <!-- ===== STOK ===== -->
-    <div id="page-stok" class="page">
-      <div class="card">
-        <h2>📥 Stok Masuk & Batch</h2>
+<div id="page-stok" class="page">
+  <h2>📥 Stok Masuk & Batch</h2>
 
-        <div class="sub-tab-stok">
-          <button id="btnStokBatch" class="tab-btn tab-batch" onclick="showSubPage('stok', 'batch')">📋 Batch</button>
-          <button id="btnStokBatal" class="tab-btn tab-batal" onclick="showSubPage('stok', 'batal')">🗑️ Batal</button>
-          <button class="tab-refresh-stok" onclick="refreshStokSubtab()">🔄 Refresh</button>
-        </div>
+  <div class="sub-tab-stok">
+    <button id="btnStokBatch" class="tab-btn tab-batch" onclick="showSubPage('stok', 'batch')">📋 Batch</button>
+    <button id="btnStokBatal" class="tab-btn tab-batal" onclick="showSubPage('stok', 'batal')">🗑️ Batal</button>
+    <button class="tab-refresh-stok" onclick="refreshStokSubtab()">🔄 Refresh</button>
+  </div>
 
-        <!-- SUB: STOK MASUK -->
-        <div id="sub-stok-masuk" class="sub-page active">
-          <div style="background:#f9f9f9;padding:12px 15px;border-radius:8px;margin-bottom:15px;border:1px solid #e0e0e0;">
-            <div class="stok-header-grid">
-              <div class="stok-header-item">
-                <label>📄 No. Nota</label>
-                <input type="text" id="noNotaStok" readonly>
-              </div>
-              <div class="stok-header-item">
-                <label>📅 Tanggal</label>
-                <input type="date" id="tanggalStokMasuk" onchange="updateStokMasukUI()" oninput="updateStokMasukUI()">
-              </div>
-              <div class="stok-header-item">
-                <label>🏢 Pemasok</label>
-                <input type="text" id="pemasokStok" placeholder="Nama pemasok">
-              </div>
-            </div>
-          </div>
-          
-          <div class="stok-layout">
-            <div class="stok-products" id="stokProducts"><p style="color:#999;text-align:center;grid-column:1/-1;">Loading produk...</p></div>
-            <div class="stok-cart">
-              <div class="stok-tanggal-wrapper" style="border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                <label>🛒 BELANJA PRODUK</label>
-                <span style="font-size:0.8rem;color:#999;">Klik produk untuk menambah</span>
-              </div>
-              <div id="stokScanCariBar" style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
-                <button class="btn-scan" onclick="startScannerSTOK()" style="font-size:0.8rem; padding:6px 12px; height:36px;">📷 Scan</button>
-                <input type="text" id="stokBarcodeInput" placeholder="Cari / ketik kode atau nama produk..."
-                       onkeydown="if(event.key === 'Enter'){ manualBarcodeSearchSTOK(); }"
-                       style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--border); border-radius:5px; font-size:0.85rem; height:36px;">
-                <button class="btn btn-primary btn-sm" onclick="manualBarcodeSearchSTOK()" style="height:36px; padding:0 12px;">Cari</button>
-              </div>
-              <div id="stokCartItems"><p style="color:#999;">Belum ada produk</p></div>
-              <div class="stok-cart-total">Total: <span id="stokCartTotal">Rp 0</span></div>
-              <button class="btn btn-success" id="btnSimpanStok" onclick="simpanStokMasuk()" disabled>🛒 BELANJA PRODUK</button>
-            </div>
-          </div>
-          
-          <hr style="margin:20px 0;">
-          
-          <!-- RIWAYAT STOK MASUK - GROUPING PER NOTA -->
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-            <h3 style="margin:0;">📋 Riwayat Stok Masuk</h3>
-            <div class="dropdown-excel">
-              <button class="btn btn-excel" onclick="toggleExcelDropdownStok()" style="padding:6px 14px; font-size:0.8rem;">📊 Excel ▼</button>
-              <div class="dropdown-content" id="excelDropdownStok">
-                <a onclick="exportRiwayatStokCSV('summary')">📊 Ringkasan (per Nota)</a>
-                <a onclick="exportRiwayatStokCSV('detail')">📋 Detail (per Item)</a>
-              </div>
-            </div>
-          </div>
-          
-          <!-- FILTER RIWAYAT STOK -->
-          <div class="filter-riwayat-stok" id="filterRiwayatStok">
-            <div class="filter-group">
-              <label>🔍 Cari:</label>
-              <input type="text" id="cariNota" placeholder="No.Nota atau Pemasok..." oninput="filterRiwayatStok()">
-            </div>
-            <div class="filter-group">
-              <label>📅 Dari:</label>
-              <input type="date" id="filterStokMulai" onchange="filterRiwayatStok()">
-            </div>
-            <div class="filter-group">
-              <label>📅 Sampai:</label>
-              <input type="date" id="filterStokSampai" onchange="filterRiwayatStok()">
-            </div>
-            <div class="filter-actions">
-              <button class="btn btn-info btn-sm" onclick="filterRiwayatStok()" style="height:34px;">🔍 Cari</button>
-              <button class="btn btn-cyan btn-sm" onclick="resetFilterRiwayatStok()" style="height:34px;">↺ Reset</button>
-            </div>
-            <div class="filter-info" id="stokFilterInfo">Menampilkan semua nota (0 nota · 0 item)</div>
-          </div>
-          
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:50px;">No</th>
-                  <th>Tanggal</th>
-                  <th>No.Nota</th>
-                  <th>Pemasok</th>
-                  <th style="text-align:right;">Total</th>
-                  <th style="text-align:center;">Jml Item</th>
-                  <th style="text-align:center;">Status</th>
-                  <th style="text-align:center;">Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="riwayatStokTable">
-                <tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">⏳ Memuat data...</td></tr>
-              </tbody>
-            </table>
-          </div>
+  <!-- SUB: STOK MASUK -->
+  <div id="sub-stok-masuk" class="sub-page active">
+    <div style="background:#f9f9f9;padding:12px 15px;border-radius:8px;margin-bottom:15px;border:1px solid #e0e0e0;">
+      <div class="stok-header-grid">
+        <div class="stok-header-item">
+          <label>📄 No. Nota</label>
+          <input type="text" id="noNotaStok" readonly>
         </div>
-        
-        <!-- SUB: BATCH -->
-        <div id="sub-stok-batch" class="sub-page">
-          <p style="color:#666;margin-bottom:15px;">Setiap batch memiliki harga beli masing-masing (FIFO).</p>
-          <div class="table-wrapper">
-            <table>
-              <thead><tr><th>Batch</th><th>Kode</th><th>Produk</th><th>Harga Beli</th><th>Stok</th><th>Tanggal Masuk</th></tr></thead>
-              <tbody id="batchTable"><tr><td colspan="6" style="text-align:center;color:#999;">Loading...</td></tr></tbody>
-            </table>
-          </div>
+        <div class="stok-header-item">
+          <label>📅 Tanggal</label>
+          <input type="date" id="tanggalStokMasuk" onchange="updateStokMasukUI()" oninput="updateStokMasukUI()">
         </div>
-        
-        <!-- SUB: BATAL -->
-        <div id="sub-stok-batal" class="sub-page">
-          <p style="color:#666;margin-bottom:15px;">
-            Hanya batch yang <strong>belum terpakai</strong> (stok masih utuh) yang dapat dibatalkan.
-          </p>
-          <div class="alert alert-warning">
-            <strong>⚠️ Peringatan!</strong>
-            <ul>
-              <li>Batch dengan status <span class="badge-success">✅ Bisa Dibatalkan</span> adalah batch yang stoknya <strong>belum terpakai sama sekali</strong></li>
-              <li>Batch yang sudah <strong>terpakai</strong> (stok berkurang) <strong>TIDAK BISA</strong> dibatalkan</li>
-              <li>Pembatalan akan menghapus batch, mengurangi stok produk, dan menghapus riwayat stok</li>
-              <li>Tindakan ini <strong>TIDAK DAPAT DIUNDUR!</strong></li>
-            </ul>
-          </div>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Batch</th>
-                  <th>Kode</th>
-                  <th>Nama Produk</th>
-                  <th>Harga Beli</th>
-                  <th>Stok</th>
-                  <th>Tanggal Masuk</th>
-                  <th>Status</th>
-                  <th>Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="batalStokTable">
-                <tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <hr style="margin:20px 0;">
-          <h3>📋 Log Pembatalan Stok</h3>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Tanggal Batal</th>
-                  <th>User</th>
-                  <th>Alasan</th>
-                  <th>Batch</th>
-                  <th>Produk</th>
-                  <th>Stok</th>
-                </tr>
-              </thead>
-              <tbody id="logPembatalanStokTable">
-                <tr><td colspan="6" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="stok-header-item">
+          <label>🏢 Pemasok</label>
+          <input type="text" id="pemasokStok" placeholder="Nama pemasok">
         </div>
       </div>
     </div>
+    
+    <div class="stok-layout">
+      <div class="stok-products" id="stokProducts"><p style="color:#999;text-align:center;grid-column:1/-1;">Loading produk...</p></div>
+      <div class="stok-cart">
+        <div class="stok-tanggal-wrapper" style="border-bottom: 1px solid #eee; padding-bottom: 10px;">
+          <label>🛒 BELANJA PRODUK</label>
+          <span style="font-size:0.8rem;color:#999;">Klik produk untuk menambah</span>
+        </div>
+        <div id="stokScanCariBar" style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
+          <button class="btn-scan" onclick="startScannerSTOK()" style="font-size:0.8rem; padding:6px 12px; height:36px;">📷 Scan</button>
+          <input type="text" id="stokBarcodeInput" placeholder="Cari / ketik kode atau nama produk..."
+                 onkeydown="if(event.key === 'Enter'){ manualBarcodeSearchSTOK(); }"
+                 style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--border); border-radius:5px; font-size:0.85rem; height:36px;">
+          <button class="btn btn-primary btn-sm" onclick="manualBarcodeSearchSTOK()" style="height:36px; padding:0 12px;">Cari</button>
+        </div>
+        <div id="stokCartItems"><p style="color:#999;">Belum ada produk</p></div>
+        <div class="stok-cart-total">Total: <span id="stokCartTotal">Rp 0</span></div>
+        <button class="btn btn-success" id="btnSimpanStok" onclick="simpanStokMasuk()" disabled>🛒 BELANJA PRODUK</button>
+      </div>
+    </div>
+    
+    <hr style="margin:20px 0;">
+    
+    <!-- RIWAYAT STOK MASUK - GROUPING PER NOTA -->
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+      <h3 style="margin:0;">📋 Riwayat Stok Masuk</h3>
+      <div class="dropdown-excel">
+        <button class="btn btn-excel" onclick="toggleExcelDropdownStok()" style="padding:6px 14px; font-size:0.8rem;">📊 Excel ▼</button>
+        <div class="dropdown-content" id="excelDropdownStok">
+          <a onclick="exportRiwayatStokCSV('summary')">📊 Ringkasan (per Nota)</a>
+          <a onclick="exportRiwayatStokCSV('detail')">📋 Detail (per Item)</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- FILTER RIWAYAT STOK -->
+    <div class="filter-riwayat-stok" id="filterRiwayatStok">
+      <div class="filter-group">
+        <label>🔍 Cari:</label>
+        <input type="text" id="cariNota" placeholder="No.Nota atau Pemasok..." oninput="filterRiwayatStok()">
+      </div>
+      <div class="filter-group">
+        <label>📅 Dari:</label>
+        <input type="date" id="filterStokMulai" onchange="filterRiwayatStok()">
+      </div>
+      <div class="filter-group">
+        <label>📅 Sampai:</label>
+        <input type="date" id="filterStokSampai" onchange="filterRiwayatStok()">
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-info btn-sm" onclick="filterRiwayatStok()" style="height:34px;">🔍 Cari</button>
+        <button class="btn btn-cyan btn-sm" onclick="resetFilterRiwayatStok()" style="height:34px;">↺ Reset</button>
+      </div>
+      <div class="filter-info" id="stokFilterInfo">Menampilkan semua nota (0 nota · 0 item)</div>
+    </div>
+    
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:50px;">No</th>
+            <th>Tanggal</th>
+            <th>No.Nota</th>
+            <th>Pemasok</th>
+            <th style="text-align:right;">Total</th>
+            <th style="text-align:center;">Jml Item</th>
+            <th style="text-align:center;">Status</th>
+            <th style="text-align:center;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="riwayatStokTable">
+          <tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">⏳ Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- SUB: BATCH -->
+  <div id="sub-stok-batch" class="sub-page">
+    <p style="color:#666;margin-bottom:15px;">Setiap batch memiliki harga beli masing-masing (FIFO).</p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Batch</th><th>Kode</th><th>Produk</th><th>Harga Beli</th><th>Stok</th><th>Tanggal Masuk</th></tr></thead>
+        <tbody id="batchTable"><tr><td colspan="6" style="text-align:center;color:#999;">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- SUB: BATAL -->
+  <div id="sub-stok-batal" class="sub-page">
+    <p style="color:#666;margin-bottom:15px;">
+      Hanya batch yang <strong>belum terpakai</strong> (stok masih utuh) yang dapat dibatalkan.
+    </p>
+    <div class="alert alert-warning">
+      <strong>⚠️ Peringatan!</strong>
+      <ul>
+        <li>Batch dengan status <span class="badge-success">✅ Bisa Dibatalkan</span> adalah batch yang stoknya <strong>belum terpakai sama sekali</strong></li>
+        <li>Batch yang sudah <strong>terpakai</strong> (stok berkurang) <strong>TIDAK BISA</strong> dibatalkan</li>
+        <li>Pembatalan akan menghapus batch, mengurangi stok produk, dan menghapus riwayat stok</li>
+        <li>Tindakan ini <strong>TIDAK DAPAT DIUNDUR!</strong></li>
+      </ul>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Batch</th>
+            <th>Kode</th>
+            <th>Nama Produk</th>
+            <th>Harga Beli</th>
+            <th>Stok</th>
+            <th>Tanggal Masuk</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="batalStokTable">
+          <tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <hr style="margin:20px 0;">
+    <h3>📋 Log Pembatalan Stok</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Tanggal Batal</th>
+            <th>User</th>
+            <th>Alasan</th>
+            <th>Batch</th>
+            <th>Produk</th>
+            <th>Stok</th>
+          </tr>
+        </thead>
+        <tbody id="logPembatalanStokTable">
+          <tr><td colspan="6" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
     
     <!-- ===== USER ===== -->
     <div id="page-user" class="page">
