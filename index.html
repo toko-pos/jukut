@@ -1185,9 +1185,32 @@
   display: block;
   margin-bottom: 4px;
 }
+
+    /* Expand / Collapse Hutang Vendor */
+.debt-master { cursor: pointer; }
+.debt-master:hover { background: #f8faff; }
+.debt-master .expand-icon { display: inline-block; transition: transform 0.3s; margin-right: 4px; font-size: 0.8rem; color: #666; }
+.debt-master .expand-icon.expanded { transform: rotate(180deg); }
+.debt-detail-row { background: #f8faff; padding: 0 !important; }
+.debt-detail-inner { padding: 15px 20px; border: 1px solid #e8ecf4; border-radius: 8px; margin: 10px 0; background: white; }
   
-  
-  
+  /* ===== STRUK 58MM ===== */
+.struk-58mm {
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  width: 58mm;
+  margin: 0 auto;
+  background: white;
+  color: black;
+}
+.struk-58mm .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px; }
+.struk-58mm .row { display: flex; justify-content: space-between; }
+.struk-58mm .total { font-weight: bold; font-size: 14px; border-top: 1px solid #000; padding-top: 5px; margin-top: 5px; }
+.struk-58mm .footer { text-align: center; margin-top: 10px; font-size: 10px; }
+@media print {
+  .struk-58mm { width: 58mm; }
+}
   
   </style>
 </head>
@@ -6225,10 +6248,7 @@ function closeModal() {
 function loadHutangVendor() {
   try {
     var tbody = document.getElementById('hutangVendorTable');
-    if (!tbody) {
-      console.warn('⚠️ Elemen hutangVendorTable tidak ditemukan');
-      return;
-    }
+    if (!tbody) return;
     
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">⏳ Memuat hutang...</td></tr>';
     
@@ -6237,32 +6257,19 @@ function loadHutangVendor() {
       var el = document.getElementById(summaryIds[i]);
       if (el) el.textContent = '⏳';
     }
-    var subEls = ['hutangTotalNotaSub', 'hutangTotalSisaSub', 'hutangStatusCount'];
-    for (var i = 0; i < subEls.length; i++) {
-      var el = document.getElementById(subEls[i]);
-      if (el) el.textContent = '';
-    }
     
     callGAS('getHutangVendor', {})
     .then(function(res) {
       try {
-        if (!res || !res.success) {
-          throw new Error(res ? res.error : 'Gagal memuat data');
-        }
+        if (!res || !res.success) throw new Error(res ? res.error : 'Gagal memuat data');
         var data = (res && res.data) || [];
         var s = (res && res.summary) || { totalNota: 0, totalDibayar: 0, totalSisa: 0 };
         
-        var el1 = document.getElementById('hutangTotalNota');
-        var el2 = document.getElementById('hutangTotalDibayar');
-        var el3 = document.getElementById('hutangTotalSisa');
-        var el4 = document.getElementById('hutangTotalNotaCount');
-        if (el1) el1.textContent = formatRupiah(s.totalNota || 0);
-        if (el2) el2.textContent = formatRupiah(s.totalDibayar || 0);
-        if (el3) el3.textContent = formatRupiah(s.totalSisa || 0);
-        if (el4) el4.textContent = data.length;
-        
-        var sub1 = document.getElementById('hutangTotalNotaSub');
-        if (sub1) sub1.textContent = data.length + ' nota';
+        // Update Summary
+        document.getElementById('hutangTotalNota').textContent = formatRupiah(s.totalNota || 0);
+        document.getElementById('hutangTotalDibayar').textContent = formatRupiah(s.totalDibayar || 0);
+        document.getElementById('hutangTotalSisa').textContent = formatRupiah(s.totalSisa || 0);
+        document.getElementById('hutangTotalNotaCount').textContent = data.length;
         
         var lunas = 0, belum = 0, cicilan = 0;
         for (var i = 0; i < data.length; i++) {
@@ -6270,12 +6277,7 @@ function loadHutangVendor() {
           else if (data[i].status === 'CICILAN') cicilan++;
           else belum++;
         }
-        var statusEl = document.getElementById('hutangStatusCount');
-        if (statusEl) statusEl.textContent = lunas + ' lunas · ' + cicilan + ' cicilan · ' + belum + ' belum';
-        
-        var sisaCount = data.filter(function(x) { return x.status !== 'LUNAS'; }).length;
-        var sisaSub = document.getElementById('hutangTotalSisaSub');
-        if (sisaSub) sisaSub.textContent = sisaCount + ' nota belum lunas';
+        document.getElementById('hutangStatusCount').textContent = lunas + ' lunas · ' + cicilan + ' cicilan · ' + belum + ' belum';
         
         if (!data.length) {
           tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">📭 Belum ada hutang vendor</td></tr>';
@@ -6295,14 +6297,14 @@ function loadHutangVendor() {
           var noNotaEscaped = String(x.noNota).replace(/'/g, "\\'");
           var sisaHutang = x.sisaHutang || 0;
           
-          html += '<tr>' +
-              '<td><strong>' + escapeHtml(x.noNota) + '</strong></td>' +
+          // Baris Utama (Master)
+          html += '<tr class="debt-master" onclick="toggleDebtDetail(this)" data-nota="' + escapeHtml(x.noNota) + '">' +
+              '<td><span class="expand-icon">▶</span> <strong>' + escapeHtml(x.noNota) + '</strong></td>' +
               '<td>' + formatTanggalDisplay(x.tanggal) + '</td>' +
               '<td>' + escapeHtml(x.pemasok || '-') + '</td>' +
               '<td style="text-align:right;">' + formatRupiah(x.totalNota) + '</td>' +
               '<td style="text-align:right;">' + formatRupiah(x.totalDibayar) + '</td>' +
-              '<td style="text-align:right;font-weight:bold;color:' + (sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';">' + 
-                  formatRupiah(sisaHutang) + '</td>' +
+              '<td style="text-align:right;font-weight:bold;color:' + (sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';">' + formatRupiah(sisaHutang) + '</td>' +
               '<td style="text-align:center;">' +
                   '<div class="debt-progress"><div class="fill ' + progressClass + '" style="width:' + Math.min(progress, 100) + '%;"></div></div>' +
                   '<span style="font-size:0.65rem;color:#666;">' + progress + '%</span>' +
@@ -6311,10 +6313,19 @@ function loadHutangVendor() {
               '<td style="text-align:center;">' +
                   '<div class="debt-actions">' +
                       (sisaHutang > 0 ? 
-                          '<button class="btn btn-bayar" onclick="bukaPembayaranVendor(\'' + noNotaEscaped + '\')">💰 Bayar</button>' : 
+                          '<button class="btn btn-bayar" onclick="event.stopPropagation();bukaPembayaranVendor(\'' + noNotaEscaped + '\')">💰 Bayar</button>' : 
                           '<button class="btn btn-bayar" disabled style="opacity:0.4;background:#999;">✅ Lunas</button>'
                       ) +
-                      '<button class="btn btn-riwayat" onclick="lihatRiwayatPembayaranVendor(\'' + noNotaEscaped + '\')">📋 Riwayat</button>' +
+                      '<button class="btn btn-riwayat" onclick="event.stopPropagation();lihatRiwayatPembayaranVendor(\'' + noNotaEscaped + '\')">📋 Riwayat</button>' +
+                  '</div>' +
+              '</td>' +
+              '</tr>';
+          
+          // Baris Detail (Expandable)
+          html += '<tr class="debt-detail-row" style="display:none;">' +
+              '<td colspan="9">' +
+                  '<div class="debt-detail-inner" id="debt-detail-' + escapeHtml(x.noNota) + '">' +
+                      '<div style="text-align:center; padding: 10px;">Memuat riwayat...</div>' +
                   '</div>' +
               '</td>' +
               '</tr>';
@@ -6326,13 +6337,64 @@ function loadHutangVendor() {
       }
     })
     .catch(function(e) {
-      console.error('❌ Error loadHutangVendor:', e);
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#f44336;padding:30px;">❌ ' + 
-          escapeHtml(e.message || 'Gagal memuat') + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#f44336;padding:30px;">❌ ' + escapeHtml(e.message || 'Gagal memuat') + '</td></tr>';
     });
   } catch (e) {
     console.error('❌ Error loadHutangVendor:', e);
   }
+}
+
+// ==================== TOGGLE DETAIL HUTANG ====================
+function toggleDebtDetail(row) {
+  var detailRow = row.nextElementSibling;
+  var icon = row.querySelector('.expand-icon');
+  
+  if (detailRow && detailRow.classList.contains('debt-detail-row')) {
+    var isVisible = detailRow.style.display !== 'none';
+    detailRow.style.display = isVisible ? 'none' : 'table-row';
+    if (icon) {
+      icon.textContent = isVisible ? '▶' : '▼';
+      icon.classList.toggle('expanded', !isVisible);
+    }
+    
+    // Jika baru dibuka dan belum ada isi, panggil API
+    if (!isVisible) {
+      var noNota = row.getAttribute('data-nota');
+      var container = document.getElementById('debt-detail-' + noNota);
+      if (container && container.innerHTML.includes('Memuat riwayat...')) {
+        loadDebtDetailToTable(noNota, container);
+      }
+    }
+  }
+}
+
+function loadDebtDetailToTable(noNota, container) {
+  callGAS('getDetailHutangVendor', { noNota: noNota })
+  .then(function(r) {
+    if (r && r.success) {
+      var x = r.data;
+      var rows = x.riwayatPembayaran || [];
+      
+      var html = '<div style="font-weight:bold; margin-bottom:10px; color:#1a2332;">📋 Riwayat Pembayaran (Total ' + rows.length + ')</div>';
+      if (!rows || rows.length === 0) {
+        html += '<div style="color:#999; padding:10px;">Belum ada pembayaran.</div>';
+      } else {
+        html += '<table style="width:100%; border-collapse:collapse; font-size:0.85rem;">';
+        html += '<thead><tr style="background:#f0f4ff;"><th style="padding:6px;">Tgl</th><th style="padding:6px; text-align:right;">Nominal</th><th style="padding:6px;">User</th></tr></thead><tbody>';
+        for (var i = 0; i < rows.length; i++) {
+          var a = rows[i];
+          html += '<tr><td>' + formatTanggalDisplay(a.tanggal) + '</td><td style="text-align:right;">' + formatRupiah(a.nominal || 0) + '</td><td>' + escapeHtml(a.user || '-') + '</td></tr>';
+        }
+        html += '</tbody></table>';
+      }
+      container.innerHTML = html;
+    } else {
+      container.innerHTML = '<div style="color:red;">Gagal memuat riwayat.</div>';
+    }
+  })
+  .catch(function(e) {
+    container.innerHTML = '<div style="color:red;">Error: ' + e.message + '</div>';
+  });
 }
 
 // ==================== MODAL PEMBAYARAN HUTANG ====================
@@ -6419,38 +6481,24 @@ function simpanPembayaranVendor(noNota) {
   var tanggal = document.getElementById('tanggalBayarVendor').value;
   var catatan = document.getElementById('catatanBayarVendor').value.trim();
   
-  if (!nominal || nominal <= 0) {
-    showToast('⚠️ Nominal pembayaran harus diisi!', 'error');
-    document.getElementById('nominalBayarVendor').focus();
-    return;
-  }
-  if (!tanggal) {
-    showToast('⚠️ Tanggal pembayaran wajib diisi!', 'error');
-    document.getElementById('tanggalBayarVendor').focus();
-    return;
-  }
+  if (!nominal || nominal <= 0) { showToast('⚠️ Nominal pembayaran harus diisi!', 'error'); return; }
+  if (!tanggal) { showToast('⚠️ Tanggal pembayaran wajib diisi!', 'error'); return; }
   
   var btn = document.querySelector('.modal-content .btn-success');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ Memproses...';
-  }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
   
   callGAS('simpanPembayaranVendor', {
-    noNota: noNota,
-    tanggal: tanggal,
-    nominal: nominal,
-    catatan: catatan,
+    noNota: noNota, tanggal: tanggal, nominal: nominal, catatan: catatan,
     user: (currentUser && currentUser.nama) || '-'
   })
   .then(function(r) {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '💾 Simpan Pembayaran';
-    }
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan Pembayaran'; }
     if (r && r.success) {
       showToast('✅ Pembayaran berhasil! Status: ' + r.status, 'success');
-      closeModal();
+      
+      // 🔥 Panggil fungsi preview nota pembayaran
+      showNotaPembayaranVendor(noNota, nominal, tanggal, r.status, r.sisaHutang, catatan);
+      
       loadHutangVendor();
       loadDashboard();
     } else {
@@ -6458,87 +6506,106 @@ function simpanPembayaranVendor(noNota) {
     }
   })
   .catch(function(e) {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '💾 Simpan Pembayaran';
-    }
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan Pembayaran'; }
     showToast('❌ ' + e.message, 'error');
   });
 }
 
-// ==================== RIWAYAT PEMBAYARAN ====================
-function lihatRiwayatPembayaranVendor(noNota) {
-  if (!noNota) {
-    showToast('⚠️ No.Nota tidak valid!', 'error');
-    return;
+// ==================== PREVIEW NOTA PEMBAYARAN (58MM) ====================
+function showNotaPembayaranVendor(noNota, nominal, tanggal, status, sisa, catatan) {
+  var html = '<div class="struk-58mm" id="strukNotaPembayaran">';
+  html += '<div class="header"><strong style="font-size:14px;">NOTA PEMBAYARAN</strong><br>';
+  html += 'No: ' + escapeHtml(noNota) + '<br>';
+  html += 'Tanggal: ' + formatTanggalDisplay(tanggal) + '</div>';
+  
+  html += '<div class="row"><span>Status</span><span>' + status + '</span></div>';
+  html += '<div class="row"><span>Nominal Bayar</span><span>' + formatRupiah(nominal) + '</span></div>';
+  if (sisa !== undefined && sisa !== null) {
+    html += '<div class="row" style="font-weight:bold;"><span>Sisa Hutang</span><span>' + formatRupiah(sisa) + '</span></div>';
+  }
+  if (catatan) {
+    html += '<div style="margin-top:5px;">Catatan: ' + escapeHtml(catatan) + '</div>';
   }
   
-  showToast('⏳ Memuat riwayat pembayaran...', 'info');
+  html += '<div class="row" style="margin-top:10px; border-top: 1px dashed #000; padding-top: 5px;"><span>User</span><span>' + escapeHtml(currentUser ? currentUser.nama : '-') + '</span></div>';
+  html += '<div class="footer">Terima Kasih</div>';
+  html += '</div>';
   
+  // Tampilkan preview di modal
+  document.getElementById('modalTitle').textContent = '🧾 Preview Nota Pembayaran';
+  document.getElementById('modalContent').classList.remove('large'); 
+  document.getElementById('modalBody').innerHTML = html + 
+    '<div class="struk-actions">' +
+    '<button class="btn btn-success" onclick="printNotaPembayaranVendor()">🖨️ Cetak</button>' +
+    '<button class="btn btn-danger" onclick="closeModal()">Tutup</button>' +
+    '</div>';
+  document.getElementById('modal').classList.add('active');
+}
+
+function printNotaPembayaranVendor() {
+  var content = document.getElementById('strukNotaPembayaran');
+  if (!content) return;
+  var printWindow = window.open('', '_blank', 'width=300,height=auto');
+  printWindow.document.write('<html><head><title>Cetak Nota</title><style>.struk-58mm { font-family: "Courier New", monospace; font-size: 11px; width: 58mm; } .header { text-align:center; border-bottom:1px dashed #000; margin-bottom:5px; padding-bottom:5px; } .row { display:flex; justify-content:space-between; } .footer { text-align:center; margin-top:10px; }</style></head><body>');
+  printWindow.document.write(content.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  setTimeout(function() { printWindow.print(); }, 300);
+}
+
+// ==================== CETAK RIWAYAT VENDOR (58MM) ====================
+function cetakRiwayatVendor(noNota) {
   callGAS('getDetailHutangVendor', { noNota: noNota })
   .then(function(r) {
-    if (!r || !r.success) {
-      showToast((r && r.error) || 'Data tidak ditemukan', 'error');
-      return;
-    }
+    if (!r || !r.success) return;
     
     var x = r.data;
-    var rows = x.riwayatPembayaran || x.riwayat || [];
+    var rows = x.riwayatPembayaran || [];
     
-    var html = '';
-    html += '<div class="debt-modal-detail">';
-    html += '<div class="row">';
-    html += '  <div class="item"><span class="label">📄 No.Nota</span><span class="value">' + escapeHtml(x.noNota) + '</span></div>';
-    html += '  <div class="item"><span class="label">🏢 Vendor</span><span class="value">' + escapeHtml(x.vendor || x.pemasok || '-') + '</span></div>';
-    html += '  <div class="item"><span class="label">💰 Total</span><span class="value">' + formatRupiah(x.totalNota) + '</span></div>';
-    html += '  <div class="item"><span class="label">✅ Dibayar</span><span class="value">' + formatRupiah(x.totalDibayar) + '</span></div>';
-    html += '  <div class="item" style="border-bottom:none;padding-bottom:0;"><span class="label">⚠️ Sisa</span><span class="value" style="color:' + (x.sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';font-weight:bold;">' + formatRupiah(x.sisaHutang) + '</span></div>';
-    html += '</div></div>';
+    var html = '<div class="struk-58mm" id="strukCetakRiwayat">';
+    html += '<div class="header"><strong style="font-size:14px;">NOTA RIWAYAT BAYAR</strong><br>';
+    html += 'No: ' + escapeHtml(x.noNota) + '<br>';
+    html += 'Vendor: ' + escapeHtml(x.pemasok) + '<br>';
+    html += 'Tanggal: ' + formatTanggalDisplay(new Date()) + '</div>';
     
-    html += '<div style="margin-top:12px;"><strong>📋 Riwayat Pembayaran</strong> <span style="font-size:0.8rem;color:#666;">(' + rows.length + ' pembayaran)</span></div>';
-    
-    if (!rows || rows.length === 0) {
-      html += '<div style="text-align:center;color:#999;padding:20px;border:1px solid #eee;border-radius:8px;margin-top:8px;">📭 Belum ada pembayaran</div>';
+    if (rows.length === 0) {
+      html += '<div style="text-align:center;">Belum ada pembayaran</div>';
     } else {
-      html += '<div class="debt-riwayat-list" style="max-height:300px;overflow-y:auto;border:1px solid #e8ecf4;border-radius:8px;margin-top:8px;">';
-      html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
-      html += '<thead><tr style="background:#f0f4ff;">';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">No</th>';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Tanggal</th>';
-      html += '  <th style="padding:8px 12px;text-align:right;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Nominal</th>';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">User</th>';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Catatan</th>';
-      html += '</tr></thead><tbody>';
+      html += '<div class="row"><span>Total</span><span>' + formatRupiah(x.totalNota) + '</span></div>';
+      html += '<div class="row"><span>Dibayar</span><span>' + formatRupiah(x.totalDibayar) + '</span></div>';
+      html += '<div class="row" style="font-weight:bold;"><span>Sisa</span><span>' + formatRupiah(x.sisaHutang) + '</span></div>';
+      html += '<div style="border-top:1px dashed #000; margin:10px 0;"></div>';
       
       for (var i = 0; i < rows.length; i++) {
         var a = rows[i];
-        html += '<tr>' +
-          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + (i + 1) + '</td>' +
-          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + formatTanggalDisplay(a.tanggal) + '</td>' +
-          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;text-align:right;font-weight:600;color:#2e7d32;">' + formatRupiah(a.nominal || 0) + '</td>' +
-          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + escapeHtml(a.user || '-') + '</td>' +
-          '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;font-size:0.8rem;color:#666;">' + escapeHtml(a.catatan || '-') + '</td>' +
-          '</tr>';
+        html += '<div class="row"><span>' + formatTanggalDisplay(a.tanggal) + '</span><span>' + formatRupiah(a.nominal) + '</span></div>';
+        if (a.user) html += '<div style="font-size:10px; color:#555;">User: ' + escapeHtml(a.user) + '</div>';
+        if (a.catatan) html += '<div style="font-size:10px; color:#555;">Cat: ' + escapeHtml(a.catatan) + '</div>';
+        html += '<div style="border-bottom:1px dotted #ccc; margin:5px 0;"></div>';
       }
-      html += '</tbody></table></div>';
     }
     
-    html += '<div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">';
-    if (x.sisaHutang > 0) {
-      html += '<button class="btn btn-success" onclick="closeModal();bukaPembayaranVendor(\'' + escapeHtml(x.noNota) + '\');" style="flex:1;padding:12px;font-weight:700;border-radius:8px;border:none;cursor:pointer;">💰 Bayar Lagi</button>';
-    }
-    html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:12px;font-weight:700;border-radius:8px;border:none;cursor:pointer;background:#2196F3;color:white;">Tutup</button>';
+    html += '<div class="footer">Terima Kasih</div>';
     html += '</div>';
     
-    document.getElementById('modalTitle').textContent = '📋 Riwayat Pembayaran - ' + x.noNota;
-    document.getElementById('modalContent').classList.add('large');
-    document.getElementById('modalBody').innerHTML = html;
+    // Tampilkan di modal (untuk preview), lalu cetak
+    document.getElementById('modalTitle').textContent = '🖨️ Preview Cetak Riwayat';
+    document.getElementById('modalContent').classList.remove('large'); // Gunakan lebar standar
+    document.getElementById('modalBody').innerHTML = html + 
+      '<div class="struk-actions"><button class="btn btn-success" onclick="printRiwayatVendor()">🖨️ Cetak</button><button class="btn btn-danger" onclick="closeModal()">Tutup</button></div>';
     document.getElementById('modal').classList.add('active');
-  })
-  .catch(function(e) {
-    console.error('❌ Error lihatRiwayatPembayaranVendor:', e);
-    showToast('❌ ' + e.message, 'error');
   });
+}
+
+function printRiwayatVendor() {
+  var content = document.getElementById('strukCetakRiwayat');
+  if (!content) return;
+  var printWindow = window.open('', '_blank', 'width=300,height=auto');
+  printWindow.document.write('<html><head><title>Cetak Riwayat</title><style>.struk-58mm { font-family: "Courier New", monospace; font-size: 11px; width: 58mm; } .header { text-align:center; border-bottom:1px dashed #000; margin-bottom:5px; padding-bottom:5px; } .row { display:flex; justify-content:space-between; } .footer { text-align:center; margin-top:10px; }</style></head><body>');
+  printWindow.document.write(content.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  setTimeout(function() { printWindow.print(); }, 300);
 }
 
 // ==================== SCANNER BARCODE ====================
