@@ -1,22 +1,22 @@
 {
-  "name": "POS System FIFO",
-  "short_name": "POS FIFO",
-  "description": "Point of Sale System with FIFO Inventory",
-  "start_url": "/jukut/",
-  "scope": "/jukut/",
+  "name": "POS System - Toko & Reseller",
+  "short_name": "POS System",
+  "description": "Point of Sale dengan Manajemen Reseller dan FIFO Inventory",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#4CAF50",
   "theme_color": "#4CAF50",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/jukut/iconbayamtabur.png",
+      "src": "iconbayamtabur.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/jukut/iconbayamtabur.png",
+      "src": "iconbayamtabur.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
