@@ -3315,6 +3315,8 @@ function loadKasirList() {
 
 // ==================== UPDATE HEADER INFO ====================
 function updateHeaderInfo() {
+   // 🔥 Refresh cache info toko
+  refreshInfoTokoCache();
   console.log('🔄 updateHeaderInfo() dipanggil');
   
   callGAS('getInfoToko', {})
@@ -5955,7 +5957,10 @@ function loadProfile() {
       console.error('❌ Error getInfoToko:', error);
       showToast('⚠️ Gagal memuat info toko: ' + error.message, 'error');
     });
-      
+
+   // 🔥 Refresh cache info toko
+    refreshInfoTokoCache();
+    
   } catch (e) {
     console.error('❌ Error loadProfile:', e);
     showToast('❌ Gagal memuat profil: ' + e.message, 'error');
@@ -6209,7 +6214,136 @@ function prosesPembayaran() {
 }
 
 // ==================== STRUK ====================
+
+// 🔥 FUNGSI UNTUK MENDAPATKAN DATA TOKO DARI CACHE
+function getInfoTokoSync() {
+  var result = { namaToko: '', alamat: '', noHp: '' };
+  
+  try {
+    var cached = localStorage.getItem('info_toko');
+    if (cached) {
+      var parsed = JSON.parse(cached);
+      if (parsed && parsed.namaToko) {
+        return parsed;
+      }
+    }
+  } catch(e) {
+    console.warn('⚠️ Gagal baca cache info_toko:', e);
+  }
+  
+  return result;
+}
+
+// 🔥 FUNGSI UNTUK REFRESH CACHE INFO TOKO
+function refreshInfoTokoCache() {
+  callGAS('getInfoToko', {})
+  .then(function(result) {
+    if (result && result.success) {
+      var data = result.data.data || result.data;
+      var infoToko = {
+        namaToko: data.namaToko || '',
+        alamat: data.alamat || '',
+        noHp: data.noHp || ''
+      };
+      localStorage.setItem('info_toko', JSON.stringify(infoToko));
+      console.log('✅ Cache Info Toko diupdate:', infoToko);
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Gagal refresh cache info toko:', error);
+  });
+}
+
+// 🔥 FORMAT RUPIAH TANPA SIMBOL (UNTUK STRUK)
+function formatRupiahPlain(amount) {
+  amount = parseInt(amount) || 0;
+  return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// 🔥 GENERATE STRUK DENGAN DATA TOKO
+function generateStrukHTML(data) {
+  var infoToko = getInfoTokoSync();
+  
+  var html = '<div class="struk-container" id="strukContent">';
+  html += '<div class="header-struk">';
+  
+  // 🔥 NAMA TOKO
+  html += '<h2>' + (infoToko.namaToko || '🛒 POS System') + '</h2>';
+  
+  // 🔥 ALAMAT TOKO
+  if (infoToko.alamat) {
+    html += '<div class="info">' + infoToko.alamat + '</div>';
+  }
+  
+  // 🔥 NO HP
+  if (infoToko.noHp) {
+    html += '<div class="info">📞 Pemesanan: ' + infoToko.noHp + '</div>';
+  }
+  
+  html += '<div style="border-top:1px dashed #999;margin:5px 0;"></div>';
+  html += '<div class="info"><b>ID:</b> ' + data.id + '</div>';
+  html += '<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>';
+  html += '<div class="info"><b>Kasir:</b> ' + data.kasir + '</div>';
+  if (data.namaPembeli && data.namaPembeli !== '-') {
+    html += '<div class="info"><b>Pembeli:</b> ' + data.namaPembeli + '</div>';
+  }
+  html += '</div>';
+  
+  // 🔥 ITEMS
+  html += '<div class="items-struk">';
+  html += '<div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>';
+  
+  if (data.items.length === 0) {
+    html += '<div class="item-row"><span class="item-name" style="color:#999;">Tidak ada item</span></div>';
+  } else {
+    for (var i = 0; i < data.items.length; i++) {
+      var item = data.items[i];
+      var name = item.nama || 'Produk';
+      if (name.length > 20) name = name.substring(0, 18) + '..';
+      var qty = parseInt(item.qty) || 0;
+      var price = parseInt(item.harga) || 0;
+      var subtotal = parseInt(item.subtotal) || (price * qty);
+      html += '<div class="item-row">';
+      html += '<span class="item-name">' + name + '</span>';
+      html += '<span class="item-qty">' + qty + '</span>';
+      html += '<span class="item-harga">' + formatRupiahPlain(price) + '</span>';
+      html += '<span class="item-subtotal">' + formatRupiahPlain(subtotal) + '</span>';
+      html += '</div>';
+    }
+  }
+  html += '</div>';
+  
+  // 🔥 TOTAL
+  html += '<div class="total-struk">';
+  html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(data.total) + '</span></div>';
+  if (data.pembayaran) {
+    html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;"><span>Pembayaran</span><span>' + formatRupiahPlain(data.pembayaran) + '</span></div>';
+  }
+  if (data.kembalian) {
+    html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;font-weight:bold;color:#4CAF50;"><span>Kembalian</span><span>' + formatRupiahPlain(data.kembalian) + '</span></div>';
+  }
+  html += '</div>';
+  
+  // 🔥 FOOTER
+  html += '<div class="footer-struk">';
+  html += '<div class="divider"></div>';
+  html += '<div class="thanks">TERIMA KASIH</div>';
+  html += '<div style="font-size:9px;color:#999;">Barang yang sudah dibeli tidak dapat ditukar</div>';
+  if (infoToko.noHp) {
+    html += '<div style="font-size:9px;color:#999;">📞 ' + infoToko.noHp + '</div>';
+  }
+  html += '<div class="small">' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>';
+  html += '</div>';
+  html += '</div>';
+  
+  return html;
+}
+
+// 🔥 SHOW STRUK
 function showStruk(data, isFromHistory) {
+  // Refresh cache sebelum tampilkan struk
+  refreshInfoTokoCache();
+  
   var html = generateStrukHTML(data);
   
   html += '<div class="struk-actions">';
@@ -6226,67 +6360,67 @@ function showStruk(data, isFromHistory) {
   document.getElementById('modal').classList.add('active');
 }
 
-function generateStrukHTML(data) {
-  var html = '<div class="struk-container" id="strukContent">';
-  html += '<div class="header-struk">';
-  html += '<h2>' + (currentUser && currentUser.role === 'admin' ? 'POS System' : '') + '</h2>';
-  html += '<div class="info"><b>ID:</b> ' + data.id + '</div>';
-  html += '<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>';
-  html += '<div class="info"><b>Kasir:</b> ' + data.kasir + '</div>';
-  if (data.namaPembeli && data.namaPembeli !== '-') {
-    html += '<div class="info"><b>Pembeli:</b> ' + data.namaPembeli + '</div>';
-  }
-  html += '</div>';
-  
-  html += '<div class="items-struk">';
-  html += '<div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>';
-  for (var i = 0; i < data.items.length; i++) {
-    var item = data.items[i];
-    var name = item.nama || 'Produk';
-    if (name.length > 20) name = name.substring(0,18) + '..';
-    html += '<div class="item-row"><span class="item-name">' + name + '</span><span class="item-qty">' + item.qty + '</span><span class="item-harga">' + formatRupiah(item.harga) + '</span><span class="item-subtotal">' + formatRupiah(item.subtotal) + '</span></div>';
-  }
-  html += '</div>';
-  
-  html += '<div class="total-struk">';
-  html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiah(data.total) + '</span></div>';
-  if (data.pembayaran) {
-    html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;"><span>Pembayaran</span><span>' + formatRupiah(data.pembayaran) + '</span></div>';
-  }
-  if (data.kembalian) {
-    html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;"><span>Kembalian</span><span>' + formatRupiah(data.kembalian) + '</span></div>';
-  }
-  html += '</div>';
-  
-  html += '<div class="footer-struk">';
-  html += '<div class="divider"></div>';
-  html += '<div class="thanks">TERIMA KASIH</div>';
-  html += '<div style="font-size:9px;color:#999;">Barang yang sudah dibeli tidak dapat ditukar</div>';
-  html += '<div class="small">' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>';
-  html += '<div class="small">Scan untuk pengecekan harga</div>';
-  html += '</div>';
-  html += '</div>';
-  
-  return html;
-}
-
+// 🔥 CETAK STRUK
 function printStruk() {
   var content = document.getElementById('strukContent');
   if (!content) { showToast('Struk tidak ditemukan!', 'error'); return; }
   var printWindow = window.open('', '_blank', 'width=280,height=auto');
-  printWindow.document.write('<html><head><title>Struk</title><style>/* style print */</style></head><body>');
+  printWindow.document.write('<html><head><title>Struk</title><style>');
+  printWindow.document.write('body { font-family: "Courier New", monospace; font-size: 11px; margin: 0; padding: 8px; }');
+  printWindow.document.write('.struk-container { max-width: 58mm; margin: 0 auto; }');
+  printWindow.document.write('.header-struk { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.header-struk h2 { font-size: 14px; margin: 0 0 4px 0; }');
+  printWindow.document.write('.header-struk .info { font-size: 9px; color: #444; line-height: 1.3; }');
+  printWindow.document.write('.items-struk { border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.struk-header-item { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px dotted #999; padding-bottom: 3px; margin-bottom: 3px; font-size: 9px; }');
+  printWindow.document.write('.item-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px; }');
+  printWindow.document.write('.item-name { flex: 3; text-align: left; }');
+  printWindow.document.write('.item-qty { flex: 1; text-align: center; }');
+  printWindow.document.write('.item-harga { flex: 1.5; text-align: right; }');
+  printWindow.document.write('.item-subtotal { flex: 1.5; text-align: right; }');
+  printWindow.document.write('.total-struk { border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; padding: 3px 0; }');
+  printWindow.document.write('.payment-row { display: flex; justify-content: space-between; font-size: 10px; padding: 2px 0; }');
+  printWindow.document.write('.payment-row.highlight { font-weight: bold; color: #4CAF50; }');
+  printWindow.document.write('.footer-struk { text-align: center; font-size: 9px; color: #666; line-height: 1.5; padding-top: 4px; }');
+  printWindow.document.write('.footer-struk .divider { border-top: 1px dashed #ccc; margin: 6px 0; }');
+  printWindow.document.write('.footer-struk .thanks { font-size: 11px; font-weight: bold; color: #333; }');
+  printWindow.document.write('.footer-struk .small { font-size: 8px; color: #999; }');
+  printWindow.document.write('</style></head><body>');
   printWindow.document.write(content.innerHTML);
   printWindow.document.write('</body></html>');
   printWindow.document.close();
   setTimeout(function() { printWindow.print(); }, 300);
 }
 
+// 🔥 DOWNLOAD STRUK PDF
 function downloadStrukPDF() {
   var content = document.getElementById('strukContent');
   if (!content) { showToast('Struk tidak ditemukan!', 'error'); return; }
   showToast('📄 Membuat PDF...', 'success');
   var printWindow = window.open('', '_blank', 'width=280,height=auto');
-  printWindow.document.write('<html><head><title>Struk</title><style>/* style print */</style></head><body>');
+  printWindow.document.write('<html><head><title>Struk</title><style>');
+  printWindow.document.write('body { font-family: "Courier New", monospace; font-size: 11px; margin: 0; padding: 8px; }');
+  printWindow.document.write('.struk-container { max-width: 58mm; margin: 0 auto; }');
+  printWindow.document.write('.header-struk { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.header-struk h2 { font-size: 14px; margin: 0 0 4px 0; }');
+  printWindow.document.write('.header-struk .info { font-size: 9px; color: #444; line-height: 1.3; }');
+  printWindow.document.write('.items-struk { border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.struk-header-item { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px dotted #999; padding-bottom: 3px; margin-bottom: 3px; font-size: 9px; }');
+  printWindow.document.write('.item-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px; }');
+  printWindow.document.write('.item-name { flex: 3; text-align: left; }');
+  printWindow.document.write('.item-qty { flex: 1; text-align: center; }');
+  printWindow.document.write('.item-harga { flex: 1.5; text-align: right; }');
+  printWindow.document.write('.item-subtotal { flex: 1.5; text-align: right; }');
+  printWindow.document.write('.total-struk { border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; padding: 3px 0; }');
+  printWindow.document.write('.payment-row { display: flex; justify-content: space-between; font-size: 10px; padding: 2px 0; }');
+  printWindow.document.write('.payment-row.highlight { font-weight: bold; color: #4CAF50; }');
+  printWindow.document.write('.footer-struk { text-align: center; font-size: 9px; color: #666; line-height: 1.5; padding-top: 4px; }');
+  printWindow.document.write('.footer-struk .divider { border-top: 1px dashed #ccc; margin: 6px 0; }');
+  printWindow.document.write('.footer-struk .thanks { font-size: 11px; font-weight: bold; color: #333; }');
+  printWindow.document.write('.footer-struk .small { font-size: 8px; color: #999; }');
+  printWindow.document.write('</style></head><body>');
   printWindow.document.write(content.innerHTML);
   printWindow.document.write('</body></html>');
   printWindow.document.close();
