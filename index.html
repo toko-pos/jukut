@@ -6885,54 +6885,74 @@ function populateEditHargaDropdown() {
     }
     dropdown.appendChild(option);
   }
-
-
-  // ==================== RELOAD LENGKAP SETELAH UPDATE ====================
-function reloadAllDataAfterUpdate(kode, hargaBaru) {
-  console.log('🔄 Reload semua data setelah update...');
   
-  // 1. Load produk dari server (yang paling penting)
+  // 🔥 PERTAHANKAN SELECTED VALUE
+  if (selectedValue) {
+    dropdown.value = selectedValue;
+  } else if (sorted.length > 0) {
+    dropdown.value = sorted[0].Kode;
+  }
+  
+  // Trigger onchange untuk update harga otomatis
+  if (dropdown.value) {
+    onEditHargaDropdownChange();
+  }
+  
+  console.log('✅ Dropdown diisi dengan', sorted.length, 'produk');
+}
+
+ // ==================== RELOAD LENGKAP SETELAH UPDATE ====================
+function reloadAllDataAfterUpdate(kode, hargaBaru) {
+  console.log('🔄 Reload semua data setelah update...', kode, hargaBaru);
+  
+  // 🔥 LOAD ULANG PRODUK DARI SERVER
   callGAS('getProduk', {})
   .then(function(result) {
+    console.log('📥 getProduk response:', result);
+    
     if (result && result.success) {
       produkList = result.data || [];
       console.log('✅ produkList terbaru dari server:', produkList);
       
-      // 2. Refresh tabel produk
+      // 1. Refresh tabel produk
       renderProdukTable();
       
-      // 3. Refresh POS
+      // 2. Refresh POS
       loadPosProduk();
       
-      // 4. Refresh dropdown
+      // 3. Refresh dropdown
       populateEditHargaDropdown();
       
-      // 5. Pilih produk yang sama di dropdown
+      // 4. Pilih produk yang sama di dropdown
       var dropdown = document.getElementById('editHargaDropdown');
       if (dropdown) {
         dropdown.value = kode;
         onEditHargaDropdownChange();
       }
       
-      // 6. Refresh dashboard
+      // 5. Refresh dashboard
       loadDashboard();
       
-      // 7. Update result div
+      // 6. Update result div
       var resultDiv = document.getElementById('editHargaResult');
       if (resultDiv) {
         resultDiv.innerHTML = '✅ Harga jual berhasil diupdate menjadi: <strong>' + formatRupiah(hargaBaru) + '</strong>';
         resultDiv.style.color = '#4CAF50';
       }
       
-      showToast('✅ Semua data telah diperbarui!', 'success');
+      console.log('✅ Semua data telah diperbarui!');
+    } else {
+      console.error('❌ Gagal load produk:', result);
+      showToast('⚠️ Data berhasil diupdate, tapi gagal refresh tampilan', 'warning');
     }
   })
   .catch(function(error) {
     console.error('❌ Error reload data:', error);
+    showToast('⚠️ Data berhasil diupdate, tapi gagal refresh tampilan', 'warning');
   });
 }
 
-// Fungsi render tabel produk (dipisahkan agar reusable)
+// Fungsi render tabel produk
 function renderProdukTable() {
   var tbody = document.getElementById('produkTable');
   if (!tbody) return;
@@ -7043,12 +7063,12 @@ function tampilkanModalKonfirmasiHarga(kode, nama, hargaLama, hargaBaru) {
   }
   
   // 🔥 SIMPAN DATA KE VARIABEL GLOBAL
-  editHargaData = {
+  window.editHargaData = {
     kode: kode,
     hargaBaru: hargaBaru
   };
   
-  console.log('✅ editHargaData tersimpan:', editHargaData);
+  console.log('✅ editHargaData tersimpan:', window.editHargaData);
   
   body.innerHTML = `
     <div style="margin-bottom: 10px;">
@@ -7092,8 +7112,8 @@ function closeEditHargaModal() {
   if (modal) {
     modal.classList.remove('active');
   }
-  editHargaData = null;
-  console.log('✅ Modal ditutup, editHargaData direset');
+  // 🔥 JANGAN RESET DI SINI!
+  console.log('✅ Modal ditutup');
 }
 
 // Fungsi untuk menyimpan edit harga (dipanggil dari tombol)
@@ -7147,27 +7167,44 @@ function prosesEditHargaJual() {
   console.log('🔍 prosesEditHargaJual dipanggil');
   console.log('📊 editHargaData:', editHargaData);
   
-  if (!editHargaData || !editHargaData.kode) {
-    showToast('❌ Data tidak valid!', 'error');
+  // 🔥 CEK DATA SEBELUM DIPROSES
+  if (!editHargaData) {
+    console.error('❌ editHargaData adalah null!');
+    showToast('❌ Data tidak valid! Silakan pilih produk lagi.', 'error');
+    closeEditHargaModal();
+    return;
+  }
+  
+  if (!editHargaData.kode) {
+    console.error('❌ editHargaData.kode tidak ditemukan!');
+    showToast('❌ Kode produk tidak ditemukan!', 'error');
     closeEditHargaModal();
     return;
   }
   
   var btn = document.getElementById('btnConfirmEditHarga');
-  if (!btn) return;
+  if (!btn) {
+    console.error('❌ Tombol konfirmasi tidak ditemukan!');
+    return;
+  }
   
   var originalText = btn.textContent;
   btn.textContent = '⏳ Memproses...';
   btn.disabled = true;
   
-  var dataToSend = {
-    kode: editHargaData.kode,
-    hargaJualBaru: editHargaData.hargaBaru
-  };
+  // 🔥 SIMPAN DATA KE VARIABEL LOKAL
+  var currentKode = editHargaData.kode;
+  var currentHarga = editHargaData.hargaBaru;
   
-  console.log('📤 Mengirim request update harga ke GAS:', dataToSend);
+  console.log('📤 Mengirim request update harga ke GAS:', {
+    kode: currentKode,
+    hargaJualBaru: currentHarga
+  });
   
-  callGAS('updateHargaJual', dataToSend)
+  callGAS('updateHargaJual', {
+    kode: currentKode,
+    hargaJualBaru: currentHarga
+  })
   .then(function(result) {
     console.log('📥 Response dari server:', result);
     
@@ -7176,18 +7213,18 @@ function prosesEditHargaJual() {
     
     if (result && result.success) {
       showToast('✅ Harga jual berhasil diupdate!', 'success');
+      
+      // 🔥 RESET DATA
+      editHargaData = null;
       closeEditHargaModal();
       
-      var updatedKode = editHargaData.kode;
-      var updatedHarga = editHargaData.hargaBaru;
+      // 🔥 RELOAD SEMUA DATA
+      reloadAllDataAfterUpdate(currentKode, currentHarga);
       
-      // 🔥 RELOAD SEMUA DATA DENGAN URUTAN YANG BENAR
-      reloadAllDataAfterUpdate(updatedKode, updatedHarga);
-      
-      editHargaData = null;
     } else {
       var errorMsg = result && result.error ? result.error : 'Terjadi kesalahan';
       showToast('❌ Gagal update harga: ' + errorMsg, 'error');
+      editHargaData = null;
     }
   })
   .catch(function(error) {
@@ -7195,6 +7232,7 @@ function prosesEditHargaJual() {
     btn.textContent = originalText;
     btn.disabled = false;
     showToast('❌ Error: ' + error.message, 'error');
+    editHargaData = null;
   });
 }
       
