@@ -6802,29 +6802,38 @@ function checkout() {
   html += '<div class="form-group">';
   html += '<label>💰 Nominal Pembayaran</label>';
   
-  // 🔥 TOMBOL QUICK NOMINAL - STATIS
+  // 🔥 TOMBOL QUICK NOMINAL - HANYA TAMPILKAN YANG >= TOTAL
   html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;" id="quickNominalContainer">';
   
   // 🔥 DAFTAR NOMINAL STATIS
   var quickNoms = [10000, 15000, 20000, 30000, 50000, 60000, 90000, 100000, 120000, 160000, 200000];
   
+  var tombolMuncul = 0;
   for (var i = 0; i < quickNoms.length; i++) {
     var nom = quickNoms[i];
-    // 🔥 SEMUA TOMBOL TETAP MUNCUL, TAPI YANG < TOTAL DISABLE
-    var isEnough = nom >= total;
-    var style = isEnough ? 
-      'padding:6px 12px;border:1px solid #4CAF50;border-radius:5px;background:white;color:#4CAF50;cursor:pointer;font-weight:600;font-size:0.8rem;' :
-      'padding:6px 12px;border:1px solid #ddd;border-radius:5px;background:#f5f5f5;color:#bbb;cursor:not-allowed;font-weight:400;font-size:0.8rem;';
-    
-    html += '<button type="button" class="btn-sm" onclick="setNominal(' + nom + ')" style="' + style + '" ' + (!isEnough ? 'disabled' : '') + '>' + formatRupiah(nom) + '</button>';
+    // 🔥 HANYA TAMPILKAN JIKA NOMINAL >= TOTAL
+    if (nom >= total) {
+      html += '<button type="button" class="btn-sm" onclick="setNominal(' + nom + ')" style="padding:6px 12px;border:1px solid #4CAF50;border-radius:5px;background:white;color:#4CAF50;cursor:pointer;font-weight:600;font-size:0.8rem;">' + formatRupiah(nom) + '</button>';
+      tombolMuncul++;
+    }
   }
   
-  // Tombol "Tepat" - bayar sesuai total (selalu aktif)
+  // 🔥 JIKA TIDAK ADA TOMBOL YANG MUNCUL (TOTAL > 200.000)
+  if (tombolMuncul === 0) {
+    // Generate nominal kelipatan 50.000 ke atas
+    var baseNom = Math.ceil(total / 50000) * 50000;
+    for (var i = 0; i < 5; i++) {
+      var nom = baseNom + (i * 50000);
+      html += '<button type="button" class="btn-sm" onclick="setNominal(' + nom + ')" style="padding:6px 12px;border:1px solid #4CAF50;border-radius:5px;background:white;color:#4CAF50;cursor:pointer;font-weight:600;font-size:0.8rem;">' + formatRupiah(nom) + '</button>';
+    }
+  }
+  
+  // Tombol "Tepat" - bayar sesuai total (selalu tampil)
   html += '<button type="button" class="btn-sm" onclick="setNominal(' + total + ')" style="padding:6px 12px;border:1px solid #4CAF50;border-radius:5px;background:#4CAF50;color:white;cursor:pointer;font-weight:700;font-size:0.8rem;">💳 Tepat</button>';
   
   html += '</div>';
   
-  // 🔥 INPUT NOMINAL - SELALU BISA DIISI (TIDAK DISABLE)
+  // 🔥 INPUT NOMINAL - SELALU BISA DIISI
   html += '<input type="number" id="fPembayaran" min="0" placeholder="Masukkan nominal pembayaran..." style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:bold;background:white;" oninput="hitungKembalian(' + total + ')">';
   html += '<small style="color:#999;display:block;margin-top:4px;">💡 Ketik nominal atau klik tombol cepat di atas</small>';
   html += '</div>';
@@ -6849,12 +6858,14 @@ function checkout() {
     if (input) { 
       input.focus(); 
       input.select();
-      // 🔥 ISI OTOMATIS DENGAN TOTAL (BISA DIUBAH KASIR)
       input.value = total;
       hitungKembalian(total);
     }
   }, 300);
 }
+
+
+  
 function setNominal(value) {
   var input = document.getElementById('fPembayaran');
   if (input) {
