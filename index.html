@@ -8640,11 +8640,11 @@ function aturHargaReseller(kodeReseller) {
           <td style="padding:6px 10px;font-weight:bold;font-size:0.8rem;">${escapeHtml(kode)}</td>
           <td style="padding:6px 10px;font-size:0.8rem;">${escapeHtml(nama)}</td>
           <td style="padding:6px 10px;text-align:right;font-weight:bold;font-size:0.8rem;">${formatRupiah(hargaNormal)}</td>
-          <td style="padding:6px 10px;text-align:right;">
-            <input type="number" id="harga_${kode}" value="${hargaReseller}" min="0" step="1000"
+          <td style="padding:12px 16px;text-align:right;">
+            <input type="number" id="harga_${kode}" value="${hargaReseller}" 
                    style="width:100%;max-width:120px;padding:5px 8px;border:1.5px solid #dce3f0;border-radius:6px;font-size:0.85rem;font-weight:600;text-align:right;"
                    onchange="onHargaResellerChange('${kode}', ${hargaNormal})"
-                   placeholder="Harga">
+                  
           </td>
           <td style="padding:6px 10px;text-align:center;font-size:0.7rem;">
             ${badgeHtml}
