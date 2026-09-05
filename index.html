@@ -39,7 +39,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyMVnDS2xkkvsTg9veGDGnvH_qK2VY_5ph2CvpACaNkpt6ZAkXfYWp3zKqkxhoCpRIZmA/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxb08OHvF72rs0WZGptcu5zy5MiY3YGwDGi8hpD8Lp0k7_0BjKANo6clXMxsS0X18NS7g/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -1644,6 +1644,26 @@
               ⚠️ Pilih tanggal untuk mengaktifkan produk
             </div>
           </div>
+
+
+
+          <!-- 🔥 PILIH RESELLER -->
+      <div class="pos-tanggal-wrapper" style="border-bottom: 1px solid #eee; padding-bottom: 10px;">
+        <label for="pilihReseller">👥 Pilih Reseller:</label>
+        <select id="pilihReseller" onchange="onResellerChange()" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:5px; font-size:0.9rem; height:36px;">
+          <option value="">-- Tanpa Reseller (Harga Normal) --</option>
+        </select>
+        <button class="btn btn-info btn-sm" onclick="loadResellerOptions()" style="height:36px; padding:0 12px;">🔄</button>
+      </div>
+      
+      <!-- 🔥 INFO RESELLER -->
+      <div id="resellerInfo" style="display:none; background:#f0f8ff; padding:8px 12px; border-radius:5px; margin-bottom:10px; border-left:4px solid #2196F3;">
+        <span id="resellerNamaDisplay"></span>
+        <span id="resellerDiskonDisplay" style="margin-left:10px; font-weight:bold; color:#FF9800;"></span>
+      </div>
+
+
+          
           <div class="pos-tanggal-wrapper" style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: -5px;">
             <label for="namaPembeli">👤 Nama Pembeli:</label>
             <input type="text" id="namaPembeli" placeholder="Masukkan nama pembeli (opsional)" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:5px; font-size:0.9rem; height:36px;">
@@ -3641,7 +3661,11 @@ function showPage(page) {
     }
   }
   if (page === 'dashboard') loadDashboard();
-  if (page === 'pos') { loadPosProduk(); updateCartDisplay(); }
+
+    if (page === 'pos') { loadPosProduk(); updateCartDisplay(); loadResellerOptions(); // 🔥 Tambahkan ini
+  }
+
+  
   if (page === 'transaksi') { 
     loadTransaksi(); 
     loadLogPembatalan(); 
@@ -8229,6 +8253,360 @@ function getKodeResellerOtomatis() {
   });
 }
 
+
+  // ==================== LOAD RESELLER OPTIONS ====================
+function loadResellerOptions() {
+  var select = document.getElementById('pilihReseller');
+  if (!select) return;
+  
+  var previousValue = select.value;
+  
+  select.innerHTML = '<option value="">-- Tanpa Reseller (Harga Normal) --</option>';
+  
+  callGAS('getResellerActive', {})
+  .then(function(result) {
+    if (!result || !result.success) return;
+    
+    var resellers = result.data || [];
+    
+    for (var i = 0; i < resellers.length; i++) {
+      var r = resellers[i];
+      var option = document.createElement('option');
+      option.value = r.kode;
+      option.textContent = r.kode + ' - ' + r.nama;
+      option.dataset.diskon = r.diskon || 0;
+      select.appendChild(option);
+    }
+    
+    if (previousValue) {
+      select.value = previousValue;
+    }
+    
+    console.log('✅ Reseller options loaded: ' + resellers.length);
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadResellerOptions:', error);
+  });
+}
+
+// ==================== ON RESELLER CHANGE ====================
+function onResellerChange() {
+  var select = document.getElementById('pilihReseller');
+  var kodeReseller = select.value;
+  var infoDiv = document.getElementById('resellerInfo');
+  
+  if (!kodeReseller) {
+    infoDiv.style.display = 'none';
+    resetCartPrices();
+    return;
+  }
+  
+  // Cari nama reseller
+  var selectedOption = select.options[select.selectedIndex];
+  var resellerName = selectedOption.text;
+  var diskon = parseInt(selectedOption.dataset.diskon) || 0;
+  
+  // Tampilkan info
+  infoDiv.style.display = 'block';
+  document.getElementById('resellerNamaDisplay').textContent = '👤 ' + resellerName;
+  document.getElementById('resellerDiskonDisplay').textContent = 'Diskon: ' + diskon + '%';
+  
+  // Refresh harga di cart
+  refreshCartPrices();
+}
+
+// ==================== RESET CART PRICES ====================
+function resetCartPrices() {
+  for (var i = 0; i < currentCart.length; i++) {
+    var item = currentCart[i];
+    for (var j = 0; j < produkList.length; j++) {
+      if (produkList[j].Kode === item.kode) {
+        item.harga = produkList[j]['Harga Jual'] || 0;
+        item.subtotal = item.harga * item.qty;
+        break;
+      }
+    }
+  }
+  updateCartDisplay();
+}
+
+// ==================== REFRESH CART PRICES ====================
+function refreshCartPrices() {
+  var kodeReseller = document.getElementById('pilihReseller').value;
+  
+  if (!kodeReseller) {
+    resetCartPrices();
+    return;
+  }
+  
+  callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
+  .then(function(result) {
+    if (!result || !result.success) return;
+    
+    var hargaMap = result.data || {};
+    
+    for (var i = 0; i < currentCart.length; i++) {
+      var item = currentCart[i];
+      
+      // Cek apakah ada harga khusus untuk produk ini
+      if (hargaMap[item.kode]) {
+        var hargaKhusus = hargaMap[item.kode].hargaReseller || 0;
+        if (hargaKhusus > 0) {
+          item.harga = hargaKhusus;
+        } else {
+          // Jika harga khusus 0, pakai harga normal
+          for (var j = 0; j < produkList.length; j++) {
+            if (produkList[j].Kode === item.kode) {
+              item.harga = produkList[j]['Harga Jual'] || 0;
+              break;
+            }
+          }
+        }
+      } else {
+        // Tidak ada harga khusus, pakai harga normal
+        for (var j = 0; j < produkList.length; j++) {
+          if (produkList[j].Kode === item.kode) {
+            item.harga = produkList[j]['Harga Jual'] || 0;
+            break;
+          }
+        }
+      }
+      
+      item.subtotal = item.harga * item.qty;
+    }
+    
+    updateCartDisplay();
+    
+    // Tampilkan info harga yang digunakan
+    showResellerPriceInfo(hargaMap);
+  })
+  .catch(function(error) {
+    console.error('❌ Error refreshCartPrices:', error);
+  });
+}
+
+// ==================== SHOW RESELLER PRICE INFO ====================
+function showResellerPriceInfo(hargaMap) {
+  var cartItems = document.querySelectorAll('.cart-item');
+  
+  for (var i = 0; i < cartItems.length; i++) {
+    var cartItem = cartItems[i];
+    var kode = cartItem.dataset.kode;
+    
+    if (kode && hargaMap[kode]) {
+      var hargaInfo = hargaMap[kode];
+      var selisih = hargaInfo.selisih || 0;
+      var priceDisplay = cartItem.querySelector('.item-price');
+      
+      if (priceDisplay) {
+        var originalPrice = priceDisplay.dataset.original || '';
+        if (selisih < 0) {
+          priceDisplay.innerHTML = `
+            <span style="text-decoration:line-through;color:#999;font-size:0.7rem;">
+              ${formatRupiah(hargaInfo.hargaNormal)}
+            </span>
+            <span style="color:#4CAF50;font-weight:bold;font-size:0.9rem;">
+              ${formatRupiah(hargaInfo.hargaReseller)}
+            </span>
+            <span style="color:#FF9800;font-size:0.7rem;">
+              (hemat ${formatRupiah(Math.abs(selisih))})
+            </span>
+          `;
+        }
+      }
+    }
+  }
+}
+
+
+  // ==================== ATUR HARGA RESELLER ====================
+function aturHargaReseller(kodeReseller) {
+  // Cari nama reseller
+  var reseller = null;
+  for (var i = 0; i < resellerList.length; i++) {
+    if (resellerList[i].kode === kodeReseller) {
+      reseller = resellerList[i];
+      break;
+    }
+  }
+  
+  if (!reseller) {
+    showToast('❌ Reseller tidak ditemukan!', 'error');
+    return;
+  }
+  
+  // Load data harga reseller
+  callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
+  .then(function(result) {
+    var hargaMap = (result && result.success) ? result.data : {};
+    
+    document.getElementById('modalTitle').textContent = '💲 Atur Harga - ' + reseller.nama;
+    document.getElementById('modalContent').classList.add('large');
+    
+    var html = `
+      <div style="margin-bottom:15px;">
+        <p><strong>Reseller:</strong> ${escapeHtml(reseller.nama)} (${escapeHtml(reseller.kode)})</p>
+        <p style="color:#666;font-size:0.85rem;">Atur harga khusus per produk untuk reseller ini. Kosongkan = pakai harga normal.</p>
+      </div>
+      <div style="max-height:400px;overflow-y:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+          <thead>
+            <tr style="background:#f5f5f5;">
+              <th style="padding:8px;text-align:left;">Kode</th>
+              <th style="padding:8px;text-align:left;">Nama Produk</th>
+              <th style="padding:8px;text-align:right;">Harga Normal</th>
+              <th style="padding:8px;text-align:right;">Harga Reseller</th>
+              <th style="padding:8px;text-align:center;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    for (var i = 0; i < produkList.length; i++) {
+      var p = produkList[i];
+      var kode = p.Kode;
+      var nama = p['Nama Produk'] || '-';
+      var hargaNormal = p['Harga Jual'] || 0;
+      var hargaReseller = (hargaMap[kode] && hargaMap[kode].hargaReseller) ? hargaMap[kode].hargaReseller : '';
+      var selisih = (hargaMap[kode] && hargaMap[kode].selisih) ? hargaMap[kode].selisih : 0;
+      var warna = selisih < 0 ? '#4CAF50' : (selisih > 0 ? '#f44336' : '#999');
+      
+      html += `
+        <tr>
+          <td style="padding:6px 8px;font-weight:bold;">${escapeHtml(kode)}</td>
+          <td style="padding:6px 8px;">${escapeHtml(nama)}</td>
+          <td style="padding:6px 8px;text-align:right;font-weight:bold;">${formatRupiah(hargaNormal)}</td>
+          <td style="padding:6px 8px;text-align:right;">
+            <input type="number" id="harga_${kode}" value="${hargaReseller}" min="0" step="1000"
+                   style="width:120px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;text-align:right;font-weight:bold;"
+                   onchange="onHargaResellerChange('${kode}', ${hargaNormal})">
+            <span id="selisih_${kode}" style="font-size:0.7rem;color:${warna};margin-left:4px;">
+              ${selisih !== 0 ? (selisih < 0 ? '✅ ' : '⚠️ ') + formatRupiah(selisih) : ''}
+            </span>
+          </td>
+          <td style="padding:6px 8px;text-align:center;">
+            <button class="btn btn-danger btn-sm" onclick="hapusHargaReseller('${kodeReseller}','${kode}')" 
+                    style="padding:2px 6px;font-size:0.6rem;" title="Hapus harga khusus">
+              ✕
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+    
+    html += `
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:15px;display:flex;gap:10px;">
+        <button class="btn btn-success" onclick="simpanSemuaHargaReseller('${kodeReseller}')" style="flex:1;padding:12px;font-size:1rem;">
+          💾 Simpan Semua Perubahan
+        </button>
+        <button class="btn btn-danger" onclick="closeModal()" style="flex:1;padding:12px;font-size:1rem;">
+          ✖ Tutup
+        </button>
+      </div>
+    `;
+    
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('modal').classList.add('active');
+  })
+  .catch(function(error) {
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+// ==================== ON HARGA RESELLER CHANGE ====================
+function onHargaResellerChange(kodeProduk, hargaNormal) {
+  var input = document.getElementById('harga_' + kodeProduk);
+  var hargaReseller = parseInt(input.value) || 0;
+  var selisih = hargaReseller - hargaNormal;
+  var selisihEl = document.getElementById('selisih_' + kodeProduk);
+  
+  if (selisihEl) {
+    if (hargaReseller > 0) {
+      var warna = selisih < 0 ? '#4CAF50' : (selisih > 0 ? '#f44336' : '#999');
+      selisihEl.textContent = (selisih < 0 ? '✅ ' : '⚠️ ') + formatRupiah(selisih);
+      selisihEl.style.color = warna;
+    } else {
+      selisihEl.textContent = '';
+    }
+  }
+}
+
+// ==================== SIMPAN SEMUA HARGA ====================
+function simpanSemuaHargaReseller(kodeReseller) {
+  var inputs = document.querySelectorAll('[id^="harga_"]');
+  var promises = [];
+  var totalSaved = 0;
+  
+  showToast('⏳ Menyimpan semua harga...', 'info');
+  
+  for (var i = 0; i < inputs.length; i++) {
+    var input = inputs[i];
+    var kodeProduk = input.id.replace('harga_', '');
+    var hargaReseller = parseInt(input.value) || 0;
+    
+    if (hargaReseller > 0) {
+      var p = new Promise(function(resolve, reject) {
+        callGAS('simpanHargaReseller', {
+          kodeReseller: kodeReseller,
+          kodeProduk: kodeProduk,
+          hargaReseller: hargaReseller
+        })
+        .then(function(result) {
+          if (result && result.success) {
+            totalSaved++;
+            resolve(result);
+          } else {
+            reject(new Error(result ? result.error : 'Gagal simpan'));
+          }
+        })
+        .catch(function(error) {
+          reject(error);
+        });
+      });
+      promises.push(p);
+    }
+  }
+  
+  if (promises.length === 0) {
+    showToast('⚠️ Tidak ada harga yang diisi!', 'warning');
+    return;
+  }
+  
+  Promise.all(promises)
+  .then(function() {
+    showToast('✅ ' + totalSaved + ' harga reseller berhasil disimpan!', 'success');
+    closeModal();
+    loadReseller();
+  })
+  .catch(function(error) {
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+// ==================== HAPUS HARGA RESELLER ====================
+function hapusHargaReseller(kodeReseller, kodeProduk) {
+  if (!confirm('Yakin ingin menghapus harga khusus untuk produk ini?')) return;
+  
+  callGAS('hapusHargaReseller', {
+    kodeReseller: kodeReseller,
+    kodeProduk: kodeProduk
+  })
+  .then(function(result) {
+    if (result && result.success) {
+      showToast('✅ Harga berhasil dihapus!', 'success');
+      // Refresh modal
+      aturHargaReseller(kodeReseller);
+    } else {
+      showToast('❌ Gagal hapus harga: ' + (result ? result.error : ''), 'error');
+    }
+  })
+  .catch(function(error) {
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
   
 </script>
 
