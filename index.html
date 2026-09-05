@@ -8559,8 +8559,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-  // ============================================================
-// RESELLER - DASHBOARD SENDIRI (untuk role reseller)
+// ============================================================
+// RESELLER - DASHBOARD SENDIRI
 // ============================================================
 
 function showResellerDashboardSelf() {
@@ -8569,7 +8569,6 @@ function showResellerDashboardSelf() {
     return;
   }
 
-  // Cari reseller ID dari username
   callGAS('getResellers', {})
     .then(function(result) {
       if (!result || !result.success) throw new Error('Gagal memuat data reseller');
@@ -8586,12 +8585,9 @@ function showResellerDashboardSelf() {
         return;
       }
       
-      // Set dropdown dan load dashboard
       var dropdown = document.getElementById('resellerDashboardSelect');
       if (dropdown) dropdown.value = resellerId;
       loadResellerDashboard();
-      
-      // Sembunyikan tab yang tidak perlu
       hideResellerTabsForReseller();
     })
     .catch(function(error) {
@@ -8650,7 +8646,102 @@ function hideResellerTabsForReseller() {
     updateResellerSummaryDashboard(); 
   } 
 }
+
+// ============================================================
+// TRANSAKSI RESELLER
+// ============================================================
+
+function loadTransaksiReseller() {
+  var tbody = document.getElementById('transaksiResellerTable');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
   
+  callGAS('getResellerTransaksi', {})
+    .then(function(result) {
+      if (!result || !result.success) throw new Error('Gagal memuat data');
+      var data = result.data || [];
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">📭 Tidak ada transaksi reseller</td></tr>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < data.length; i++) {
+        var t = data[i];
+        var statusColor = t.status === 'LUNAS' ? '#4CAF50' : (t.status === 'CICILAN' ? '#FF9800' : '#f44336');
+        html += '<tr><td>' + formatTanggalDisplay(t.tanggal) + '</td><td><strong>' + t.id + '</strong></td><td>' + (t.resellerId || '-') + '</td><td>' + formatRupiah(t.total) + '</td><td style="color:' + (t.sisa > 0 ? '#f44336' : '#4CAF50') + ';">' + formatRupiah(t.sisa) + '</td><td><span class="badge" style="background:' + statusColor + ';color:white;">' + t.status + '</span></td></tr>';
+      }
+      tbody.innerHTML = html;
+    })
+    .catch(function(error) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;">❌ Error: ' + error.message + '</td></tr>';
+    });
+}
+
+function loadPenjualanReseller() {
+  var tbody = document.getElementById('penjualanResellerTable');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
+  
+  callGAS('getResellerPenjualan', {})
+    .then(function(result) {
+      if (!result || !result.success) throw new Error('Gagal memuat data');
+      var data = result.data || [];
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada penjualan reseller</td></tr>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < data.length; i++) {
+        var t = data[i];
+        html += '<tr><td>' + formatTanggalDisplay(t.tanggal) + '</td><td><strong>' + t.id + '</strong></td><td>' + (t.resellerId || '-') + '</td><td>' + formatRupiah(t.total) + '</td><td>' + (t.pelanggan || '-') + '</td><td>' + (t.kasir || '-') + '</td></tr>';
+      }
+      tbody.innerHTML = html;
+    })
+    .catch(function(error) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + error.message + '</td></tr>';
+    });
+}
+  
+// ============================================================
+// STOK SUB PAGE
+// ============================================================
+
+function showStokSubPage(sub) {
+  var subPages = document.querySelectorAll('#page-stok .sub-page, #page-stok .reseller-subpage');
+  for (var i = 0; i < subPages.length; i++) {
+    subPages[i].classList.remove('active');
+  }
+  
+  var target = document.getElementById('subStok' + sub.charAt(0).toUpperCase() + sub.slice(1));
+  if (!target) {
+    target = document.getElementById('sub-stok-' + sub);
+  }
+  if (target) target.classList.add('active');
+  
+  // Update tombol
+  var btnMasuk = document.getElementById('btnStokMasuk');
+  var btnBatch = document.getElementById('btnStokBatch');
+  var btnBatal = document.getElementById('btnStokBatal');
+  
+  if (btnMasuk) { btnMasuk.style.background = ''; btnMasuk.style.color = ''; }
+  if (btnBatch) { btnBatch.style.background = ''; btnBatch.style.color = ''; }
+  if (btnBatal) { btnBatal.style.background = ''; btnBatal.style.color = ''; }
+  
+  if (sub === 'masuk' && btnMasuk) { btnMasuk.style.background = 'var(--primary)'; btnMasuk.style.color = 'white'; }
+  if (sub === 'batch' && btnBatch) { btnBatch.style.background = '#9C27B0'; btnBatch.style.color = 'white'; }
+  if (sub === 'batal' && btnBatal) { btnBatal.style.background = 'var(--danger)'; btnBatal.style.color = 'white'; }
+  
+  if (sub === 'masuk') {
+    generateNoNotaStok();
+    loadStokProduk();
+    loadRiwayatStok();
+  }
+  if (sub === 'batch') loadBatchList();
+  if (sub === 'batal') {
+    loadBatchUntukDibatalkan();
+    loadLogPembatalanStok();
+  }
+}
   
 </script>
 
