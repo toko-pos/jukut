@@ -1609,11 +1609,32 @@
                 <th>Detail</th>
               </tr>
             </thead>
-            <tbody id="logPembatalanTable">
+                        <tbody id="logPembatalanTable">
               <tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>
             </tbody>
           </table>
         </div>
+        
+        <hr style="margin:20px 0;">
+        
+        <h3>📋 Transaksi Reseller</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Tanggal</th><th>ID</th><th>Reseller</th><th>Total</th><th>Sisa</th><th>Status</th></tr></thead>
+            <tbody id="transaksiResellerTable"><tr><td colspan="6" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr></tbody>
+          </table>
+        </div>
+
+        <hr style="margin:20px 0;">
+        
+        <h3>💰 Penjualan Reseller</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Tanggal</th><th>ID</th><th>Reseller</th><th>Total</th><th>Pelanggan</th><th>Kasir</th></tr></thead>
+            <tbody id="penjualanResellerTable"><tr><td colspan="6" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr></tbody>
+          </table>
+        </div>
+        
       </div>
     </div>
     
@@ -1745,13 +1766,14 @@
       </div>
     </div>
     
-    <!-- ===== STOK ===== -->
+   <!-- ===== STOK ===== -->
 <div id="page-stok" class="page">
   <h2>📥 Stok Masuk & Batch</h2>
 
   <div class="sub-tab-stok">
-    <button id="btnStokBatch" class="tab-btn tab-batch" onclick="showSubPage('stok', 'batch')">📋 Batch</button>
-    <button id="btnStokBatal" class="tab-btn tab-batal" onclick="showSubPage('stok', 'batal')">🗑️ Batal</button>
+    <button id="btnStokMasuk" class="tab-btn tab-masuk active" onclick="showStokSubPage('masuk')" style="background: var(--primary); color: white;">🛒 Masuk</button>
+    <button id="btnStokBatch" class="tab-btn tab-batch" onclick="showStokSubPage('batch')">📋 Batch</button>
+    <button id="btnStokBatal" class="tab-btn tab-batal" onclick="showStokSubPage('batal')">🗑️ Batal</button>
     <button class="tab-refresh-stok" onclick="refreshStokSubtab()">🔄 Refresh</button>
   </div>
 
@@ -1796,7 +1818,6 @@
     
     <hr style="margin:20px 0;">
     
-    <!-- RIWAYAT STOK MASUK - GROUPING PER NOTA -->
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
       <h3 style="margin:0;">📋 Riwayat Stok Masuk</h3>
       <div class="dropdown-excel">
@@ -1806,27 +1827,6 @@
           <a onclick="exportRiwayatStokCSV('detail')">📋 Detail (per Item)</a>
         </div>
       </div>
-    </div>
-    
-    <!-- FILTER RIWAYAT STOK -->
-    <div class="filter-riwayat-stok" id="filterRiwayatStok">
-      <div class="filter-group">
-        <label>🔍 Cari:</label>
-        <input type="text" id="cariNota" placeholder="No.Nota atau Pemasok..." oninput="filterRiwayatStok()">
-      </div>
-      <div class="filter-group">
-        <label>📅 Dari:</label>
-        <input type="date" id="filterStokMulai" onchange="filterRiwayatStok()">
-      </div>
-      <div class="filter-group">
-        <label>📅 Sampai:</label>
-        <input type="date" id="filterStokSampai" onchange="filterRiwayatStok()">
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-info btn-sm" onclick="filterRiwayatStok()" style="height:34px;">🔍 Cari</button>
-        <button class="btn btn-cyan btn-sm" onclick="resetFilterRiwayatStok()" style="height:34px;">↺ Reset</button>
-      </div>
-      <div class="filter-info" id="stokFilterInfo">Menampilkan semua nota (0 nota · 0 item)</div>
     </div>
     
     <div class="table-wrapper">
@@ -1866,15 +1866,6 @@
     <p style="color:#666;margin-bottom:15px;">
       Hanya batch yang <strong>belum terpakai</strong> (stok masih utuh) yang dapat dibatalkan.
     </p>
-    <div class="alert alert-warning">
-      <strong>⚠️ Peringatan!</strong>
-      <ul>
-        <li>Batch dengan status <span class="badge-success">✅ Bisa Dibatalkan</span> adalah batch yang stoknya <strong>belum terpakai sama sekali</strong></li>
-        <li>Batch yang sudah <strong>terpakai</strong> (stok berkurang) <strong>TIDAK BISA</strong> dibatalkan</li>
-        <li>Pembatalan akan menghapus batch, mengurangi stok produk, dan menghapus riwayat stok</li>
-        <li>Tindakan ini <strong>TIDAK DAPAT DIUNDUR!</strong></li>
-      </ul>
-    </div>
     <div class="table-wrapper">
       <table>
         <thead>
@@ -5723,6 +5714,10 @@ function loadLogPembatalan() {
     }
     
     logTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
+    
+    // AMBIL TANGGAL DARI FILTER TRANSAKSI UTAMA
+    var tanggalMulai = document.getElementById('filterTransaksiMulai').value;
+    var tanggalSampai = document.getElementById('filterTransaksiSampai').value;
     
     callGAS('getLogPembatalanFiltered', {
       tanggalMulai: tanggalMulai,
