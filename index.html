@@ -8396,28 +8396,41 @@ if (typeof loadProduk === 'function') {
 
 <script>
 // ============================================================
-// REGISTER SERVICE WORKER - PWA UNTUK GITHUB PAGES
+// REGISTER SERVICE WORKER - TANPA RELOAD LOOP
 // ============================================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    console.log('📦 Registering Service Worker...');
+    console.log('📦 Checking Service Worker...');
     
-    // 🔥 FIX: Gunakan relative path untuk GitHub Pages
-    navigator.serviceWorker.register('sw.js', { 
-  scope: '/'  // 🔥 Untuk GitHub Pages
-})
-    .then(function(registration) {
-      console.log('✅ Service Worker registered with scope:', registration.scope);
-      
-      // 🔥 Cek update setiap 60 detik
-      setInterval(function() {
-        registration.update();
-        console.log('🔄 Checking for updates...');
-      }, 60000);
-    })
-    .catch(function(error) {
-      console.log('❌ Service Worker registration failed:', error);
-    });
+    // 🔥 Cek apakah SW sudah terdaftar
+    navigator.serviceWorker.getRegistrations()
+      .then(function(registrations) {
+        var hasOldSW = registrations.length > 0;
+        
+        if (hasOldSW) {
+          console.log('⚠️ Found existing SW, updating...');
+          // Update existing SW
+          return navigator.serviceWorker.register('sw.js?v=' + Date.now(), { 
+            scope: '/'
+          });
+        } else {
+          console.log('📦 Registering new SW...');
+          return navigator.serviceWorker.register('sw.js', { 
+            scope: '/'
+          });
+        }
+      })
+      .then(function(registration) {
+        console.log('✅ Service Worker registered with scope:', registration.scope);
+        
+        // 🔥 Check for updates every 60 seconds (tidak agresif)
+        setInterval(function() {
+          registration.update();
+        }, 60000);
+      })
+      .catch(function(error) {
+        console.log('❌ Service Worker registration failed:', error);
+      });
   });
 }
 
