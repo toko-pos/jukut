@@ -6794,9 +6794,6 @@ function checkout() {
     total += currentCart[i].subtotal;
   }
   
-  var pembayaran = 0;
-  var kembalian = 0;
-  
   // Tampilkan modal pembayaran
   var html = '<div style="margin-bottom:15px;">';
   html += '<div style="background:#f5f5f5;padding:15px;border-radius:8px;margin-bottom:15px;">';
@@ -6806,35 +6803,62 @@ function checkout() {
   
   html += '<div class="form-group">';
   html += '<label>💰 Nominal Pembayaran</label>';
-  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">';
   
-  // Quick nominal buttons
+  // 🔥 TOMBOL QUICK NOMINAL
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;" id="quickNominalContainer">';
+  
   var quickNoms = [];
   if (total <= 50000) quickNoms = [10000, 20000, 50000];
   else if (total <= 100000) quickNoms = [20000, 50000, 100000];
   else if (total <= 200000) quickNoms = [50000, 100000, 200000];
   else if (total <= 500000) quickNoms = [100000, 200000, 500000];
-  else quickNoms = [100000, 200000, 500000, 1000000];
+  else if (total <= 1000000) quickNoms = [100000, 200000, 500000, 1000000];
+  else quickNoms = [100000, 200000, 500000, 1000000, 2000000];
   
+  // Filter quick nominal yang >= total
+  var filteredNoms = [];
   for (var i = 0; i < quickNoms.length; i++) {
     if (quickNoms[i] >= total) {
-      html += '<button type="button" class="btn-sm" onclick="setNominal(' + quickNoms[i] + ')">' + formatRupiah(quickNoms[i]) + '</button>';
+      filteredNoms.push(quickNoms[i]);
     }
   }
-  html += '<button type="button" class="btn-sm btn-success" onclick="setNominal(' + total + ')">💳 Tepat</button>';
+  
+  // Jika tidak ada yang >= total, tambahkan total + 10000
+  if (filteredNoms.length === 0) {
+    var nextNom = Math.ceil(total / 10000) * 10000;
+    filteredNoms.push(nextNom);
+    if (nextNom + 10000 <= nextNom + 50000) {
+      filteredNoms.push(nextNom + 10000);
+      filteredNoms.push(nextNom + 20000);
+    }
+  }
+  
+  // Ambil 5 quick nominal teratas
+  if (filteredNoms.length > 5) {
+    filteredNoms = filteredNoms.slice(0, 5);
+  }
+  
+  for (var i = 0; i < filteredNoms.length; i++) {
+    html += '<button type="button" class="btn-sm" onclick="setNominal(' + filteredNoms[i] + ')" style="padding:6px 12px;border:1px solid #4CAF50;border-radius:5px;background:white;color:#4CAF50;cursor:pointer;font-weight:600;font-size:0.8rem;">' + formatRupiah(filteredNoms[i]) + '</button>';
+  }
+  
+  // Tombol "Tepat" - bayar sesuai total
+  html += '<button type="button" class="btn-sm" onclick="setNominal(' + total + ')" style="padding:6px 12px;border:1px solid #4CAF50;border-radius:5px;background:#4CAF50;color:white;cursor:pointer;font-weight:700;font-size:0.8rem;">💳 Tepat</button>';
+  
   html += '</div>';
   
-  html += '<input type="number" id="fPembayaran" min="' + total + '" placeholder="Masukkan nominal pembayaran..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:bold;" oninput="hitungKembalian(' + total + ')">';
+  // 🔥 INPUT NOMINAL - PASTIKAN BISA DIISI
+  html += '<input type="number" id="fPembayaran" min="' + total + '" placeholder="Masukkan nominal pembayaran..." style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:bold;background:white;" oninput="hitungKembalian(' + total + ')">';
   html += '</div>';
   
   html += '<div class="form-group">';
   html += '<label>🔄 Kembalian</label>';
-  html += '<input type="text" id="fKembalian" readonly value="Rp 0" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:1.1rem;background:#f9f9f9;font-weight:bold;color:var(--primary);">';
+  html += '<input type="text" id="fKembalian" readonly value="Rp 0" style="width:100%;padding:12px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:1.1rem;background:#f9f9f9;font-weight:bold;color:var(--primary);">';
   html += '</div>';
   
   html += '<div style="display:flex;gap:10px;margin-top:15px;">';
-  html += '<button class="btn btn-success" onclick="prosesPembayaran()" style="flex:1;padding:12px;font-size:1rem;font-weight:700;border-radius:10px;">✅ Proses</button>';
-  html += '<button class="btn btn-danger" onclick="closeModal()" style="flex:1;padding:12px;font-size:1rem;border-radius:10px;">✖ Batal</button>';
+  html += '<button class="btn btn-success" onclick="prosesPembayaran()" style="flex:2;padding:14px;font-size:1.1rem;font-weight:700;border-radius:10px;background:linear-gradient(135deg,#4CAF50,#388E3C);color:white;border:none;cursor:pointer;box-shadow:0 4px 15px rgba(76,175,80,0.3);">✅ Proses</button>';
+  html += '<button class="btn btn-danger" onclick="closeModal()" style="flex:1;padding:14px;font-size:1.1rem;border-radius:10px;background:#f44336;color:white;border:none;cursor:pointer;">✖ Batal</button>';
   html += '</div>';
   
   document.getElementById('modalTitle').textContent = '💳 Pembayaran';
@@ -6842,9 +6866,15 @@ function checkout() {
   document.getElementById('modalBody').innerHTML = html;
   document.getElementById('modal').classList.add('active');
   
+  // 🔥 FOCUS KE INPUT SETELAH MODAL TERBUKA
   setTimeout(function() {
     var input = document.getElementById('fPembayaran');
-    if (input) { input.focus(); }
+    if (input) { 
+      input.focus(); 
+      input.select();
+      input.value = total; // 🔥 AUTO ISI DENGAN TOTAL
+      hitungKembalian(total);
+    }
   }, 300);
 }
 
@@ -6852,18 +6882,42 @@ function setNominal(value) {
   var input = document.getElementById('fPembayaran');
   if (input) {
     input.value = value;
-    input.dispatchEvent(new Event('input'));
+    // Panggil hitungKembalian untuk update otomatis
+    var total = 0;
+    for (var i = 0; i < currentCart.length; i++) {
+      total += currentCart[i].subtotal;
+    }
+    hitungKembalian(total);
+    // Fokus ke input setelah klik
+    input.focus();
+    input.select();
   }
 }
 
 function hitungKembalian(total) {
   var input = document.getElementById('fPembayaran');
+  if (!input) return;
+  
   var nominal = parseInt(input.value) || 0;
   var kembalian = Math.max(0, nominal - total);
   var el = document.getElementById('fKembalian');
   if (el) {
     el.value = formatRupiah(kembalian);
-    el.style.color = kembalian > 0 ? 'var(--primary)' : '#f44336';
+    el.style.color = kembalian > 0 ? 'var(--primary)' : (kembalian === 0 ? '#666' : '#f44336');
+  }
+  
+  // 🔥 Enable/disable tombol Proses
+  var btnProses = document.querySelector('.modal-content .btn-success');
+  if (btnProses) {
+    if (nominal >= total) {
+      btnProses.disabled = false;
+      btnProses.style.opacity = '1';
+      btnProses.style.cursor = 'pointer';
+    } else {
+      btnProses.disabled = true;
+      btnProses.style.opacity = '0.5';
+      btnProses.style.cursor = 'not-allowed';
+    }
   }
 }
 
@@ -6874,7 +6928,10 @@ function prosesPembayaran() {
   }
   
   var inputPembayaran = document.getElementById('fPembayaran');
-  if (!inputPembayaran) return;
+  if (!inputPembayaran) {
+    showToast('❌ Input pembayaran tidak ditemukan!', 'error');
+    return;
+  }
   
   var nominal = parseInt(inputPembayaran.value) || 0;
   var total = 0;
@@ -6884,6 +6941,13 @@ function prosesPembayaran() {
   
   if (nominal < total) {
     showToast('⚠️ Pembayaran kurang dari total!', 'error');
+    inputPembayaran.focus();
+    return;
+  }
+  
+  // 🔥 CEK JIKA NOMINAL 0 ATAU KOSONG
+  if (nominal <= 0) {
+    showToast('⚠️ Masukkan nominal pembayaran!', 'error');
     inputPembayaran.focus();
     return;
   }
@@ -6937,7 +7001,6 @@ function prosesPembayaran() {
     if (result.success) {
       showToast('✅ Transaksi berhasil disimpan!', 'success');
       
-      // Ambil data transaksi untuk struk
       var idTransaksi = result.id;
       callGAS('getTransaksiById', { idTransaksi: idTransaksi })
       .then(function(headerData) {
@@ -6968,7 +7031,6 @@ function prosesPembayaran() {
           closeModal();
           showStruk(data, false);
           
-          // Reset cart
           currentCart = [];
           updateCartDisplay();
           updateStokGridPOS();
@@ -6977,7 +7039,7 @@ function prosesPembayaran() {
           
         } else {
           closeModal();
-          showToast('✅ Transaksi berhasil, gagal memuat detail', 'warning');
+          showToast('✅ Transaksi berhasil!', 'success');
           currentCart = [];
           updateCartDisplay();
           updateStokGridPOS();
