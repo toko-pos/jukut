@@ -1143,175 +1143,7 @@
     @keyframes logoutPopUp { from{opacity:0;transform:scale(.94) translateY(14px)} to{opacity:1;transform:scale(1) translateY(0)} }
     @media(max-width:480px){ .logout-card{padding:28px 20px 22px;border-radius:20px}.logout-actions{flex-direction:column} }
  
-/* ===== STATUS RESELLER ===== */
-.status-reseller {
-  display: inline-block;
-  padding: 3px 12px;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-align: center;
-  min-width: 50px;
-  white-space: nowrap;
-}
-.status-reseller.active {
-  background: #4CAF50;
-  color: white;
-}
-.status-reseller.inactive {
-  background: #f44336;
-  color: white;
-}
-
-/* ===== ELEGANT CONFIRM POPUP ===== */
-.confirm-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 999999;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  box-sizing: border-box;
-}
-.confirm-overlay.active {
-  display: flex;
-  animation: confirmFadeIn 0.25s ease;
-}
-.confirm-card {
-  position: relative;
-  width: min(420px, 100%);
-  background: #fff;
-  border-radius: 20px;
-  padding: 28px 24px 24px;
-  text-align: center;
-  box-shadow: 0 25px 80px rgba(0,0,0,0.3);
-  animation: confirmPopUp 0.3s ease;
-}
-.confirm-icon {
-  width: 70px;
-  height: 70px;
-  margin: 0 auto 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 32px;
-}
-.confirm-icon.warning {
-  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-  border: 1px solid #ffcc80;
-}
-.confirm-icon.success {
-  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-  border: 1px solid #a5d6a7;
-}
-.confirm-icon.danger {
-  background: linear-gradient(135deg, #ffebee, #ffcdd2);
-  border: 1px solid #ef9a9a;
-}
-.confirm-card h3 {
-  margin: 0 0 8px;
-  color: #1f2937;
-  font-size: 20px;
-  font-weight: 700;
-}
-.confirm-card p {
-  margin: 0 auto 20px;
-  color: #6b7280;
-  font-size: 14px;
-  line-height: 1.6;
-}
-.confirm-card .highlight {
-  display: inline-block;
-  padding: 6px 16px;
-  background: #f1f8f2;
-  border-radius: 8px;
-  color: #3f7d4c;
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-.confirm-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-.confirm-actions .btn-confirm-cancel {
-  flex: 1;
-  padding: 12px 15px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  background: white;
-  color: #475569;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-.confirm-actions .btn-confirm-cancel:hover {
-  background: #f1f5f9;
-}
-.confirm-actions .btn-confirm-yes {
-  flex: 2;
-  padding: 12px 15px;
-  border: 0;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-.confirm-actions .btn-confirm-yes.warning {
-  background: linear-gradient(135deg, #FF9800, #F57C00);
-  color: white;
-  box-shadow: 0 4px 15px rgba(255,152,0,0.3);
-}
-.confirm-actions .btn-confirm-yes.danger {
-  background: linear-gradient(135deg, #f44336, #c62828);
-  color: white;
-  box-shadow: 0 4px 15px rgba(244,67,54,0.3);
-}
-.confirm-actions .btn-confirm-yes.success {
-  background: linear-gradient(135deg, #4CAF50, #388E3C);
-  color: white;
-  box-shadow: 0 4px 15px rgba(76,175,80,0.3);
-}
-.confirm-actions .btn-confirm-yes:hover {
-  transform: translateY(-2px);
-}
-.confirm-close {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  border: 0;
-  background: transparent;
-  color: #94a3b8;
-  font-size: 28px;
-  line-height: 1;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.confirm-close:hover {
-  color: #dc2626;
-  transform: rotate(90deg);
-}
-@keyframes confirmFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes confirmPopUp {
-  from { opacity: 0; transform: scale(0.92) translateY(15px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-@media (max-width: 480px) {
-  .confirm-card { padding: 24px 18px 20px; border-radius: 16px; }
-  .confirm-actions { flex-direction: column; }
-}
-    
+  
   /* ===== MODAL ELEGAN EDIT HARGA ===== */
 #editHargaModal {
   display: none;
@@ -2426,20 +2258,7 @@
 </div>
 
 
-<!-- ==================== CONFIRM POPUP ==================== -->
-<div id="confirmPopup" class="confirm-overlay" aria-hidden="true">
-  <div class="confirm-card" role="dialog" aria-modal="true">
-    <button type="button" class="confirm-close" onclick="closeConfirmPopup()" aria-label="Tutup">×</button>
-    <div class="confirm-icon" id="confirmIcon">⚠️</div>
-    <h3 id="confirmTitle">Konfirmasi</h3>
-    <p id="confirmMessage">Apakah Anda yakin?</p>
-    <div class="highlight" id="confirmHighlight"></div>
-    <div class="confirm-actions">
-      <button type="button" class="btn-confirm-cancel" onclick="closeConfirmPopup()">✕ Batal</button>
-      <button type="button" class="btn-confirm-yes" id="confirmYesBtn">✅ Ya, Lanjutkan</button>
-    </div>
-  </div>
-</div>
+
 
 
   
@@ -8080,36 +7899,33 @@ function renderResellerTable(data) {
   var html = '';
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
-    // 🔥 STATUS TANPA ICON
-    var statusClass = r.active ? 'status-reseller active' : 'status-reseller inactive';
-    var statusText = r.active ? 'Aktif' : 'Nonaktif';
+    var statusClass = r.active ? 'badge-reseller-active' : 'badge-reseller-inactive';
+    var statusText = r.active ? '✅ Aktif' : '❌ Nonaktif';
     
     html += '<tr>' +
       '<td><strong>' + escapeHtml(r.kode || '-') + '</strong></td>' +
       '<td>' + escapeHtml(r.nama || '-') + '</td>' +
       '<td>' + escapeHtml(r.kontak || '-') + '</td>' +
       '<td>' + escapeHtml(r.alamat || '-') + '</td>' +
+      // 🔥 KOLOM HARGA KHUSUS - TOMBOL ATUR HARGA
       '<td style="text-align:center;">' +
         '<button class="btn-atuharga" onclick="aturHargaReseller(\'' + escapeHtml(r.kode) + '\')" ' +
-                'style="padding:5px 12px;font-size:0.7rem;border-radius:6px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);color:white;border:none;cursor:pointer;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(156,39,176,0.3);transition:all 0.3s;">' +
+                'style="padding:6px 14px;font-size:0.75rem;border-radius:8px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);color:white;border:none;cursor:pointer;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(156,39,176,0.3);transition:all 0.3s;">' +
           '💲 Atur Harga' +
         '</button>' +
-        '<div style="font-size:0.55rem;color:#999;margin-top:2px;">' +
+        '<div style="font-size:0.6rem;color:#999;margin-top:2px;">' +
           '<span id="hargaCount_' + escapeHtml(r.kode) + '">0 produk</span>' +
         '</div>' +
       '</td>' +
-      '<td style="text-align:center;"><span class="' + statusClass + '">' + statusText + '</span></td>' +
-      '<td style="white-space:nowrap;text-align:center;">' +
-        '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.6rem;margin-right:3px;border:none;border-radius:4px;cursor:pointer;background:#2196F3;color:white;" title="Edit">✏️</button>' +
-        '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.6rem;margin-right:3px;border:none;border-radius:4px;cursor:pointer;' + (r.active ? 'background:#FF9800;color:white;' : 'background:#4CAF50;color:white;') + '" title="Toggle Status">' + (r.active ? '🔇' : '🔊') + '</button>' +
-        '<button class="btn btn-danger btn-sm" onclick="hapusReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.6rem;border:none;border-radius:4px;cursor:pointer;background:#f44336;color:white;" title="Hapus">🗑️</button>' +
+      '<td><span class="' + statusClass + '">' + statusText + '</span></td>' +
+      '<td style="white-space:nowrap;">' +
+        '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Edit">✏️</button>' +
+        '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Toggle Status">' + (r.active ? '🔇' : '🔊') + '</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="hapusReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Hapus">🗑️</button>' +
       '</td>' +
       '</tr>';
   }
   tbody.innerHTML = html;
-  
-  loadHargaCountForResellers();
-}
 
 
 
@@ -8291,45 +8107,31 @@ function editReseller(kode) {
   
   document.getElementById('modalTitle').textContent = '✏️ Edit Reseller';
   document.getElementById('modalBody').innerHTML = `
-    <form id="formEditReseller" style="padding:5px 0;">
+    <form id="formEditReseller">
       <div class="form-group">
-        <label style="font-weight:600;color:#555;font-size:0.85rem;">Kode Reseller</label>
-        <input type="text" id="fEditKodeReseller" value="${escapeHtml(reseller.kode)}" readonly 
-               style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:6px;font-size:0.95rem;background:#f5f5f5;color:#666;">
-        <small style="color:#999;display:block;margin-top:4px;">Kode tidak dapat diubah</small>
+        <label>Kode Reseller</label>
+        <input type="text" id="fEditKodeReseller" value="${escapeHtml(reseller.kode)}" readonly style="background:#f0f0f0;">
+        <small style="color:#999;display:block;margin-top:3px;">Kode tidak dapat diubah</small>
       </div>
-      
       <div class="form-group">
-        <label style="font-weight:600;color:#555;font-size:0.85rem;">Nama Reseller *</label>
-        <input type="text" id="fEditNamaReseller" required value="${escapeHtml(reseller.nama || '')}" 
-               style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:6px;font-size:0.95rem;">
+        <label>Nama Reseller *</label>
+        <input type="text" id="fEditNamaReseller" required value="${escapeHtml(reseller.nama || '')}">
       </div>
-      
       <div class="form-group">
-        <label style="font-weight:600;color:#555;font-size:0.85rem;">Kontak</label>
-        <input type="text" id="fEditKontakReseller" value="${escapeHtml(reseller.kontak || '')}" 
-               style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:6px;font-size:0.95rem;">
+        <label>Kontak</label>
+        <input type="text" id="fEditKontakReseller" value="${escapeHtml(reseller.kontak || '')}">
       </div>
-      
       <div class="form-group">
-        <label style="font-weight:600;color:#555;font-size:0.85rem;">Alamat</label>
-        <textarea id="fEditAlamatReseller" rows="2" 
-                  style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:6px;font-size:0.95rem;resize:vertical;min-height:60px;">${escapeHtml(reseller.alamat || '')}</textarea>
+        <label>Alamat</label>
+        <textarea id="fEditAlamatReseller" rows="2">${escapeHtml(reseller.alamat || '')}</textarea>
       </div>
-      
-      <!-- 🔥 HAPUS FIELD DISKON -->
-      
-      <div style="display:flex;gap:10px;margin-top:20px;">
-        <button type="submit" class="btn btn-warning" style="flex:2;padding:12px;font-size:1rem;font-weight:700;border:none;border-radius:8px;background:linear-gradient(135deg,#FF9800,#F57C00);color:white;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 15px rgba(255,152,0,0.3);">
-          💾 Update Reseller
-        </button>
-        <button type="button" onclick="closeModal()" style="flex:1;padding:12px;font-size:1rem;font-weight:600;border:2px solid #e0e0e0;border-radius:8px;background:white;color:#666;cursor:pointer;transition:all 0.3s;">
-          ✖ Batal
-        </button>
+      <div class="form-group">
+        <label>Diskon (%)</label>
+        <input type="number" id="fEditDiskonReseller" value="${reseller.diskon || 0}" min="0" max="100">
       </div>
+      <button type="submit" class="btn btn-warning btn-block">💾 Update Reseller</button>
     </form>
   `;
-  document.getElementById('modalContent').classList.remove('large');
   document.getElementById('modal').classList.add('active');
   
   document.getElementById('formEditReseller').addEventListener('submit', function(e) {
@@ -8393,30 +8195,23 @@ function toggleResellerStatus(kode) {
   }
   
   var newStatus = !reseller.active;
-  var statusText = newStatus ? 'AKTIF' : 'NONAKTIF';
-  var actionText = newStatus ? 'Mengaktifkan' : 'Menonaktifkan';
+  var statusText = newStatus ? 'Aktif' : 'Nonaktif';
   
-  // 🔥 ELEGANT POPUP
-  showConfirmPopup({
-    type: newStatus ? 'success' : 'warning',
-    title: actionText + ' Reseller',
-    message: 'Anda akan ' + actionText.toLowerCase() + ' reseller berikut:',
-    highlight: reseller.nama + ' (' + reseller.kode + ')',
-    yesText: '✅ Ya, ' + actionText,
-    onConfirm: function() {
-      callGAS('toggleResellerStatus', { kode: kode })
-      .then(function(result) {
-        if (result && result.success) {
-          showToast('✅ Status reseller berhasil diubah!', 'success');
-          loadReseller();
-        } else {
-          showToast('❌ Gagal mengubah status: ' + (result ? result.error : 'Unknown error'), 'error');
-        }
-      })
-      .catch(function(error) {
-        showToast('❌ Error: ' + error.message, 'error');
-      });
+  if (!confirm('Yakin ingin mengubah status reseller "' + reseller.nama + '" menjadi ' + statusText + '?')) {
+    return;
+  }
+  
+  callGAS('toggleResellerStatus', { kode: kode })
+  .then(function(result) {
+    if (result && result.success) {
+      showToast('✅ ' + result.message, 'success');
+      loadReseller();
+    } else {
+      showToast('❌ ' + (result ? result.error : 'Gagal mengubah status!'), 'error');
     }
+  })
+  .catch(function(error) {
+    showToast('❌ Error: ' + error.message, 'error');
   });
 }
 
@@ -8435,27 +8230,21 @@ function hapusReseller(kode) {
     return;
   }
   
-  // 🔥 ELEGANT POPUP
-  showConfirmPopup({
-    type: 'danger',
-    title: '🗑️ Hapus Reseller',
-    message: 'Anda akan menghapus reseller berikut. Tindakan ini TIDAK DAPAT DIUNDUR!',
-    highlight: reseller.nama + ' (' + reseller.kode + ')',
-    yesText: '🗑️ Ya, Hapus',
-    onConfirm: function() {
-      callGAS('hapusReseller', { kode: kode })
-      .then(function(result) {
-        if (result && result.success) {
-          showToast('✅ Reseller berhasil dihapus!', 'success');
-          loadReseller();
-        } else {
-          showToast('❌ Gagal hapus reseller: ' + (result ? result.error : 'Unknown error'), 'error');
-        }
-      })
-      .catch(function(error) {
-        showToast('❌ Error: ' + error.message, 'error');
-      });
+  if (!confirm('⚠️ Yakin ingin menghapus reseller "' + reseller.nama + '" ?\nTindakan ini tidak dapat diundur!')) {
+    return;
+  }
+  
+  callGAS('hapusReseller', { kode: kode })
+  .then(function(result) {
+    if (result && result.success) {
+      showToast('✅ ' + result.message, 'success');
+      loadReseller();
+    } else {
+      showToast('❌ ' + (result ? result.error : 'Gagal hapus reseller!'), 'error');
     }
+  })
+  .catch(function(error) {
+    showToast('❌ Error: ' + error.message, 'error');
   });
 }
 
@@ -8830,89 +8619,6 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
     showToast('❌ Error: ' + error.message, 'error');
   });
 }
-
-// ==================== ELEGANT CONFIRM POPUP ====================
-var confirmCallback = null;
-
-function showConfirmPopup(options) {
-  var overlay = document.getElementById('confirmPopup');
-  var icon = document.getElementById('confirmIcon');
-  var title = document.getElementById('confirmTitle');
-  var message = document.getElementById('confirmMessage');
-  var highlight = document.getElementById('confirmHighlight');
-  var yesBtn = document.getElementById('confirmYesBtn');
-  
-  // Set icon
-  var iconMap = {
-    'warning': '⚠️',
-    'danger': '🗑️',
-    'success': '✅',
-    'info': 'ℹ️'
-  };
-  icon.className = 'confirm-icon ' + (options.type || 'warning');
-  icon.textContent = iconMap[options.type] || '⚠️';
-  
-  // Set title & message
-  title.textContent = options.title || 'Konfirmasi';
-  message.textContent = options.message || 'Apakah Anda yakin?';
-  
-  // Set highlight
-  if (options.highlight) {
-    highlight.textContent = options.highlight;
-    highlight.style.display = 'block';
-  } else {
-    highlight.style.display = 'none';
-  }
-  
-  // Set button
-  var btnClasses = {
-    'warning': 'warning',
-    'danger': 'danger',
-    'success': 'success',
-    'info': 'success'
-  };
-  yesBtn.className = 'btn-confirm-yes ' + (btnClasses[options.type] || 'warning');
-  yesBtn.textContent = options.yesText || '✅ Ya, Lanjutkan';
-  
-  // Set callback
-  confirmCallback = options.onConfirm || null;
-  
-  overlay.classList.add('active');
-  overlay.setAttribute('aria-hidden', 'false');
-}
-
-function closeConfirmPopup() {
-  var overlay = document.getElementById('confirmPopup');
-  overlay.classList.remove('active');
-  overlay.setAttribute('aria-hidden', 'true');
-  confirmCallback = null;
-}
-
-// Event listener untuk tombol YES
-document.getElementById('confirmYesBtn').addEventListener('click', function() {
-  if (typeof confirmCallback === 'function') {
-    confirmCallback();
-  }
-  closeConfirmPopup();
-});
-
-// Tutup dengan ESC
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    var overlay = document.getElementById('confirmPopup');
-    if (overlay.classList.contains('active')) {
-      closeConfirmPopup();
-    }
-  }
-});
-
-// Tutup dengan klik overlay
-document.getElementById('confirmPopup').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeConfirmPopup();
-  }
-});
-  
   
 </script>
 
