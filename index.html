@@ -1802,10 +1802,10 @@
 
           
           <div class="pos-tanggal-wrapper" style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: -5px;">
-            <label for="namaPembeli">👤 Nama Pembeli:</label>
-            <input type="text" id="namaPembeli" placeholder="Masukkan nama pembeli (opsional)" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:5px; font-size:0.9rem; height:36px;">
-            <span class="field-opsional">Opsional</span>
-          </div>
+  <label for="namaPembeli">👤 Nama Pembeli:</label>
+  <input type="text" id="namaPembeli" placeholder="Masukkan nama pembeli (opsional)" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:5px; font-size:0.9rem; height:36px;">
+  <span class="field-opsional" id="namaPembeliStatus">Opsional</span>
+</div>
           <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
             <button class="btn-scan" onclick="startScannerPOS()" style="font-size:0.8rem; padding:6px 12px; height:36px;">📷 Scan</button>
             <input type="text" id="manualBarcodeInput" placeholder="Cari / ketik kode atau nama produk..." 
@@ -8454,6 +8454,14 @@ function loadResellerOptions() {
       select.value = previousValue;
     }
     
+    // 🔥 UPDATE STATUS NAMA PEMBELI
+    updateNamaPembeliStatus();
+    
+    // 🔥 JIKA ADA RESELLER TERPILIH, PANGGIL onResellerChange
+    if (select.value) {
+      onResellerChange();
+    }
+    
     console.log('✅ Reseller options loaded: ' + resellers.length);
   })
   .catch(function(error) {
@@ -8469,6 +8477,8 @@ function onResellerChange() {
   
   if (!kodeReseller) {
     infoDiv.style.display = 'none';
+    // 🔥 ENABLE KEMBALI NAMA PEMBELI
+    updateNamaPembeliStatus(); // Panggil fungsi ini
     resetCartPrices();
     return;
   }
@@ -8478,15 +8488,45 @@ function onResellerChange() {
   var resellerName = selectedOption.text;
   var diskon = parseInt(selectedOption.dataset.diskon) || 0;
   
-  // Tampilkan info
   infoDiv.style.display = 'block';
   document.getElementById('resellerNamaDisplay').textContent = '👤 ' + resellerName;
-  document.getElementById('resellerDiskonDisplay').textContent = 'Diskon: ' + diskon + '%';
+  document.getElementById('resellerDiskonDisplay').textContent = ''; // KOSONGKAN
+  
+  // 🔥 UPDATE NAMA PEMBELI
+  updateNamaPembeliStatus();
   
   // Refresh harga di cart
   refreshCartPrices();
 }
 
+
+// ==================== CEK STATUS NAMA PEMBELI ====================
+function updateNamaPembeliStatus() {
+  var select = document.getElementById('pilihReseller');
+  var namaPembeliInput = document.getElementById('namaPembeli');
+  var statusEl = document.getElementById('namaPembeliStatus');
+  
+  if (!namaPembeliInput || !statusEl) return;
+  
+  if (select && select.value) {
+    // Ada reseller dipilih
+    var selectedOption = select.options[select.selectedIndex];
+    var resellerName = selectedOption.text.replace(/^[^-]+-\s*/, '').trim();
+    namaPembeliInput.disabled = true;
+    namaPembeliInput.value = resellerName;
+    statusEl.textContent = '🔒 Nama reseller';
+    statusEl.style.color = '#4CAF50';
+  } else {
+    // Tidak ada reseller
+    namaPembeliInput.disabled = false;
+    namaPembeliInput.value = '';
+    namaPembeliInput.placeholder = 'Masukkan nama pembeli (opsional)';
+    statusEl.textContent = 'Opsional';
+    statusEl.style.color = '#999';
+  }
+}
+
+  
 // ==================== RESET CART PRICES ====================
 function resetCartPrices() {
   for (var i = 0; i < currentCart.length; i++) {
