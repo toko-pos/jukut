@@ -22,35 +22,38 @@
   <!-- ===== FAVICON ===== -->
   <link rel="icon" type="image/png" href="iconbayamtabur.png">
   
-  <!-- ===== BASE URL DETECTION UNTUK GITHUB PAGES ===== -->
+
   <script>
-  // 🔥 FIX: Deteksi base URL untuk GitHub Pages
-  (function() {
-    // Simpan base URL
-    var baseUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/');
-    window.PWA_BASE_URL = baseUrl;
+// ============================================================
+// FIX: Redirect 404 untuk PWA GitHub Pages
+// ============================================================
+(function() {
+  // Cek apakah ini halaman 404
+  var bodyText = document.body ? document.body.textContent : '';
+  var is404 = bodyText.includes('404') || 
+              bodyText.includes('Not Found') ||
+              bodyText.includes('Halaman tidak ditemukan') ||
+              document.title.includes('404');
+  
+  if (is404) {
+    console.log('⚠️ 404 detected, redirecting to index.html');
+    window.location.replace('index.html');
+  }
+  
+  // Deteksi PWA mode dan perbaiki path
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('📱 Running as PWA');
     
-    // Cek apakah ini PWA mode
-    var isPWA = window.matchMedia('(display-mode: standalone)').matches;
-    
-    if (isPWA) {
-      console.log('📱 Running in PWA mode - GitHub Pages');
-      localStorage.setItem('pwa_mode', 'true');
-      
-      // Cek 404
-      var bodyText = document.body ? document.body.textContent : '';
-      var is404 = bodyText.includes('404') || 
-                  bodyText.includes('Not Found') ||
-                  bodyText.includes('Halaman tidak ditemukan') ||
-                  document.title.includes('404');
-      
-      if (is404) {
-        console.log('⚠️ Detected 404, redirecting to index.html');
-        window.location.replace('index.html');
-      }
+    // Jika URL tidak mengandung index.html, redirect
+    if (!window.location.pathname.includes('index.html') && 
+        window.location.pathname !== '/' && 
+        window.location.pathname !== '') {
+      console.log('🔄 Redirecting to index.html');
+      window.location.replace('index.html');
     }
-  })();
-  </script>
+  }
+})();
+</script>
   
   <title>POS System - FIFO</title>
   
@@ -8346,8 +8349,8 @@ if ('serviceWorker' in navigator) {
     
     // 🔥 FIX: Gunakan relative path untuk GitHub Pages
     navigator.serviceWorker.register('sw.js', { 
-      scope: './'  // 🔥 Penting: scope harus relative
-    })
+  scope: '/'  // 🔥 Untuk GitHub Pages
+})
     .then(function(registration) {
       console.log('✅ Service Worker registered with scope:', registration.scope);
       
@@ -8363,28 +8366,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ============================================================
-// FIX: Handle 404 di PWA untuk GitHub Pages
-// ============================================================
-(function() {
-  // Deteksi jika aplikasi berjalan sebagai PWA
-  if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('📱 Running as PWA - checking for 404');
-    
-    // Cek apakah ini halaman 404
-    var bodyText = document.body ? document.body.textContent : '';
-    var is404 = bodyText.includes('404') || 
-                bodyText.includes('Not Found') ||
-                bodyText.includes('Halaman tidak ditemukan') ||
-                document.title.includes('404');
-    
-    if (is404) {
-      console.log('⚠️ Detected 404 page, redirecting to index.html');
-      // Gunakan replace agar tidak kembali ke 404
-      window.location.replace('index.html');
-    }
-  }
-})();
 
 // ============================================================
 // DETEKSI APAKAH SUDAH TERINSTALL SEBAGAI PWA
