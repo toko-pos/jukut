@@ -1250,6 +1250,44 @@
 @media print {
   .struk-58mm { width: 58mm; }
 }
+
+
+
+    /* ===== RESELLER TABS ===== */
+.reseller-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+.reseller-tabs .tab-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: all 0.3s;
+  background: #f0f0f0;
+  color: #666;
+}
+.reseller-tabs .tab-btn:hover {
+  background: #e0e0e0;
+}
+.reseller-tabs .tab-btn.active {
+  background: var(--primary);
+  color: white;
+}
+.reseller-subpage {
+  display: none;
+}
+.reseller-subpage.active {
+  display: block;
+}
+
+    
   
   </style>
 </head>
@@ -1879,6 +1917,127 @@
 </div>
 
 
+
+  <!-- ===== RESELLER ===== -->
+<div id="page-reseller" class="page">
+  <div class="card">
+    <h2>👥 Manajemen Reseller</h2>
+
+    <div class="reseller-tabs">
+      <button class="tab-btn active" onclick="showResellerTab('dashboard')">📊 Dashboard</button>
+      <button class="tab-btn" onclick="showResellerTab('daftar')">📋 Daftar</button>
+      <button class="tab-btn" onclick="showResellerTab('stok')">📦 Stok</button>
+      <button class="tab-btn" onclick="showResellerTab('piutang')">💰 Piutang</button>
+      <button class="tab-btn" onclick="showResellerTab('tambah')">➕ Tambah</button>
+    </div>
+
+    <!-- Tab Dashboard Reseller -->
+    <div id="resellerTabDashboard" class="reseller-subpage active">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+        <div style="flex:1; min-width:200px;">
+          <label style="font-weight:600; font-size:0.85rem; color:#555; display:block; margin-bottom:4px;">Pilih Reseller</label>
+          <select id="resellerDashboardSelect" onchange="loadResellerDashboard()" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:5px; font-size:0.9rem; height:38px;">
+            <option value="">-- Pilih Reseller --</option>
+          </select>
+        </div>
+        <button class="btn btn-info" onclick="loadResellerDashboard()" style="height:38px;">🔄 Refresh</button>
+      </div>
+      <div id="resellerDashboardContent">
+        <p style="color:#999;text-align:center;padding:30px;">Pilih reseller untuk melihat dashboard</p>
+      </div>
+    </div>
+
+    <!-- Tab Daftar Reseller -->
+    <div id="resellerTabDaftar" class="reseller-subpage">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nama</th>
+              <th>Kontak</th>
+              <th>User ID</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="resellerTable">
+            <tr><td colspan="6" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab Stok Reseller -->
+    <div id="resellerTabStok" class="reseller-subpage">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+        <div style="flex:1; min-width:200px;">
+          <label style="font-weight:600; font-size:0.85rem; color:#555; display:block; margin-bottom:4px;">Pilih Reseller</label>
+          <select id="resellerStokSelect" onchange="loadResellerStok()" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:5px; font-size:0.9rem; height:38px;">
+            <option value="">-- Pilih Reseller --</option>
+          </select>
+        </div>
+        <button class="btn btn-success" onclick="showTambahStokReseller()" style="height:38px;">📦 Tambah Stok</button>
+        <button class="btn btn-info" onclick="loadResellerStok()" style="height:38px;">🔄 Refresh</button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Kode</th>
+              <th>Stok</th>
+              <th>Harga Reseller</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="resellerStokTable">
+            <tr><td colspan="4" style="text-align:center;color:#999;">Pilih reseller terlebih dahulu</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab Piutang Reseller -->
+    <div id="resellerTabPiutang" class="reseller-subpage">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+        <div style="flex:1; min-width:200px;">
+          <label style="font-weight:600; font-size:0.85rem; color:#555; display:block; margin-bottom:4px;">Pilih Reseller</label>
+          <select id="resellerPiutangSelect" onchange="loadResellerPiutang()" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:5px; font-size:0.9rem; height:38px;">
+            <option value="">-- Pilih Reseller --</option>
+          </select>
+        </div>
+        <button class="btn btn-warning" onclick="showBayarPiutangReseller()" style="height:38px;">💰 Bayar Piutang</button>
+        <button class="btn btn-info" onclick="loadResellerPiutang()" style="height:38px;">🔄 Refresh</button>
+      </div>
+      <div id="resellerPiutangContent">
+        <p style="color:#999;text-align:center;padding:30px;">Pilih reseller untuk melihat piutang</p>
+      </div>
+    </div>
+
+    <!-- Tab Tambah Reseller -->
+    <div id="resellerTabTambah" class="reseller-subpage">
+      <form id="formTambahReseller">
+        <div class="form-row">
+          <div class="form-group"><label>Nama Reseller *</label><input type="text" id="fResNama" required></div>
+          <div class="form-group"><label>Kontak</label><input type="text" id="fResKontak" placeholder="No HP / WA"></div>
+        </div>
+        <div class="form-group"><label>Alamat</label><textarea id="fResAlamat" rows="2"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>User ID (Login)</label><input type="text" id="fResUserId" placeholder="Kosongkan untuk auto-generate"></div>
+          <div class="form-group"><label>Password</label><input type="text" id="fResPassword" placeholder="Kosongkan = reseller123"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Limit Piutang</label><input type="number" id="fResLimit" value="0" min="0"><small style="color:#999;">0 = tidak ada limit</small></div>
+          <div class="form-group"><label>Jatuh Tempo (hari)</label><input type="number" id="fResJatuhTempo" value="30" min="0"><small style="color:#999;">0 = tidak ada jatuh tempo</small></div>
+        </div>
+        <button type="submit" class="btn btn-success btn-block">💾 Simpan Reseller</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+    
     
     <!-- ===== USER ===== -->
     <div id="page-user" class="page">
@@ -7701,6 +7860,561 @@ function closeInstallBanner() {
   var banner = document.getElementById('installBanner');
   if (banner) banner.style.display = 'none';
 }
+
+
+    // ============================================================
+// RESELLER FUNCTIONS - LENGKAP
+// ============================================================
+
+// ============================================================
+// RESELLER - CRUD
+// ============================================================
+
+function loadResellers() {
+  var tbody = document.getElementById('resellerTable');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
+
+  callGAS('getResellers', {})
+    .then(function(result) {
+      if (!result || !result.success) throw new Error(result ? result.error : 'Gagal memuat data');
+      var data = result.data || [];
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">📭 Belum ada reseller</td></tr>';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < data.length; i++) {
+        var r = data[i];
+        var statusColor = r.status === 'AKTIF' ? '#4CAF50' : '#f44336';
+        html += '<tr>' +
+          '<td><strong>' + r.id + '</strong></td>' +
+          '<td>' + r.nama + '</td>' +
+          '<td>' + r.kontak + '</td>' +
+          '<td>' + r.userId + '</td>' +
+          '<td><span style="background:' + statusColor + ';color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + r.status + '</span></td>' +
+          '<td style="white-space:nowrap;">' +
+          '<button class="btn btn-warning btn-sm" onclick="editReseller(\'' + r.id + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;">✏️</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="hapusReseller(\'' + r.id + '\')" style="padding:4px 8px;font-size:0.65rem;">🗑️</button>' +
+          '</td></tr>';
+      }
+      tbody.innerHTML = html;
+      loadResellerDropdowns();
+    })
+    .catch(function(error) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">❌ Error: ' + error.message + '</td></tr>';
+    });
+}
+
+function loadResellerDropdowns() {
+  callGAS('getResellers', {})
+    .then(function(result) {
+      if (!result || !result.success) return;
+      var data = result.data || [];
+      var dropdowns = ['posResellerDropdown', 'resellerDashboardSelect', 'resellerStokSelect', 'resellerPiutangSelect'];
+      for (var d = 0; d < dropdowns.length; d++) {
+        var el = document.getElementById(dropdowns[d]);
+        if (!el) continue;
+        var currentVal = el.value;
+        el.innerHTML = '<option value="">-- Pilih Reseller --</option>';
+        for (var i = 0; i < data.length; i++) {
+          if (data[i].status === 'AKTIF') {
+            var opt = document.createElement('option');
+            opt.value = data[i].id;
+            opt.textContent = data[i].nama + ' (' + data[i].id + ')';
+            if (currentVal && currentVal === data[i].id) opt.selected = true;
+            el.appendChild(opt);
+          }
+        }
+      }
+    })
+    .catch(function(error) { console.error('❌ Error loadResellerDropdowns:', error); });
+}
+
+function editReseller(id) {
+  callGAS('getResellers', {})
+    .then(function(result) {
+      if (!result || !result.success) throw new Error('Gagal memuat data');
+      var data = result.data || [];
+      var reseller = null;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].id === id) { reseller = data[i]; break; }
+      }
+      if (!reseller) { showToast('⚠️ Reseller tidak ditemukan', 'error'); return; }
+
+      document.getElementById('modalTitle').textContent = '✏️ Edit Reseller';
+      document.getElementById('modalBody').innerHTML =
+        '<form id="formEditReseller">' +
+        '<div class="form-group"><label>Nama Reseller *</label><input type="text" id="fResEditNama" value="' + escapeHtml(reseller.nama) + '" required></div>' +
+        '<div class="form-group"><label>Kontak</label><input type="text" id="fResEditKontak" value="' + escapeHtml(reseller.kontak) + '"></div>' +
+        '<div class="form-group"><label>Alamat</label><textarea id="fResEditAlamat" rows="2">' + escapeHtml(reseller.alamat) + '</textarea></div>' +
+        '<div class="form-group"><label>Status</label><select id="fResEditStatus"><option value="AKTIF" ' + (reseller.status === 'AKTIF' ? 'selected' : '') + '>AKTIF</option><option value="NONAKTIF" ' + (reseller.status === 'NONAKTIF' ? 'selected' : '') + '>NONAKTIF</option></select></div>' +
+        '<div class="form-row"><div class="form-group"><label>Limit Piutang</label><input type="number" id="fResEditLimit" value="' + (reseller.limitPiutang || 0) + '" min="0"></div>' +
+        '<div class="form-group"><label>Jatuh Tempo (hari)</label><input type="number" id="fResEditJatuhTempo" value="' + (reseller.jatuhTempo || 0) + '" min="0"></div></div>' +
+        '<button type="submit" class="btn btn-warning btn-block">💾 Update Reseller</button></form>';
+      document.getElementById('modal').classList.add('active');
+
+      document.getElementById('formEditReseller').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var data = {
+          id: id,
+          nama: document.getElementById('fResEditNama').value.trim(),
+          kontak: document.getElementById('fResEditKontak').value.trim(),
+          alamat: document.getElementById('fResEditAlamat').value.trim(),
+          status: document.getElementById('fResEditStatus').value,
+          limitPiutang: parseInt(document.getElementById('fResEditLimit').value) || 0,
+          jatuhTempo: parseInt(document.getElementById('fResEditJatuhTempo').value) || 0
+        };
+        if (!data.nama) { showToast('⚠️ Nama reseller wajib diisi!', 'error'); return; }
+
+        var btn = e.target.querySelector('button[type="submit"]');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
+
+        callGAS('updateReseller', data)
+          .then(function(result) {
+            if (btn) { btn.disabled = false; btn.textContent = '💾 Update Reseller'; }
+            if (result && result.success) {
+              showToast('✅ Reseller berhasil diupdate!', 'success');
+              closeModal();
+              loadResellers();
+              loadResellerDropdowns();
+            } else {
+              showToast('❌ Gagal update reseller: ' + (result ? result.error : ''), 'error');
+            }
+          })
+          .catch(function(error) {
+            if (btn) { btn.disabled = false; btn.textContent = '💾 Update Reseller'; }
+            showToast('❌ Error: ' + error.message, 'error');
+          });
+      });
+    })
+    .catch(function(error) { showToast('❌ Error: ' + error.message, 'error'); });
+}
+
+function hapusReseller(id) {
+  if (!confirm('⚠️ Yakin ingin menghapus reseller ini? Data terkait akan tetap tersimpan.')) return;
+  callGAS('deleteReseller', { id: id })
+    .then(function(result) {
+      if (result && result.success) {
+        showToast('✅ Reseller berhasil dihapus!', 'success');
+        loadResellers();
+        loadResellerDropdowns();
+      } else {
+        showToast('❌ Gagal hapus reseller: ' + (result ? result.error : ''), 'error');
+      }
+    })
+    .catch(function(error) { showToast('❌ Error: ' + error.message, 'error'); });
+}
+
+// ============================================================
+// RESELLER - STOK
+// ============================================================
+
+function loadResellerStok() {
+  var tbody = document.getElementById('resellerStokTable');
+  if (!tbody) return;
+  var resellerId = document.getElementById('resellerStokSelect').value;
+  if (!resellerId) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">Pilih reseller terlebih dahulu</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
+
+  callGAS('getResellerStok', { resellerId: resellerId })
+    .then(function(result) {
+      if (!result || !result.success) throw new Error(result ? result.error : 'Gagal memuat data');
+      var data = result.data || [];
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">📭 Belum ada stok untuk reseller ini</td></tr>';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < data.length; i++) {
+        var s = data[i];
+        html += '<tr>' +
+          '<td><strong>' + s.kode + '</strong></td>' +
+          '<td><strong>' + s.stok + '</strong></td>' +
+          '<td>' + formatRupiah(s.hargaReseller) + '</td>' +
+          '<td><button class="btn btn-danger btn-sm" onclick="hapusStokReseller(\'' + s.id + '\', \'' + resellerId + '\')" style="padding:4px 8px;font-size:0.65rem;">🗑️</button></td>' +
+          '</tr>';
+      }
+      tbody.innerHTML = html;
+    })
+    .catch(function(error) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:red;">❌ Error: ' + error.message + '</td></tr>';
+    });
+}
+
+function hapusStokReseller(id, resellerId) {
+  if (!confirm('⚠️ Yakin ingin menghapus stok ini?')) return;
+  callGAS('deleteResellerStok', { id: id })
+    .then(function(result) {
+      if (result && result.success) {
+        showToast('✅ Stok berhasil dihapus!', 'success');
+        loadResellerStok();
+      } else {
+        showToast('❌ Gagal hapus stok: ' + (result ? result.error : ''), 'error');
+      }
+    })
+    .catch(function(error) { showToast('❌ Error: ' + error.message', 'error'); });
+}
+
+function showTambahStokReseller() {
+  var resellerId = document.getElementById('resellerStokSelect').value;
+  if (!resellerId) { showToast('⚠️ Pilih reseller terlebih dahulu!', 'warning'); return; }
+
+  callGAS('getProduk', {})
+    .then(function(result) {
+      if (!result || !result.success) throw new Error('Gagal memuat produk');
+      var produk = result.data || [];
+      var options = '';
+      for (var i = 0; i < produk.length; i++) {
+        options += '<option value="' + produk[i].Kode + '">' + produk[i].Kode + ' - ' + produk[i]['Nama Produk'] + ' (Stok: ' + produk[i].Stok + ')</option>';
+      }
+
+      document.getElementById('modalTitle').textContent = '📦 Tambah Stok Reseller';
+      document.getElementById('modalBody').innerHTML =
+        '<form id="formTambahStokReseller">' +
+        '<div class="form-group"><label>Produk</label><select id="fStokResProduk" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:5px;">' + options + '</select></div>' +
+        '<div class="form-group"><label>Jumlah</label><input type="number" id="fStokResQty" min="1" value="1" required></div>' +
+        '<div class="form-group"><label>Harga Reseller (Rp)</label><input type="number" id="fStokResHarga" min="0" value="0" required><small style="color:#999;">0 = gunakan harga default (diskon 15%)</small></div>' +
+        '<button type="submit" class="btn btn-success btn-block">📦 Tambah Stok</button></form>';
+      document.getElementById('modal').classList.add('active');
+
+      document.getElementById('fStokResProduk').addEventListener('change', function() {
+        var kode = this.value;
+        var produkList = produk;
+        for (var i = 0; i < produkList.length; i++) {
+          if (produkList[i].Kode === kode) {
+            var hargaDiskon = Math.round(produkList[i]['Harga Jual'] * 0.85);
+            document.getElementById('fStokResHarga').value = hargaDiskon;
+            break;
+          }
+        }
+      });
+      setTimeout(function() {
+        var event = new Event('change');
+        document.getElementById('fStokResProduk').dispatchEvent(event);
+      }, 100);
+
+      document.getElementById('formTambahStokReseller').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var data = {
+          resellerId: resellerId,
+          kode: document.getElementById('fStokResProduk').value,
+          qty: parseInt(document.getElementById('fStokResQty').value) || 0,
+          hargaReseller: parseInt(document.getElementById('fStokResHarga').value) || 0
+        };
+        if (!data.kode || data.qty <= 0) { showToast('⚠️ Pilih produk dan isi jumlah!', 'error'); return; }
+
+        var btn = e.target.querySelector('button[type="submit"]');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
+
+        callGAS('tambahResellerStok', data)
+          .then(function(result) {
+            if (btn) { btn.disabled = false; btn.textContent = '📦 Tambah Stok'; }
+            if (result && result.success) {
+              showToast('✅ Stok berhasil ditambahkan ke reseller!', 'success');
+              closeModal();
+              loadResellerStok();
+            } else {
+              showToast('❌ Gagal tambah stok: ' + (result ? result.error : ''), 'error');
+            }
+          })
+          .catch(function(error) {
+            if (btn) { btn.disabled = false; btn.textContent = '📦 Tambah Stok'; }
+            showToast('❌ Error: ' + error.message, 'error');
+          });
+      });
+    })
+    .catch(function(error) { showToast('❌ Error: ' + error.message, 'error'); });
+}
+
+// ============================================================
+// RESELLER - PIUTANG
+// ============================================================
+
+function loadResellerPiutang() {
+  var resellerId = document.getElementById('resellerPiutangSelect').value;
+  var container = document.getElementById('resellerPiutangContent');
+  if (!resellerId) {
+    container.innerHTML = '<p style="color:#999;text-align:center;padding:30px;">Pilih reseller untuk melihat piutang</p>';
+    return;
+  }
+
+  container.innerHTML = '<p style="color:#999;text-align:center;padding:30px;">⏳ Memuat data...</p>';
+
+  Promise.all([
+    callGAS('getResellerTransaksi', { resellerId: resellerId }),
+    callGAS('getResellerPembayaran', { resellerId: resellerId })
+  ])
+  .then(function(results) {
+    var transResult = results[0];
+    var payResult = results[1];
+    if (!transResult || !transResult.success) throw new Error('Gagal memuat transaksi');
+    var transaksi = transResult.data || [];
+    var pembayaran = (payResult && payResult.success) ? payResult.data || [] : [];
+
+    var totalBelanja = 0;
+    var totalDibayar = 0;
+    var totalSisa = 0;
+    for (var i = 0; i < transaksi.length; i++) {
+      totalBelanja += transaksi[i].total;
+      totalDibayar += transaksi[i].pembayaran;
+      totalSisa += transaksi[i].sisa;
+    }
+
+    var html = '<div style="margin-bottom:15px;">';
+    html += '<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:15px;">';
+    html += '<div style="background:#e3f2fd; padding:12px; border-radius:8px; text-align:center;"><div style="font-weight:bold;font-size:1.2rem;">' + formatRupiah(totalBelanja) + '</div><div style="font-size:0.8rem;color:#666;">Total Belanja</div></div>';
+    html += '<div style="background:#e8f5e9; padding:12px; border-radius:8px; text-align:center;"><div style="font-weight:bold;font-size:1.2rem;color:#4CAF50;">' + formatRupiah(totalDibayar) + '</div><div style="font-size:0.8rem;color:#666;">Total Dibayar</div></div>';
+    html += '<div style="background:#ffebee; padding:12px; border-radius:8px; text-align:center;"><div style="font-weight:bold;font-size:1.2rem;color:' + (totalSisa > 0 ? '#f44336' : '#4CAF50') + ';">' + formatRupiah(totalSisa) + '</div><div style="font-size:0.8rem;color:#666;">Sisa Piutang</div></div>';
+    html += '</div>';
+
+    if (transaksi.length > 0) {
+      html += '<div class="table-wrapper"><table><thead><tr><th>Tanggal</th><th>ID</th><th>Total</th><th>Dibayar</th><th>Sisa</th><th>Status</th></tr></thead><tbody>';
+      for (var i = 0; i < transaksi.length; i++) {
+        var t = transaksi[i];
+        var statusColor = t.status === 'LUNAS' ? '#4CAF50' : (t.status === 'CICILAN' ? '#FF9800' : '#f44336');
+        html += '<tr><td>' + formatTanggalDisplay(t.tanggal) + '</td><td><strong>' + t.id + '</strong></td><td>' + formatRupiah(t.total) + '</td><td>' + formatRupiah(t.pembayaran) + '</td><td style="color:' + (t.sisa > 0 ? '#f44336' : '#4CAF50') + ';">' + formatRupiah(t.sisa) + '</td><td><span style="background:' + statusColor + ';color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + t.status + '</span></td></tr>';
+      }
+      html += '</tbody></table></div>';
+    } else {
+      html += '<p style="color:#999;text-align:center;">📭 Belum ada transaksi</p>';
+    }
+
+    if (pembayaran.length > 0) {
+      html += '<h4 style="margin-top:15px;">📋 Riwayat Pembayaran</h4>';
+      html += '<div class="table-wrapper"><table><thead><tr><th>Tanggal</th><th>Nominal</th><th>Metode</th><th>Kasir</th></tr></thead><tbody>';
+      for (var i = 0; i < pembayaran.length; i++) {
+        var p = pembayaran[i];
+        html += '<tr><td>' + formatTanggalDisplay(p.tanggal) + '</td><td>' + formatRupiah(p.nominal) + '</td><td>' + (p.metode || 'TUNAI') + '</td><td>' + (p.kasir || '-') + '</td></tr>';
+      }
+      html += '</tbody></table></div>';
+    }
+
+    if (totalSisa > 0) {
+      html += '<div style="margin-top:15px;"><button class="btn btn-warning" onclick="showBayarPiutangReseller()" style="padding:10px 20px;">💰 Bayar Piutang</button></div>';
+    }
+
+    container.innerHTML = html;
+  })
+  .catch(function(error) {
+    container.innerHTML = '<p style="color:red;text-align:center;padding:30px;">❌ Error: ' + error.message + '</p>';
+  });
+}
+
+function showBayarPiutangReseller() {
+  var resellerId = document.getElementById('resellerPiutangSelect').value;
+  if (!resellerId) { showToast('⚠️ Pilih reseller terlebih dahulu!', 'warning'); return; }
+
+  callGAS('getResellerTransaksi', { resellerId: resellerId })
+    .then(function(result) {
+      if (!result || !result.success) throw new Error('Gagal memuat data');
+      var transaksi = result.data || [];
+      var totalSisa = 0;
+      for (var i = 0; i < transaksi.length; i++) totalSisa += transaksi[i].sisa;
+
+      if (totalSisa <= 0) { showToast('✅ Reseller tidak memiliki piutang', 'success'); return; }
+
+      document.getElementById('modalTitle').textContent = '💰 Bayar Piutang Reseller';
+      document.getElementById('modalBody').innerHTML =
+        '<div style="margin-bottom:15px;"><div style="background:#f5f5f5;padding:15px;border-radius:8px;">' +
+        '<p><strong>Sisa Piutang:</strong> <span style="color:#f44336;font-size:1.3rem;font-weight:bold;">' + formatRupiah(totalSisa) + '</span></p></div></div>' +
+        '<div class="form-group"><label>Nominal Pembayaran</label>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">' +
+        '<button type="button" class="btn-sm" onclick="document.getElementById(\'fBayarPiutang\').value=' + Math.min(50000, totalSisa) + ';">' + formatRupiah(Math.min(50000, totalSisa)) + '</button>' +
+        '<button type="button" class="btn-sm" onclick="document.getElementById(\'fBayarPiutang\').value=' + Math.min(100000, totalSisa) + ';">' + formatRupiah(Math.min(100000, totalSisa)) + '</button>' +
+        '<button type="button" class="btn-sm" onclick="document.getElementById(\'fBayarPiutang\').value=' + Math.min(200000, totalSisa) + ';">' + formatRupiah(Math.min(200000, totalSisa)) + '</button>' +
+        '<button type="button" class="btn-sm btn-success" onclick="document.getElementById(\'fBayarPiutang\').value=' + totalSisa + ';">💳 Lunas</button></div>' +
+        '<input type="number" id="fBayarPiutang" min="1" max="' + totalSisa + '" placeholder="Masukkan nominal..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:bold;"></div>' +
+        '<div class="form-group"><label>Metode Pembayaran</label><select id="fBayarMetode" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:5px;"><option value="TUNAI">💵 Tunai</option><option value="TRANSFER">🏦 Transfer</option><option value="QRIS">📱 QRIS</option></select></div>' +
+        '<div class="form-group"><label>Catatan</label><input type="text" id="fBayarCatatan" placeholder="Catatan pembayaran..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:5px;"></div>' +
+        '<button class="btn btn-success btn-block" onclick="prosesBayarPiutangReseller(\'' + resellerId + '\')" style="padding:14px;font-size:1.1rem;">✅ Bayar</button>';
+      document.getElementById('modal').classList.add('active');
+
+      setTimeout(function() { document.getElementById('fBayarPiutang').focus(); }, 300);
+    })
+    .catch(function(error) { showToast('❌ Error: ' + error.message, 'error'); });
+}
+
+function prosesBayarPiutangReseller(resellerId) {
+  var nominal = parseInt(document.getElementById('fBayarPiutang').value) || 0;
+  var metode = document.getElementById('fBayarMetode').value;
+  var catatan = document.getElementById('fBayarCatatan').value.trim();
+
+  if (nominal <= 0) { showToast('⚠️ Masukkan nominal pembayaran!', 'error'); document.getElementById('fBayarPiutang').focus(); return; }
+
+  var btn = document.querySelector('.modal-content .btn-success');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
+
+  callGAS('simpanPembayaranReseller', {
+    resellerId: resellerId,
+    nominal: nominal,
+    metode: metode,
+    catatan: catatan || '-',
+    tanggal: getTodayString(),
+    kasir: currentUser ? currentUser.nama : 'Admin'
+  })
+  .then(function(result) {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Bayar'; }
+    if (result && result.success) {
+      showToast('✅ Pembayaran piutang berhasil!', 'success');
+      closeModal();
+      loadResellerPiutang();
+      loadDashboard();
+    } else {
+      showToast('❌ Gagal bayar piutang: ' + (result ? result.error : ''), 'error');
+    }
+  })
+  .catch(function(error) {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Bayar'; }
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+// ============================================================
+// RESELLER - DASHBOARD
+// ============================================================
+
+function loadResellerDashboard() {
+  var resellerId = document.getElementById('resellerDashboardSelect').value;
+  var container = document.getElementById('resellerDashboardContent');
+  if (!resellerId) {
+    container.innerHTML = '<p style="color:#999;text-align:center;padding:30px;">Pilih reseller untuk melihat dashboard</p>';
+    return;
+  }
+
+  container.innerHTML = '<p style="color:#999;text-align:center;padding:30px;">⏳ Memuat dashboard...</p>';
+
+  callGAS('getResellerDashboard', { resellerId: resellerId })
+    .then(function(result) {
+      if (!result || !result.success) throw new Error(result ? result.error : 'Gagal memuat data');
+      var data = result.data || {};
+
+      var html = '';
+      html += '<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:15px;">';
+      html += '<div style="background:#e3f2fd; padding:12px; border-radius:8px; text-align:center;"><div style="font-weight:bold;font-size:1.2rem;">' + formatRupiah(data.totalBelanja || 0) + '</div><div style="font-size:0.8rem;color:#666;">Total Belanja</div></div>';
+      html += '<div style="background:#e8f5e9; padding:12px; border-radius:8px; text-align:center;"><div style="font-weight:bold;font-size:1.2rem;color:#4CAF50;">' + formatRupiah(data.totalPembayaran || 0) + '</div><div style="font-size:0.8rem;color:#666;">Total Dibayar</div></div>';
+      html += '<div style="background:#ffebee; padding:12px; border-radius:8px; text-align:center;"><div style="font-weight:bold;font-size:1.2rem;color:' + ((data.sisaPiutang || 0) > 0 ? '#f44336' : '#4CAF50') + ';">' + formatRupiah(data.sisaPiutang || 0) + '</div><div style="font-size:0.8rem;color:#666;">Sisa Piutang</div></div>';
+      html += '<div style="background:#fff3e0; padding:12px; border-radius:8px; text-align:center;"><div style="font-weight:bold;font-size:1.2rem;color:#FF9800;">' + formatRupiah(data.totalPenjualan || 0) + '</div><div style="font-size:0.8rem;color:#666;">Total Penjualan</div></div>';
+      html += '</div>';
+
+      var stok = data.stok || [];
+      if (stok.length > 0) {
+        html += '<h4>📦 Stok Reseller</h4>';
+        html += '<div class="table-wrapper"><table><thead><tr><th>Kode</th><th>Stok</th><th>Harga</th></tr></thead><tbody>';
+        for (var i = 0; i < stok.length; i++) {
+          var s = stok[i];
+          html += '<tr><td>' + s.kode + '</td><td><strong>' + s.stok + '</strong></td><td>' + formatRupiah(s.hargaReseller) + '</td></tr>';
+        }
+        html += '</tbody></table></div>';
+      } else {
+        html += '<p style="color:#999;">📭 Belum ada stok</p>';
+      }
+
+      var transaksi = data.transaksi || [];
+      if (transaksi.length > 0) {
+        html += '<h4 style="margin-top:15px;">📋 Riwayat Transaksi</h4>';
+        html += '<div class="table-wrapper"><table><thead><tr><th>Tanggal</th><th>ID</th><th>Total</th><th>Dibayar</th><th>Sisa</th><th>Status</th></tr></thead><tbody>';
+        for (var i = 0; i < transaksi.length; i++) {
+          var t = transaksi[i];
+          var statusColor = t.status === 'LUNAS' ? '#4CAF50' : (t.status === 'CICILAN' ? '#FF9800' : '#f44336');
+          html += '<tr><td>' + formatTanggalDisplay(t.tanggal) + '</td><td><strong>' + t.id + '</strong></td><td>' + formatRupiah(t.total) + '</td><td>' + formatRupiah(t.pembayaran) + '</td><td style="color:' + (t.sisa > 0 ? '#f44336' : '#4CAF50') + ';">' + formatRupiah(t.sisa) + '</td><td><span style="background:' + statusColor + ';color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + t.status + '</span></td></tr>';
+        }
+        html += '</tbody></table></div>';
+      }
+
+      var penjualan = data.penjualan || [];
+      if (penjualan.length > 0) {
+        html += '<h4 style="margin-top:15px;">💰 Riwayat Penjualan</h4>';
+        html += '<div class="table-wrapper"><table><thead><tr><th>Tanggal</th><th>ID</th><th>Total</th><th>Pelanggan</th></tr></thead><tbody>';
+        for (var i = 0; i < penjualan.length; i++) {
+          var p = penjualan[i];
+          html += '<tr><td>' + formatTanggalDisplay(p.tanggal) + '</td><td><strong>' + p.id + '</strong></td><td>' + formatRupiah(p.total) + '</td><td>' + (p.pelanggan || '-') + '</td></tr>';
+        }
+        html += '</tbody></table></div>';
+      }
+
+      container.innerHTML = html;
+    })
+    .catch(function(error) {
+      container.innerHTML = '<p style="color:red;text-align:center;padding:30px;">❌ Error: ' + error.message + '</p>';
+    });
+}
+
+function showResellerTab(tab) {
+  var tabs = document.querySelectorAll('#page-reseller .reseller-subpage');
+  var btns = document.querySelectorAll('#page-reseller .reseller-tabs .tab-btn');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  var target = document.getElementById('resellerTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  if (target) target.classList.add('active');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].textContent.trim().toLowerCase().includes(tab === 'dashboard' ? 'dashboard' : tab === 'daftar' ? 'daftar' : tab === 'stok' ? 'stok' : tab === 'piutang' ? 'piutang' : 'tambah')) {
+      btns[i].classList.add('active');
+      break;
+    }
+  }
+  if (tab === 'dashboard') { loadResellerDashboard(); }
+  if (tab === 'daftar') { loadResellers(); }
+  if (tab === 'stok') { loadResellerStok(); }
+  if (tab === 'piutang') { loadResellerPiutang(); }
+  if (tab === 'tambah') { document.getElementById('resellerTabTambah').scrollIntoView({ behavior: 'smooth' }); }
+}
+
+// ============================================================
+// FORM TAMBAH RESELLER - EVENT LISTENER
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Form Tambah Reseller
+  var formTambahReseller = document.getElementById('formTambahReseller');
+  if (formTambahReseller) {
+    formTambahReseller.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var data = {
+        nama: document.getElementById('fResNama').value.trim(),
+        kontak: document.getElementById('fResKontak').value.trim(),
+        alamat: document.getElementById('fResAlamat').value.trim(),
+        userId: document.getElementById('fResUserId').value.trim(),
+        password: document.getElementById('fResPassword').value.trim() || 'reseller123',
+        limitPiutang: parseInt(document.getElementById('fResLimit').value) || 0,
+        jatuhTempo: parseInt(document.getElementById('fResJatuhTempo').value) || 0
+      };
+      if (!data.nama) { showToast('⚠️ Nama reseller wajib diisi!', 'error'); return; }
+
+      var btn = e.target.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
+
+      callGAS('tambahReseller', data)
+        .then(function(result) {
+          if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan Reseller'; }
+          if (result && result.success) {
+            showToast('✅ Reseller berhasil ditambahkan! User ID: ' + result.userId, 'success');
+            document.getElementById('fResNama').value = '';
+            document.getElementById('fResKontak').value = '';
+            document.getElementById('fResAlamat').value = '';
+            document.getElementById('fResUserId').value = '';
+            document.getElementById('fResPassword').value = '';
+            loadResellers();
+            loadResellerDropdowns();
+          } else {
+            showToast('❌ Gagal menambahkan reseller: ' + (result ? result.error : ''), 'error');
+          }
+        })
+        .catch(function(error) {
+          if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan Reseller'; }
+          showToast('❌ Error: ' + error.message, 'error');
+        });
+    });
+  }
+});
+
+  
 </script>
 
   
