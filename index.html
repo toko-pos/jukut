@@ -57,6 +57,10 @@
   
   <title>POS System - FIFO</title>
   
+  <!-- ===== CEGAH GOOGLE TRANSLATE ===== -->
+  <meta name="google" content="notranslate">
+  <meta name="google-translate-custom" content="notranslate">
+  
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   
@@ -75,6 +79,25 @@
   </script>
 
   <style>
+
+    /* ===== CEGAH GOOGLE TRANSLATE ===== */
+    .goog-te-banner-frame,
+    .goog-te-menu-frame,
+    #goog-gt-tt,
+    .goog-tooltip,
+    .goog-tooltip:hover {
+      display: none !important;
+    }
+    .goog-text-highlight {
+      background-color: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    body {
+      top: 0 !important;
+    }
+
+    
     /* ===== RESET & BASE ===== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root { --primary: #4CAF50; --primary-dark: #388E3C; --danger: #f44336; --danger-dark: #d32f2f; --warning: #ff9800; --success: #4CAF50; --gray: #f5f5f5; --dark: #333; --border: #ddd; --cancel-bg: #FDD835; --cancel-hover: #FBC02D; }
@@ -9375,6 +9398,30 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
   }
 })();
 </script>
+
+<script>
+// ============================================================
+// NONAKTIFKAN GOOGLE TRANSLATE
+// ============================================================
+(function() {
+  // Hapus semua elemen translate
+  var elements = document.querySelectorAll('.goog-te-banner-frame, .goog-te-menu-frame, #goog-gt-tt');
+  elements.forEach(function(el) {
+    if (el && el.parentNode) {
+      el.parentNode.removeChild(el);
+    }
+  });
+  
+  // Reset body position
+  document.body.style.top = '0px';
+  document.body.style.position = 'static';
+  
+  // Hapus cookie translate
+  document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+})();
+</script>
+
+
   
 </body>
 </html>
