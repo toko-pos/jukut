@@ -31,7 +31,7 @@
   <meta name="google" content="notranslate">
   <meta name="google-translate-custom" content="notranslate">
   
-  <!-- ===== PWA FIX UNTUK ANDROID ===== -->
+   <!-- ===== PWA FIX UNTUK ANDROID ===== -->
   <script>
   (function() {
     console.log('🚀 PWA Fix for Android');
@@ -88,6 +88,8 @@
                 var roleEl = document.getElementById('currentRole');
                 if (userEl) userEl.textContent = user.nama || user.username;
                 if (roleEl) roleEl.textContent = '(' + (user.role || 'admin') + ')';
+                
+                showToast('✅ Selamat datang kembali, ' + (user.nama || user.username));
               }
             }
           } else {
@@ -100,21 +102,6 @@
           console.warn('⚠️ Invalid user data:', e);
           localStorage.removeItem('pos_user');
         }
-      }
-      
-      // 🔥 5. Prevent duplicate reloads
-      if (!localStorage.getItem('pwa_initialized')) {
-        localStorage.setItem('pwa_initialized', 'true');
-        console.log('✅ PWA initialized');
-        
-        // Reload once to ensure clean state
-        setTimeout(function() {
-          if (document.getElementById('loginPage').style.display !== 'none') {
-            console.log('🔄 Reloading to clear cache...');
-            // Force reload from network
-            window.location.reload(true);
-          }
-        }, 500);
       }
     }
   })();
@@ -9468,48 +9455,58 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
 
 <script>
 // ============================================================
-// FIX: Android PWA Login Loop
+// FIX: Android PWA - Prevent Infinite Reload
 // ============================================================
 (function() {
-  // Deteksi PWA mode
-  if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('📱 Android PWA Fix');
-    
-    // 🔥 Cek jika ada user di localStorage tapi login page masih tampil
-    var savedUser = localStorage.getItem('pos_user');
-    var loginPage = document.getElementById('loginPage');
-    var app = document.getElementById('app');
-    
-    if (savedUser && loginPage && app) {
-      // Jika user sudah login tapi masih di halaman login
-      if (loginPage.style.display !== 'none' && app.style.display === 'none') {
-        console.log('🔄 Auto-login from localStorage');
-        try {
-          var user = JSON.parse(savedUser);
-          currentUser = user;
-          app.style.display = 'block';
-          loginPage.style.display = 'none';
-          
-          // Update UI
-          var userEl = document.getElementById('currentUser');
-          var roleEl = document.getElementById('currentRole');
-          if (userEl) userEl.textContent = user.nama || user.username;
-          if (roleEl) roleEl.textContent = '(' + (user.role || 'admin') + ')';
-          
-          // Load data
-          if (typeof loadAllData === 'function') {
-            setTimeout(function() {
-              loadAllData();
-            }, 100);
-          }
-          
-          showToast('✅ Selamat datang kembali, ' + (user.nama || user.username));
-        } catch(e) {
-          console.warn('⚠️ Auto-login failed:', e);
-          localStorage.removeItem('pos_user');
+  // 🔥 Cek apakah ini PWA mode
+  var isPWA = window.matchMedia('(display-mode: standalone)').matches;
+  
+  if (!isPWA) {
+    return; // Bukan PWA, skip
+  }
+  
+  console.log('📱 Android PWA - Checking session');
+  
+  // 🔥 CEK: Apakah sudah login?
+  var savedUser = localStorage.getItem('pos_user');
+  var loginPage = document.getElementById('loginPage');
+  var app = document.getElementById('app');
+  
+  if (savedUser && loginPage && app) {
+    // Jika user sudah login tapi masih di halaman login
+    if (loginPage.style.display !== 'none' && app.style.display === 'none') {
+      console.log('🔄 Auto-login from localStorage');
+      try {
+        var user = JSON.parse(savedUser);
+        currentUser = user;
+        app.style.display = 'block';
+        loginPage.style.display = 'none';
+        
+        // Update UI
+        var userEl = document.getElementById('currentUser');
+        var roleEl = document.getElementById('currentRole');
+        if (userEl) userEl.textContent = user.nama || user.username;
+        if (roleEl) roleEl.textContent = '(' + (user.role || 'admin') + ')';
+        
+        // Load data
+        if (typeof loadAllData === 'function') {
+          setTimeout(function() {
+            loadAllData();
+          }, 100);
         }
+        
+        showToast('✅ Selamat datang kembali, ' + (user.nama || user.username));
+      } catch(e) {
+        console.warn('⚠️ Auto-login failed:', e);
+        localStorage.removeItem('pos_user');
       }
     }
+  }
+  
+  // 🔥 CEK: Mencegah reload loop dengan flag
+  if (!sessionStorage.getItem('pwa_checked')) {
+    sessionStorage.setItem('pwa_checked', 'true');
+    console.log('✅ PWA checked (no reload)');
   }
 })();
 </script>
