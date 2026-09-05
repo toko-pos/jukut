@@ -8,8 +8,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 
-  <!-- ===== PWA MANIFEST ===== -->
-<link rel="manifest" href="manifest.json">
+ 
+<!-- ===== PWA MANIFEST ===== -->
+<link rel="manifest" href="manifest.json" crossorigin="use-credentials">
 
 <!-- ===== THEME COLOR ===== -->
 <meta name="theme-color" content="#4CAF50">
@@ -9288,9 +9289,47 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
     showToast('❌ Error: ' + error.message, 'error');
   });
 }
+
+
   
 </script>
-
+<script>
+// ============================================================
+// FIX: Redirect jika terjadi 404 di PWA
+// ============================================================
+(function() {
+  // Deteksi jika aplikasi berjalan sebagai PWA
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('📱 Running as PWA');
+    
+    // Cek apakah halaman saat ini adalah 404
+    var is404 = document.title.includes('404') || 
+                document.body.textContent.includes('404') ||
+                document.body.textContent.includes('Not Found');
+    
+    if (is404) {
+      console.log('⚠️ Detected 404 page, redirecting...');
+      
+      // Coba akses index.html
+      fetch('index.html')
+        .then(function(response) {
+          if (response.ok) {
+            window.location.href = 'index.html';
+          } else {
+            // Fallback: reload dengan base path
+            var path = window.location.pathname;
+            var basePath = path.substring(0, path.lastIndexOf('/') + 1);
+            window.location.href = basePath + 'index.html';
+          }
+        })
+        .catch(function() {
+          // Reload current page
+          window.location.reload();
+        });
+    }
+  }
+})();
+</script>
   
 </body>
 </html>
