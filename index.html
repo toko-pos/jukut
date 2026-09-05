@@ -8042,7 +8042,6 @@ function renderResellerTable(data) {
       '<td>' + escapeHtml(r.nama || '-') + '</td>' +
       '<td>' + escapeHtml(r.kontak || '-') + '</td>' +
       '<td>' + escapeHtml(r.alamat || '-') + '</td>' +
-      // 🔥 KOLOM HARGA KHUSUS - TOMBOL ATUR HARGA
       '<td style="text-align:center;">' +
         '<button class="btn-atuharga" onclick="aturHargaReseller(\'' + escapeHtml(r.kode) + '\')" ' +
                 'style="padding:6px 14px;font-size:0.75rem;border-radius:8px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);color:white;border:none;cursor:pointer;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(156,39,176,0.3);transition:all 0.3s;">' +
@@ -8052,7 +8051,6 @@ function renderResellerTable(data) {
           '<span id="hargaCount_' + escapeHtml(r.kode) + '">0 produk</span>' +
         '</div>' +
       '</td>' +
-      // 🔥 STATUS - PAKAI BULATAN HIJAU/MERAH (1 BARIS INI YANG DIUBAH)
       '<td style="text-align:center;font-size:1.2rem;">' + (r.active ? '🟢' : '🔴') + '</td>' +
       '<td style="white-space:nowrap;">' +
         '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Edit">✏️</button>' +
@@ -8062,8 +8060,33 @@ function renderResellerTable(data) {
       '</tr>';
   }
   tbody.innerHTML = html;
-  
- 
+}  // <-- FUNGSI SELESAI DI SINI
+
+// ==================== LOAD JUMLAH HARGA PER RESELLER ====================
+function loadHargaCountForResellers() {
+  callGAS('getHargaReseller', {})
+  .then(function(result) {
+    if (!result || !result.success) return;
+    
+    var allHarga = result.data || [];
+    var countMap = {};
+    
+    for (var i = 0; i < allHarga.length; i++) {
+      var kodeReseller = allHarga[i].kodeReseller;
+      if (!countMap[kodeReseller]) countMap[kodeReseller] = 0;
+      countMap[kodeReseller]++;
+    }
+    
+    for (var kode in countMap) {
+      var el = document.getElementById('hargaCount_' + kode);
+      if (el) {
+        el.textContent = countMap[kode] + ' produk';
+      }
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadHargaCount:', error);
+  });
 }
 
 
@@ -8095,9 +8118,7 @@ function loadHargaCountForResellers() {
   });
 }
   
-  //== 🔥 LOAD JUMLAH HARGA UNTUK SETIAP RESELLER
- //== loadHargaCountForResellers();
-//== }
+
 
 
 
