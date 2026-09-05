@@ -5635,18 +5635,20 @@ if (thLaba) {
           totalTransaksi++;
           totalQty += t.qty || 0;
         }
-        
-        tbody.innerHTML = html;
+       
+
+          tbody.innerHTML = html;
         
         var totalText = '📊 Total: Transaksi: ' + totalTransaksi + ' | Quantity: ' + totalQty;
         if (showLaba) {
           totalText += ' | Laba: ' + formatRupiah(totalLaba);
         }
-        
-    var totalDisplay = document.getElementById('totalTransaksiDisplay');
-if (totalDisplay) {
-    totalDisplay.textContent = totalText;
-}
+
+        // PENGAAMAN: Pastikan elemen ada sebelum mengubah textContent
+        var totalDisplayEl = document.getElementById('totalTransaksiDisplay');
+        if (totalDisplayEl) {
+            totalDisplayEl.textContent = totalText;
+        }
 
   
       } catch (e) {
@@ -5729,7 +5731,7 @@ function loadLogPembatalan() {
       }
       allLogs = result.data || [];
       if (!allLogs || allLogs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada log pembatalan</td></tr>';
+        logTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada log pembatalan</td></tr>';
         return;
       }
       var html = '';
@@ -5737,11 +5739,11 @@ function loadLogPembatalan() {
         var l = allLogs[i];
         html += '<tr><td>' + formatTanggalDisplay(l.tanggalBatal, true) + '</td><td><strong>' + (l.userPembatal || '-') + '</strong></td><td style="max-width:150px;word-wrap:break-word;font-size:0.85rem;">' + (l.alasan || '-') + '</td><td><strong>' + (l.idTransaksi || '-') + '</strong></td><td>' + (l.kasir || '-') + '</td><td>' + formatRupiah(l.total || 0) + '</td><td><button class="btn btn-info btn-sm" onclick="lihatDetailLog(\'' + (l.idTransaksi || '') + '\')" style="padding:4px 8px;font-size:0.65rem;">📄</button></td></tr>';
       }
-      tbody.innerHTML = html;
+      logTable.innerHTML = html;
     })
     .catch(function(error) { 
       console.error('❌ Error loadLogPembatalan:', error); 
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>'; 
+      logTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>'; 
     });
   } catch (e) {
     console.error('❌ Error loadLogPembatalan:', e);
@@ -8419,25 +8421,7 @@ document.addEventListener('DOMContentLoaded', function() {
     filterSampai.addEventListener('change', loadTransaksi);
   }
 
-  var resTransMulai = document.getElementById('filterResTransMulai');
-  var resTransSampai = document.getElementById('filterResTransSampai');
-  if (resTransMulai && resTransSampai) {
-    var today = getTodayString();
-    resTransMulai.value = today;
-    resTransSampai.value = today;
-    resTransMulai.addEventListener('change', loadTransaksiReseller);
-    resTransSampai.addEventListener('change', loadTransaksiReseller);
-  }
-
-  var resPenjualanMulai = document.getElementById('filterResPenjualanMulai');
-  var resPenjualanSampai = document.getElementById('filterResPenjualanSampai');
-  if (resPenjualanMulai && resPenjualanSampai) {
-    var today = getTodayString();
-    resPenjualanMulai.value = today;
-    resPenjualanSampai.value = today;
-    resPenjualanMulai.addEventListener('change', loadPenjualanReseller);
-    resPenjualanSampai.addEventListener('change', loadPenjualanReseller);
-  }
+  
 
   var scannerModal = document.getElementById('scannerModal');
   if (scannerModal) {
