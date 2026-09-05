@@ -5651,7 +5651,13 @@ if (thLaba) {
         if (showLaba) {
           totalText += ' | Laba: ' + formatRupiah(totalLaba);
         }
-        document.getElementById('totalTransaksiDisplay').textContent = totalText;
+        
+    var totalDisplay = document.getElementById('totalTransaksiDisplay');
+if (totalDisplay) {
+    totalDisplay.textContent = totalText;
+}
+
+  
       } catch (e) {
         console.error('❌ Error processing transaksi:', e);
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + e.message + '</td></tr>';
@@ -8689,6 +8695,7 @@ function loadPenjualanReseller() {
   if (!tbody) return; 
 
   tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
+  // ... (biarkan sisa kode di bawahnya tetap sama)
   
   callGAS('getResellerPenjualan', {})
     .then(function(result) {
