@@ -8017,7 +8017,7 @@ function showTambahReseller() {
 
 function simpanReseller() {
   var data = {
-    kode: document.getElementById('fKodeReseller').value.trim(),
+    
     nama: document.getElementById('fNamaReseller').value.trim(),
     kontak: document.getElementById('fKontakReseller').value.trim(),
     alamat: document.getElementById('fAlamatReseller').value.trim(),
@@ -8209,6 +8209,23 @@ function hapusReseller(kode) {
   })
   .catch(function(error) {
     showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+  // ==================== GET KODE RESELLER OTOMATIS ====================
+function getKodeResellerOtomatis() {
+  return new Promise(function(resolve, reject) {
+    callGAS('generateKodeReseller', {})
+    .then(function(result) {
+      if (result && result.success) {
+        resolve(result.data);
+      } else {
+        reject(new Error(result ? result.error : 'Gagal generate kode'));
+      }
+    })
+    .catch(function(error) {
+      reject(error);
+    });
   });
 }
 
