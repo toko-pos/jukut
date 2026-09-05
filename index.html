@@ -547,24 +547,208 @@
     .badge-warning { background: #ff9800; color: white; padding: 2px 10px; border-radius: 10px; font-size: 0.8rem; }
     .badge-secondary { background: #999; color: white; padding: 2px 10px; border-radius: 10px; font-size: 0.8rem; }
     .empty-state { padding: 28px 18px; text-align: center; color: #6d86aa; font-style: italic; }
+
+
+   
     
-    /* ===== POS LAYOUT ===== */
-    .pos-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .pos-cart { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-height: 600px; display: flex; flex-direction: column; }
-    .pos-cart #cartItems { flex: 1; overflow-y: auto; }
-    .pos-products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-height: 600px; overflow-y: auto; align-content: start; }
-    .product-item { background: white; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative; }
-    .product-item:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-    .product-item.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); border-color: #ccc; pointer-events: none; }
-    .product-item .badge-out-of-stock { position: absolute; top: 8px; right: 8px; background: var(--danger); color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-    .product-item img { width: 100% !important; height: 100px !important; object-fit: cover !important; border-radius: 8px !important; margin-bottom: 8px !important; display: block !important; background: #f0f0f0 !important; }
-    .product-item .no-image { width: 100%; height: 100px; display: flex; align-items: center; justify-content: center; background: var(--gray); border-radius: 8px; margin-bottom: 8px; font-size: 2rem; color: #999; }
-    .product-item .name { font-weight: 600; font-size: 0.85rem; margin-top: 5px; }
-    .product-item .price { color: var(--primary); font-weight: bold; margin-top: 5px; }
-    .product-item .stock { font-size: 0.75rem; color: #999; }
-    .product-item .stock.low { color: var(--danger); font-weight: bold; }
-    .product-item .stock.out-of-stock { color: var(--danger); font-weight: bold; animation: blink 1s infinite; }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+
+
+
+
+    
+   /* ===== POS LAYOUT ===== */
+.pos-layout { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px; 
+    align-items: start; /* Tambahkan ini agar tidak stretch */
+}
+
+/* ===== POS CART (KERANJANG) ===== */
+.pos-cart { 
+    background: white; 
+    padding: 18px 20px; 
+    border-radius: 10px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    max-height: 620px; /* Sedikit ditambah */
+    min-height: 450px; /* Tambahkan tinggi minimum */
+    display: flex; 
+    flex-direction: column; 
+}
+
+.pos-cart #cartItems { 
+    flex: 1; 
+    overflow-y: auto; 
+    min-height: 120px; /* Tambahkan tinggi minimum */
+    max-height: 320px; /* Batasi agar tidak terlalu besar */
+    padding-right: 4px; /* Tambahkan padding untuk scroll */
+}
+
+/* ===== POS PRODUCTS ===== */
+.pos-products { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px; 
+    max-height: 620px; /* Samakan dengan pos-cart */
+    min-height: 450px; /* Samakan dengan pos-cart */
+    overflow-y: auto; 
+    align-content: start; 
+    background: white;
+    padding: 16px 18px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* ===== PRODUCT ITEM ===== */
+.product-item { 
+    background: white; 
+    padding: 12px; 
+    border-radius: 10px; 
+    text-align: center; 
+    cursor: pointer; 
+    border: 2px solid transparent; 
+    transition: all 0.3s; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    position: relative; 
+}
+
+.product-item:hover { 
+    border-color: var(--primary); 
+    transform: translateY(-3px); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+}
+
+.product-item.disabled { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+    filter: grayscale(1); 
+    border-color: #ccc; 
+    pointer-events: none; 
+}
+
+.product-item .badge-out-of-stock { 
+    position: absolute; 
+    top: 8px; 
+    right: 8px; 
+    background: var(--danger); 
+    color: white; 
+    padding: 3px 10px; 
+    border-radius: 20px; 
+    font-size: 0.65rem; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+}
+
+.product-item img { 
+    width: 100% !important; 
+    height: 100px !important; 
+    object-fit: cover !important; 
+    border-radius: 8px !important; 
+    margin-bottom: 8px !important; 
+    display: block !important; 
+    background: #f0f0f0 !important; 
+}
+
+.product-item .no-image { 
+    width: 100%; 
+    height: 100px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    background: var(--gray); 
+    border-radius: 8px; 
+    margin-bottom: 8px; 
+    font-size: 2rem; 
+    color: #999; 
+}
+
+.product-item .name { 
+    font-weight: 600; 
+    font-size: 0.85rem; 
+    margin-top: 5px; 
+}
+
+.product-item .price { 
+    color: var(--primary); 
+    font-weight: bold; 
+    margin-top: 5px; 
+}
+
+.product-item .stock { 
+    font-size: 0.75rem; 
+    color: #999; 
+}
+
+.product-item .stock.low { 
+    color: var(--danger); 
+    font-weight: bold; 
+}
+
+.product-item .stock.out-of-stock { 
+    color: var(--danger); 
+    font-weight: bold; 
+    animation: blink 1s infinite; 
+}
+
+@keyframes blink { 
+    0%, 100% { opacity: 1; } 
+    50% { opacity: 0.5; } 
+}
+
+/* ===== RESPONSIVE POS ===== */
+@media (max-width: 768px) {
+    .pos-layout { 
+        grid-template-columns: 1fr; 
+        gap: 15px;
+    }
+    
+    .pos-products {
+        max-height: 400px;
+        min-height: 250px;
+        padding: 12px 14px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    
+    .pos-cart {
+        max-height: 480px;
+        min-height: 320px;
+        padding: 14px 16px;
+    }
+    
+    .pos-cart #cartItems {
+        max-height: 200px;
+        min-height: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pos-products {
+        grid-template-columns: repeat(2, 1fr);
+        max-height: 350px;
+        min-height: 200px;
+        padding: 10px 12px;
+        gap: 8px;
+    }
+    
+    .pos-cart {
+        max-height: 420px;
+        min-height: 280px;
+        padding: 12px 14px;
+    }
+    
+    .pos-cart #cartItems {
+        max-height: 160px;
+        min-height: 60px;
+    }
+    
+    .product-item img,
+    .product-item .no-image {
+        height: 70px !important;
+    }
+}
     
     /* ===== CART ITEM ===== */
     .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid #eee; gap: 10px; }
@@ -1770,56 +1954,74 @@
     </div>
     
     <!-- ===== POS ===== -->
-    <div id="page-pos" class="page">
-      <div class="pos-layout">
-        <div class="pos-products" id="posProducts"><p style="color:#999;text-align:center;grid-column:1/-1;">Loading produk...</p></div>
-        <div class="pos-cart">
-          <div class="pos-tanggal-wrapper">
-            <label for="tanggalTransaksi">📅 Tanggal Transaksi:</label>
-            <input type="date" id="tanggalTransaksi">
-            <div id="posTanggalInfo" style="font-size:0.8rem;color:#999;width:100%;">
-              ⚠️ Pilih tanggal untuk mengaktifkan produk
-            </div>
-          </div>
-
-
-
-          <!-- 🔥 PILIH RESELLER -->
-      <div class="pos-tanggal-wrapper" style="border-bottom: 1px solid #eee; padding-bottom: 10px;">
-        <label for="pilihReseller">👥 Pilih Reseller:</label>
-        <select id="pilihReseller" onchange="onResellerChange()" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:5px; font-size:0.9rem; height:36px;">
-          <option value="">-- Tanpa Reseller (Harga Normal) --</option>
-        </select>
-        <button class="btn btn-info btn-sm" onclick="loadResellerOptions()" style="height:36px; padding:0 12px;">🔄</button>
+<div id="page-pos" class="page">
+  <!-- ===== HEADER POS (TERPISAH) ===== -->
+  <div style="background:white; padding:15px 20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); margin-bottom:15px;">
+    <div style="display:grid; grid-template-columns: 1fr 1.2fr 1fr; gap:12px; align-items:end;">
+      <!-- TANGGAL -->
+      <div>
+        <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px;">📅 Tanggal Transaksi</label>
+        <input type="date" id="tanggalTransaksi" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; height:38px;">
       </div>
       
-      <!-- 🔥 INFO RESELLER -->
-      <div id="resellerInfo" style="display:none; background:#f0f8ff; padding:8px 12px; border-radius:5px; margin-bottom:10px; border-left:4px solid #2196F3;">
-        <span id="resellerNamaDisplay"></span>
-        <span id="resellerDiskonDisplay" style="margin-left:10px; font-weight:bold; color:#FF9800;"></span>
+      <!-- RESELLER -->
+      <div>
+        <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px;">👥 Reseller</label>
+        <select id="pilihReseller" onchange="onResellerChange()" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; height:38px; background:white;">
+          <option value="">-- Tanpa Reseller --</option>
+        </select>
       </div>
-
-
-          
-          <div class="pos-tanggal-wrapper" style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: -5px;">
-  <label for="namaPembeli">👤 Nama Pembeli:</label>
-  <input type="text" id="namaPembeli" placeholder="Masukkan nama pembeli (opsional)" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:5px; font-size:0.9rem; height:36px;">
-  <span class="field-opsional" id="namaPembeliStatus">Opsional</span>
-</div>
-          <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
-            <button class="btn-scan" onclick="startScannerPOS()" style="font-size:0.8rem; padding:6px 12px; height:36px;">📷 Scan</button>
-            <input type="text" id="manualBarcodeInput" placeholder="Cari / ketik kode atau nama produk..." 
-                   onkeydown="if(event.key === 'Enter'){ manualBarcodeSearch(); }"
-                   style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--border); border-radius:5px; font-size:0.85rem; height:36px;">
-            <button class="btn btn-primary btn-sm" onclick="manualBarcodeSearch()" style="height:36px; padding:0 12px;">Cari</button>
-          </div>
-          <h3>🛒 Keranjang</h3>
-          <div id="cartItems"><p style="color:#999;">Belum ada produk</p></div>
-          <div class="cart-total">Total: <span id="cartTotal">Rp 0</span></div>
-          <button class="btn btn-success" onclick="checkout()" id="btnCheckout" disabled>Proses Pembayaran</button>
+      
+      <!-- NAMA PEMBELI -->
+      <div>
+        <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px;">👤 Nama Pembeli</label>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input type="text" id="namaPembeli" placeholder="Masukkan nama pembeli" style="flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; height:38px;">
+          <span id="namaPembeliStatus" style="font-size:0.7rem; color:#999; white-space:nowrap;">Opsional</span>
         </div>
       </div>
     </div>
+    
+    <!-- INFO RESELLER -->
+    <div id="resellerInfo" style="display:none; background:#f0f8ff; padding:6px 12px; border-radius:6px; margin-top:10px; border-left:4px solid #2196F3; font-size:0.85rem;">
+      <span id="resellerNamaDisplay"></span>
+      <span id="resellerDiskonDisplay" style="margin-left:10px;"></span>
+    </div>
+  </div>
+  
+  <!-- ===== BODY POS: PRODUK + KERANJANG ===== -->
+  <div class="pos-layout">
+    <!-- PRODUK -->
+    <div class="pos-products" id="posProducts">
+      <p style="color:#999;text-align:center;grid-column:1/-1;">Loading produk...</p>
+    </div>
+    
+    <!-- KERANJANG -->
+    <div class="pos-cart">
+      <!-- SCAN & CARI DI DALAM KERANJANG -->
+      <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
+        <button class="btn-scan" onclick="startScannerPOS()" style="font-size:0.8rem; padding:6px 12px; height:36px;">📷 Scan</button>
+        <input type="text" id="manualBarcodeInput" placeholder="Cari kode atau nama produk..." 
+               onkeydown="if(event.key === 'Enter'){ manualBarcodeSearch(); }"
+               style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--border); border-radius:5px; font-size:0.85rem; height:36px;">
+        <button class="btn btn-primary btn-sm" onclick="manualBarcodeSearch()" style="height:36px; padding:0 12px;">Cari</button>
+      </div>
+      
+      <!-- KERANJANG ITEMS -->
+      <h3 style="font-size:1rem; margin:0 0 8px 0;">🛒 Keranjang</h3>
+      <div id="cartItems" style="flex:1; overflow-y:auto; min-height:120px; max-height:350px;"></div>
+      
+      <!-- TOTAL & CHECKOUT -->
+      <div class="cart-total" style="margin-top:12px; padding-top:12px; border-top:2px solid #eee; font-size:1.3rem;">
+        Total: <span id="cartTotal">Rp 0</span>
+      </div>
+      <button class="btn btn-success" onclick="checkout()" id="btnCheckout" disabled 
+              style="margin-top:10px; padding:14px; font-size:1.1rem; font-weight:700; border-radius:10px; width:100%;">
+        💳 Proses Pembayaran
+      </button>
+    </div>
+  </div>
+</div>
     
     <!-- ===== TRANSAKSI ===== -->
     <div id="page-transaksi" class="page">
@@ -4264,11 +4466,19 @@ function loadPosProduk() {
   });
 }
 
-// ==================== CART FUNCTIONS (POS) ====================
+// ==================== ADD TO CART (PERBAIKI) ====================
+// Modifikasi fungsi addToCart() yang sudah ada
+// Tambahkan panggilan refreshCartPrices() di akhir
+
 function addToCart(kode) {
   if (!currentUser) { showToast('Silakan login terlebih dahulu!', 'warning'); return; }
   var produk = null;
-  for (var i = 0; i < produkList.length; i++) { if (produkList[i].Kode === kode) { produk = produkList[i]; break; } }
+  for (var i = 0; i < produkList.length; i++) { 
+    if (produkList[i].Kode === kode) { 
+      produk = produkList[i]; 
+      break; 
+    } 
+  }
   if (!produk) return;
   
   var stokAsli = parseInt(produk.Stok) || 0;
@@ -4303,15 +4513,25 @@ function addToCart(kode) {
       gambar: produk['URL Gambar'] || '' 
     });
   }
+  
+  // 🔥 REFRESH HARGA RESELLER SETELAH TAMBAH PRODUK
+  refreshCartPrices();
+  
   updateCartDisplay();
   updateStokGridPOS();
   showToast(produk['Nama Produk'] + ' ditambahkan ke keranjang');
 }
 
+// ==================== UPDATE CART DISPLAY (PERBAIKI) ====================
+// Modifikasi fungsi updateCartDisplay() yang sudah ada
+// Cari fungsi updateCartDisplay() di kode Anda dan tambahkan data-kode
+
 function updateCartDisplay() {
   var container = document.getElementById('cartItems');
   var total = 0;
-  for (var i = 0; i < currentCart.length; i++) { total += currentCart[i].subtotal; }
+  for (var i = 0; i < currentCart.length; i++) { 
+    total += currentCart[i].subtotal; 
+  }
   
   var hasDate = getTanggalTransaksi() !== '';
   
@@ -4348,7 +4568,8 @@ function updateCartDisplay() {
       imgHtml = '<div class="no-image-small">📷</div>';
     }
     
-    html += `<div class="cart-item">
+    // 🔥 TAMBAHKAN data-kode PADA SETIAP CART ITEM
+    html += `<div class="cart-item" data-kode="${item.kode}">
       <div class="item-info">
         ${imgHtml}
         <div class="item-detail">
@@ -8544,7 +8765,8 @@ function resetCartPrices() {
 
 // ==================== REFRESH CART PRICES ====================
 function refreshCartPrices() {
-  var kodeReseller = document.getElementById('pilihReseller').value;
+  var select = document.getElementById('pilihReseller');
+  var kodeReseller = select ? select.value : '';
   
   if (!kodeReseller) {
     resetCartPrices();
@@ -8560,28 +8782,25 @@ function refreshCartPrices() {
     for (var i = 0; i < currentCart.length; i++) {
       var item = currentCart[i];
       
+      // Cari harga normal dari produkList
+      var hargaNormal = 0;
+      for (var j = 0; j < produkList.length; j++) {
+        if (produkList[j].Kode === item.kode) {
+          hargaNormal = produkList[j]['Harga Jual'] || 0;
+          break;
+        }
+      }
+      
       // Cek apakah ada harga khusus untuk produk ini
       if (hargaMap[item.kode]) {
         var hargaKhusus = hargaMap[item.kode].hargaReseller || 0;
         if (hargaKhusus > 0) {
           item.harga = hargaKhusus;
         } else {
-          // Jika harga khusus 0, pakai harga normal
-          for (var j = 0; j < produkList.length; j++) {
-            if (produkList[j].Kode === item.kode) {
-              item.harga = produkList[j]['Harga Jual'] || 0;
-              break;
-            }
-          }
+          item.harga = hargaNormal;
         }
       } else {
-        // Tidak ada harga khusus, pakai harga normal
-        for (var j = 0; j < produkList.length; j++) {
-          if (produkList[j].Kode === item.kode) {
-            item.harga = produkList[j]['Harga Jual'] || 0;
-            break;
-          }
-        }
+        item.harga = hargaNormal;
       }
       
       item.subtotal = item.harga * item.qty;
@@ -8603,28 +8822,54 @@ function showResellerPriceInfo(hargaMap) {
   
   for (var i = 0; i < cartItems.length; i++) {
     var cartItem = cartItems[i];
+    // Cari kode dari data-kode atau dari item detail
     var kode = cartItem.dataset.kode;
+    
+    // Jika tidak ada data-kode, cari dari inner text atau atribut lain
+    if (!kode) {
+      var nameEl = cartItem.querySelector('.item-name');
+      if (nameEl) {
+        // Cari berdasarkan nama di produkList
+        var namaProduk = nameEl.textContent.trim();
+        for (var j = 0; j < produkList.length; j++) {
+          if (produkList[j]['Nama Produk'] === namaProduk) {
+            kode = produkList[j].Kode;
+            break;
+          }
+        }
+      }
+    }
     
     if (kode && hargaMap[kode]) {
       var hargaInfo = hargaMap[kode];
       var selisih = hargaInfo.selisih || 0;
       var priceDisplay = cartItem.querySelector('.item-price');
       
-      if (priceDisplay) {
-        var originalPrice = priceDisplay.dataset.original || '';
-        if (selisih < 0) {
-          priceDisplay.innerHTML = `
-            <span style="text-decoration:line-through;color:#999;font-size:0.7rem;">
-              ${formatRupiah(hargaInfo.hargaNormal)}
-            </span>
-            <span style="color:#4CAF50;font-weight:bold;font-size:0.9rem;">
-              ${formatRupiah(hargaInfo.hargaReseller)}
-            </span>
-            <span style="color:#FF9800;font-size:0.7rem;">
-              (hemat ${formatRupiah(Math.abs(selisih))})
-            </span>
-          `;
+      if (priceDisplay && selisih < 0) {
+        // Simpan harga normal di data attribute jika belum ada
+        if (!priceDisplay.dataset.original) {
+          priceDisplay.dataset.original = hargaInfo.hargaNormal;
         }
+        
+        priceDisplay.innerHTML = `
+          <span style="text-decoration:line-through;color:#999;font-size:0.7rem;">
+            ${formatRupiah(hargaInfo.hargaNormal)}
+          </span>
+          <span style="color:#4CAF50;font-weight:bold;font-size:0.9rem;">
+            ${formatRupiah(hargaInfo.hargaReseller)}
+          </span>
+          <span style="color:#FF9800;font-size:0.7rem;">
+            (hemat ${formatRupiah(Math.abs(selisih))})
+          </span>
+        `;
+      } else if (priceDisplay && selisih === 0 && hargaInfo.hargaReseller > 0) {
+        // Harga sama dengan normal
+        priceDisplay.innerHTML = `
+          <span style="color:#4CAF50;font-weight:bold;font-size:0.9rem;">
+            ${formatRupiah(hargaInfo.hargaReseller)}
+          </span>
+          <span style="color:#999;font-size:0.6rem;">(sama)</span>
+        `;
       }
     }
   }
