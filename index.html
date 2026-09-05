@@ -8371,7 +8371,149 @@ function showResellerTab(tab) {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Form Tambah Reseller
+  
+  // ===== CEK NULL UNTUK SEMUA ELEMEN =====
+  
+  var filterTanggal = document.getElementById('filterTanggal');
+  if (filterTanggal) {
+    filterTanggal.value = getTodayString();
+    filterTanggal.addEventListener('change', function() { loadDashboard(); });
+  }
+
+  var posTanggal = document.getElementById('tanggalTransaksi');
+  if (posTanggal) {
+    var savedPosTanggal = localStorage.getItem('pos_tanggal');
+    if (savedPosTanggal) posTanggal.value = savedPosTanggal;
+    posTanggal.addEventListener('change', function() {
+      if (this.value) localStorage.setItem('pos_tanggal', this.value);
+      else localStorage.removeItem('pos_tanggal');
+      updatePosUI();
+      if (posMode === 'toko') loadPosProduk();
+      else if (posMode === 'reseller' && activeResellerId) loadPosResellerStok();
+    });
+  }
+
+  var stokTanggal = document.getElementById('tanggalStokMasuk');
+  if (stokTanggal) {
+    var savedStokTanggal = localStorage.getItem('stok_tanggal');
+    if (savedStokTanggal) stokTanggal.value = savedStokTanggal;
+    stokTanggal.addEventListener('change', function() {
+      if (this.value) localStorage.setItem('stok_tanggal', this.value);
+      else localStorage.removeItem('stok_tanggal');
+      updateStokMasukUI();
+    });
+  }
+
+  var filterMulai = document.getElementById('filterTransaksiMulai');
+  var filterSampai = document.getElementById('filterTransaksiSampai');
+  if (filterMulai && filterSampai) {
+    var today = getTodayString();
+    filterMulai.value = today;
+    filterSampai.value = today;
+    filterMulai.addEventListener('change', loadTransaksi);
+    filterSampai.addEventListener('change', loadTransaksi);
+  }
+
+  var resTransMulai = document.getElementById('filterResTransMulai');
+  var resTransSampai = document.getElementById('filterResTransSampai');
+  if (resTransMulai && resTransSampai) {
+    var today = getTodayString();
+    resTransMulai.value = today;
+    resTransSampai.value = today;
+    resTransMulai.addEventListener('change', loadTransaksiReseller);
+    resTransSampai.addEventListener('change', loadTransaksiReseller);
+  }
+
+  var resPenjualanMulai = document.getElementById('filterResPenjualanMulai');
+  var resPenjualanSampai = document.getElementById('filterResPenjualanSampai');
+  if (resPenjualanMulai && resPenjualanSampai) {
+    var today = getTodayString();
+    resPenjualanMulai.value = today;
+    resPenjualanSampai.value = today;
+    resPenjualanMulai.addEventListener('change', loadPenjualanReseller);
+    resPenjualanSampai.addEventListener('change', loadPenjualanReseller);
+  }
+
+  var scannerModal = document.getElementById('scannerModal');
+  if (scannerModal) {
+    scannerModal.addEventListener('click', function(e) {
+      if (e.target === this) stopScanner();
+    });
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var modal = document.getElementById('scannerModal');
+      if (modal && modal.classList.contains('active')) stopScanner();
+      var logoutModal = document.getElementById('logoutModal');
+      if (logoutModal && logoutModal.classList.contains('active')) closeLogoutModal();
+      var editModal = document.getElementById('editHargaModal');
+      if (editModal && editModal.classList.contains('active')) closeEditHargaModal();
+    }
+  });
+
+  // ===== CEK ELEMEN LOGIN =====
+  var toggleLogin = document.getElementById('toggleLoginPassword');
+  if (toggleLogin) {
+    toggleLogin.addEventListener('click', function() {
+      togglePasswordVisibility('loginPassword', this);
+    });
+  }
+  
+  var toggleReg = document.getElementById('toggleRegPassword');
+  if (toggleReg) {
+    toggleReg.addEventListener('click', function() {
+      togglePasswordVisibility('regPassword', this);
+    });
+  }
+  
+  var toggleRegConfirm = document.getElementById('toggleRegConfirmPassword');
+  if (toggleRegConfirm) {
+    toggleRegConfirm.addEventListener('click', function() {
+      togglePasswordVisibility('regConfirmPassword', this);
+    });
+  }
+
+  var linkShowRegister = document.getElementById('linkShowRegister');
+  if (linkShowRegister) {
+    linkShowRegister.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'block';
+    });
+  }
+  
+  var linkShowLogin = document.getElementById('linkShowLogin');
+  if (linkShowLogin) {
+    linkShowLogin.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('registerForm').style.display = 'none';
+    });
+  }
+
+  // ===== MANUAL BARCODE INPUT =====
+  var manualInput = document.getElementById('manualBarcodeInput');
+  if (manualInput) {
+    manualInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        manualBarcodeSearch();
+      }
+    });
+  }
+
+  var scannerManualInput = document.getElementById('scannerManualInput');
+  if (scannerManualInput) {
+    scannerManualInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        manualScannerAdd();
+      }
+    });
+  }
+
+  // ===== FORM TAMBAH RESELLER =====
   var formTambahReseller = document.getElementById('formTambahReseller');
   if (formTambahReseller) {
     formTambahReseller.addEventListener('submit', function(e) {
@@ -8412,6 +8554,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
   }
+
+  checkSession();
 });
 
 
