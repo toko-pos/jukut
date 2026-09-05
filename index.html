@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-afpp-status-bar-style" content="black-translucent">
 
 
   <!-- ===== PWA MANIFEST ===== -->
@@ -1416,26 +1416,23 @@
 }
 
 
-      /* ===== PERBAIKAN TOMBOL MODAL ATUR HARGA ===== */
+     /* ===== PERBAIKAN TOMBOL MODAL ATUR HARGA ===== */
 
-/* Tombol di modal Atur Harga */
+/* Tombol di modal Atur Harga - Versi sederhana */
 #modalContent.large .modal-footer-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 18px;
+  gap: 12px;
+  margin-top: 20px;
   padding-top: 16px;
   border-top: 2px solid #eee;
   flex-wrap: wrap;
-  background: #fafafa;
-  padding: 16px 20px;
-  border-radius: 0 0 12px 12px;
 }
 
 #modalContent.large .modal-footer-actions .btn {
   flex: 1;
-  min-width: 120px;
-  padding: 14px 18px;
-  font-size: 0.95rem;
+  min-width: 140px;
+  padding: 14px 20px;
+  font-size: 1rem;
   font-weight: 700;
   border-radius: 10px;
   border: none;
@@ -1462,15 +1459,14 @@
 }
 
 #modalContent.large .modal-footer-actions .btn-tutup {
-  background: #f44336;
-  color: white;
-  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.25);
+  background: #e0e0e0;
+  color: #333;
   flex: 1;
 }
 
 #modalContent.large .modal-footer-actions .btn-tutup:hover:not(:disabled) {
+  background: #d0d0d0;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.35);
 }
 
 #modalContent.large .modal-footer-actions .btn:disabled {
@@ -1480,20 +1476,20 @@
   box-shadow: none !important;
 }
 
-/* ===== KHUSUS HP ===== */
+/* ===== KHUSUS HP - TOMBOL DI TATA VERTIKAL ===== */
 @media (max-width: 768px) {
   #modalContent.large .modal-footer-actions {
     flex-direction: column;
-    padding: 12px 14px;
-    gap: 8px;
+    gap: 10px;
+    padding: 0;
   }
   
   #modalContent.large .modal-footer-actions .btn {
     width: 100%;
     min-width: 0;
-    padding: 14px 16px;
-    font-size: 1rem;
-    height: 50px;
+    padding: 16px 18px;
+    font-size: 1.05rem;
+    height: 54px;
     border-radius: 10px;
     flex: none;
   }
@@ -1501,53 +1497,42 @@
   #modalContent.large .modal-footer-actions .btn-simpan {
     flex: none;
     order: 1;
+    font-size: 1.1rem;
+    padding: 16px 20px;
   }
   
   #modalContent.large .modal-footer-actions .btn-tutup {
     flex: none;
     order: 2;
-    background: #e0e0e0;
-    color: #333;
+    background: #f5f5f5;
+    color: #555;
+    border: 1px solid #ddd;
     box-shadow: none;
-  }
-  
-  #modalContent.large .modal-footer-actions .btn-tutup:hover:not(:disabled) {
-    background: #d5d5d5;
-    transform: none;
-    box-shadow: none;
-  }
-}
-
-
-
-
-    /* ===== KHUSUS HP SANGAT KECIL (<= 480px) ===== */
-@media (max-width: 480px) {
-  #modalContent.large .modal-footer-actions .btn {
-    font-size: 0.85rem;
-    padding: 10px 12px;
-    height: 40px;
-    border-radius: 8px;
-  }
-  
-  #modalContent.large .modal-footer-actions .btn .icon {
     font-size: 1rem;
   }
   
-  /* Perbaiki ukuran font di tabel agar tidak overflow */
-  #modalContent.large .reseller-harga-grid table {
-    font-size: 0.7rem;
+  #modalContent.large .modal-footer-actions .btn-tutup:hover:not(:disabled) {
+    background: #eeeeee;
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  #modalContent.large .modal-footer-actions .btn {
+    padding: 14px 16px;
+    font-size: 0.95rem;
+    height: 48px;
+    border-radius: 8px;
   }
   
-  #modalContent.large .reseller-harga-grid th,
-  #modalContent.large .reseller-harga-grid td {
-    padding: 4px 6px;
+  #modalContent.large .modal-footer-actions .btn-simpan {
+    font-size: 1rem;
+    padding: 14px 16px;
   }
   
-  #modalContent.large .reseller-harga-grid .harga-input {
-    width: 80px;
-    font-size: 0.7rem;
-    padding: 3px 5px;
+  #modalContent.large .modal-footer-actions .btn-tutup {
+    font-size: 0.9rem;
+    padding: 12px 14px;
   }
 }
     
@@ -1557,7 +1542,7 @@
 
 <body>
 
-<!-- ==================== LOGIN PAGE ==================== -->
+
 <!-- ==================== LOGIN PAGE ==================== -->
 <div id="loginPage" class="container">
   <div class="login-container">
@@ -8568,7 +8553,8 @@ function showResellerPriceInfo(hargaMap) {
 }
 
 
-  // ==================== ATUR HARGA RESELLER - VERSION 2 ====================
+
+// ==================== ATUR HARGA RESELLER (HANYA FOOTER TOMBOL YANG DIUBAH) ====================
 function aturHargaReseller(kodeReseller) {
   // Cari nama reseller
   var reseller = null;
@@ -8592,27 +8578,21 @@ function aturHargaReseller(kodeReseller) {
     document.getElementById('modalTitle').textContent = '💲 Atur Harga - ' + reseller.nama;
     document.getElementById('modalContent').classList.add('large');
     
+    // ===== TABEL TETAP SEPERTI SEMULA =====
     var html = `
-      <div class="reseller-header-info" style="background:#f0f8ff;padding:12px 16px;border-radius:10px;border-left:4px solid #9C27B0;margin-bottom:15px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-          <span style="font-size:1rem;font-weight:700;color:#1a2332;">👤 ${escapeHtml(reseller.nama)}</span>
-          <span style="font-size:0.8rem;color:#666;background:white;padding:3px 12px;border-radius:20px;border:1px solid #dce3f0;">${escapeHtml(reseller.kode)}</span>
-        </div>
-        <div style="font-size:0.75rem;color:#6d86aa;margin-top:4px;">
-          💡 Atur harga khusus per produk. Kosongkan = pakai harga normal.
-          ${reseller.diskon ? ' | Diskon: ' + reseller.diskon + '%' : ''}
-        </div>
+      <div style="margin-bottom:15px;">
+        <p><strong>Reseller:</strong> ${escapeHtml(reseller.nama)} (${escapeHtml(reseller.kode)})</p>
+        <p style="color:#666;font-size:0.85rem;">Atur harga khusus per produk untuk reseller ini. Kosongkan = pakai harga normal.</p>
       </div>
-      
-      <div style="max-height:450px;overflow-y:auto;border:1px solid #eee;border-radius:8px;">
+      <div style="max-height:400px;overflow-y:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
           <thead>
-            <tr style="background:#f0f4ff;position:sticky;top:0;z-index:10;">
-              <th style="padding:8px 10px;text-align:left;font-size:0.7rem;text-transform:uppercase;color:#555;width:12%;">Kode</th>
-              <th style="padding:8px 10px;text-align:left;font-size:0.7rem;text-transform:uppercase;color:#555;width:28%;">Nama</th>
-              <th style="padding:8px 10px;text-align:right;font-size:0.7rem;text-transform:uppercase;color:#555;width:18%;">Normal</th>
-              <th style="padding:8px 10px;text-align:right;font-size:0.7rem;text-transform:uppercase;color:#555;width:25%;">Harga Reseller</th>
-              <th style="padding:8px 10px;text-align:center;font-size:0.7rem;text-transform:uppercase;color:#555;width:17%;">Status</th>
+            <tr style="background:#f5f5f5;">
+              <th style="padding:8px;text-align:left;">Kode</th>
+              <th style="padding:8px;text-align:left;">Nama Produk</th>
+              <th style="padding:8px;text-align:right;">Harga Normal</th>
+              <th style="padding:8px;text-align:right;">Harga Reseller</th>
+              <th style="padding:8px;text-align:center;">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -8625,30 +8605,26 @@ function aturHargaReseller(kodeReseller) {
       var hargaNormal = p['Harga Jual'] || 0;
       var hargaReseller = (hargaMap[kode] && hargaMap[kode].hargaReseller) ? hargaMap[kode].hargaReseller : '';
       var selisih = (hargaMap[kode] && hargaMap[kode].selisih) ? hargaMap[kode].selisih : 0;
-      
-      var badgeHtml = '';
-      if (selisih < 0) {
-        badgeHtml = '<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:600;display:inline-block;">✅ Hemat</span>';
-      } else if (selisih > 0) {
-        badgeHtml = '<span style="background:#fce4ec;color:#c62828;padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:600;display:inline-block;">⚠️ +' + formatRupiah(selisih) + '</span>';
-      } else if (selisih === 0 && hargaReseller > 0) {
-        badgeHtml = '<span style="background:#f5f5f5;color:#999;padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:600;display:inline-block;">➖ Sama</span>';
-      }
+      var warna = selisih < 0 ? '#4CAF50' : (selisih > 0 ? '#f44336' : '#999');
       
       html += `
         <tr>
-          <td style="padding:6px 10px;font-weight:bold;font-size:0.8rem;">${escapeHtml(kode)}</td>
-          <td style="padding:6px 10px;font-size:0.8rem;">${escapeHtml(nama)}</td>
-          <td style="padding:6px 10px;text-align:right;font-weight:bold;font-size:0.8rem;">${formatRupiah(hargaNormal)}</td>
-          <td style="padding:6px 10px;text-align:right;">
+          <td style="padding:6px 8px;font-weight:bold;">${escapeHtml(kode)}</td>
+          <td style="padding:6px 8px;">${escapeHtml(nama)}</td>
+          <td style="padding:6px 8px;text-align:right;font-weight:bold;">${formatRupiah(hargaNormal)}</td>
+          <td style="padding:6px 8px;text-align:right;">
             <input type="number" id="harga_${kode}" value="${hargaReseller}" min="0" step="1000"
-                   style="width:100%;max-width:120px;padding:5px 8px;border:1.5px solid #dce3f0;border-radius:6px;font-size:0.85rem;font-weight:600;text-align:right;"
-                   onchange="onHargaResellerChange('${kode}', ${hargaNormal})"
-                   placeholder="Harga">
+                   style="width:120px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;text-align:right;font-weight:bold;"
+                   onchange="onHargaResellerChange('${kode}', ${hargaNormal})">
+            <span id="selisih_${kode}" style="font-size:0.7rem;color:${warna};margin-left:4px;">
+              ${selisih !== 0 ? (selisih < 0 ? '✅ ' : '⚠️ ') + formatRupiah(selisih) : ''}
+            </span>
           </td>
-          <td style="padding:6px 10px;text-align:center;font-size:0.7rem;">
-            ${badgeHtml}
-            ${hargaReseller > 0 ? '<button class="btn btn-danger btn-sm" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kode + '\')" style="padding:2px 6px;font-size:0.55rem;margin-left:4px;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;">✕</button>' : ''}
+          <td style="padding:6px 8px;text-align:center;">
+            <button class="btn btn-danger btn-sm" onclick="hapusHargaReseller('${kodeReseller}','${kode}')" 
+                    style="padding:2px 6px;font-size:0.6rem;" title="Hapus harga khusus">
+              ✕
+            </button>
           </td>
         </tr>
       `;
@@ -8659,14 +8635,12 @@ function aturHargaReseller(kodeReseller) {
         </table>
       </div>
       
-      <!-- ===== TOMBOL - DIPERBAIKI UNTUK HP ===== -->
-      <div style="display:flex;gap:12px;margin-top:18px;padding-top:16px;border-top:2px solid #eee;flex-wrap:wrap;">
-        <button class="btn btn-success" onclick="simpanSemuaHargaReseller('${kodeReseller}')" 
-                style="flex:2;min-width:120px;padding:14px 20px;font-size:0.95rem;font-weight:700;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,#4CAF50,#388E3C);color:white;box-shadow:0 4px 15px rgba(76,175,80,0.3);display:flex;align-items:center;justify-content:center;gap:8px;height:50px;">
+      <!-- ===== HANYA FOOTER TOMBOL YANG DIPERBAIKI ===== -->
+      <div class="modal-footer-actions">
+        <button class="btn btn-simpan" onclick="simpanSemuaHargaReseller('${kodeReseller}')">
           💾 Simpan Semua
         </button>
-        <button class="btn btn-danger" onclick="closeModal()" 
-                style="flex:1;min-width:100px;padding:14px 20px;font-size:0.95rem;font-weight:700;border-radius:10px;border:none;cursor:pointer;background:#f44336;color:white;box-shadow:0 4px 15px rgba(244,67,54,0.25);display:flex;align-items:center;justify-content:center;gap:8px;height:50px;">
+        <button class="btn btn-tutup" onclick="closeModal()">
           ✖ Tutup
         </button>
       </div>
@@ -8698,19 +8672,18 @@ function onHargaResellerChange(kodeProduk, hargaNormal) {
   }
 }
 
-// ==================== SIMPAN SEMUA HARGA ====================
+// ==================== SIMPAN SEMUA HARGA (DENGAN FEEDBACK TOMBOL) ====================
 function simpanSemuaHargaReseller(kodeReseller) {
   var inputs = document.querySelectorAll('#modalBody input[type="number"]');
   var promises = [];
   var totalSaved = 0;
   var totalFailed = 0;
   
-  // 🔥 AMBIL TOMBOL DENGAN SELECTOR YANG LEBIH SPESIFIK
-  var btn = document.querySelector('#modalBody .btn-success');
+  // 🔥 AMBIL TOMBOL SIMPAN
+  var btn = document.querySelector('.modal-footer-actions .btn-simpan');
   if (btn) {
     btn.textContent = '⏳ Menyimpan...';
     btn.disabled = true;
-    btn.style.opacity = '0.6';
   }
   
   showToast('⏳ Menyimpan semua harga...', 'info');
@@ -8752,7 +8725,6 @@ function simpanSemuaHargaReseller(kodeReseller) {
     if (btn) {
       btn.textContent = '💾 Simpan Semua';
       btn.disabled = false;
-      btn.style.opacity = '1';
     }
     showToast('⚠️ Tidak ada harga yang diisi!', 'warning');
     return;
@@ -8763,7 +8735,6 @@ function simpanSemuaHargaReseller(kodeReseller) {
     if (btn) {
       btn.textContent = '💾 Simpan Semua';
       btn.disabled = false;
-      btn.style.opacity = '1';
     }
     showToast('✅ ' + totalSaved + ' harga berhasil disimpan!', 'success');
     closeModal();
@@ -8773,7 +8744,6 @@ function simpanSemuaHargaReseller(kodeReseller) {
     if (btn) {
       btn.textContent = '💾 Simpan Semua';
       btn.disabled = false;
-      btn.style.opacity = '1';
     }
     showToast('⚠️ ' + totalSaved + ' berhasil, ' + totalFailed + ' gagal', 'warning');
   });
