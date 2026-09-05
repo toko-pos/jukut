@@ -1735,7 +1735,48 @@
   }
 }
     
-  
+
+/* ===== BADGE RESELLER DI CARD PRODUK ===== */
+.product-item .badge-reseller {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #9C27B0;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ===== STYLE HARGA RESELLER ===== */
+.product-item .price-reseller {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.product-item .price-reseller .normal-price {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 0.6rem;
+}
+
+.product-item .price-reseller .reseller-price {
+  color: #4CAF50;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.product-item .price-reseller .save-price {
+  color: #FF9800;
+  font-size: 0.6rem;
+}
+
+    
   </style>
 </head>
 
@@ -4389,7 +4430,7 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
   }
 }
 
-// ==================== POS FUNCTIONS ====================
+// ==================== LOAD POS PRODUK DENGAN HARGA RESELLER ====================
 function loadPosProduk() {
   console.log('🔄 Memuat produk untuk POS...');
   var container = document.getElementById('posProducts');
@@ -4400,69 +4441,140 @@ function loadPosProduk() {
   
   container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">⏳ Memuat produk...</p>';
   
-  callGAS('getProduk', {})
-  .then(function(result) {
-    if (!result || !result.success) {
-      console.error('❌ Error getProduk:', result ? result.error : 'Unknown');
-      var container = document.getElementById('posProducts');
-      if (container) {
-        container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk</p>';
-      }
-      showToast('❌ Gagal memuat produk POS', 'error');
-      return;
-    }
-    
-    var produk = result.data || [];
-    console.log('✅ Data produk POS diterima:', produk);
-    produkList = produk;
-    var container = document.getElementById('posProducts');
-    if (!container) return;
-    
-    if (produkList.length === 0) {
-      container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
-      return;
-    }
-    
-    var html = '';
-    var hasDate = getTanggalTransaksi() !== '';
-    var processedKode = {};
-    
-    for (var i = 0; i < produkList.length; i++) {
-      var p = produkList[i];
-      if (processedKode[p.Kode]) continue;
-      processedKode[p.Kode] = true;
-
-      var stok = parseInt(p.Stok) || 0;
-      var isOutOfStock = stok <= 0;
-      var disabledClass = isOutOfStock ? 'disabled' : '';
-      var posDisabledClass = !hasDate ? 'pos-disabled' : '';
-      var stockClass = isOutOfStock ? 'out-of-stock' : '';
-      var onclickAttr = (isOutOfStock || !hasDate) ? '' : 'onclick="addToCart(\'' + p.Kode + '\')"';
-      var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
-      
-      html += '<div class="product-item ' + disabledClass + ' ' + posDisabledClass + '" ' + onclickAttr + ' data-kode="' + p.Kode + '">' +
-                imgHtml +
-                (isOutOfStock ? '<div class="badge-out-of-stock">⛔ HABIS</div>' : '') +
-                (!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : '') +
-                '<div class="name">' + (p['Nama Produk'] || '-') + '</div>' +
-                '<div class="price">' + formatRupiah(p['Harga Jual'] || 0) + '</div>' +
-                '<div class="stock ' + stockClass + '">' + (isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.Satuan || 'pcs')) + '</div>' +
-              '</div>';
-    }
-    
-    container.innerHTML = html;
-    updatePosUI();
-    updateStokGridPOS();
-    
-    console.log('✅ Produk POS berhasil ditampilkan: ' + produkList.length + ' produk');
-  })
-  .catch(function(error) {
-    console.error('❌ Error loadPosProduk:', error);
-    var container = document.getElementById('posProducts');
-    if (container) {
-      container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk: ' + error.message + '</p>';
-    }
-    showToast('❌ Gagal memuat produk POS: ' + error.message, 'error');
+  // Ambil kode reseller yang dipilih
+  var selectReseller = document.getElementById('pilihReseller');
+  var kodeReseller = selectReseller ? selectReseller.value : '';
+  
+  // Jika ada reseller, ambil harga khusus
+  var hargaMap = {};
+  var promise = Promise.resolve();
+  
+  if (kodeReseller) {
+    promise = callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
+      .then(function(result) {
+        if (result && result.success) {
+          hargaMap = result.data || {};
+          console.log('✅ Harga reseller dimuat:', Object.keys(hargaMap).length, 'produk');
+        }
+        return result;
+      })
+      .catch(function(error) {
+        console.error('❌ Error load harga reseller:', error);
+        return null;
+      });
+  }
+  
+  promise.then(function() {
+    callGAS('getProduk', {})
+      .then(function(result) {
+        if (!result || !result.success) {
+          console.error('❌ Error getProduk:', result ? result.error : 'Unknown');
+          var container = document.getElementById('posProducts');
+          if (container) {
+            container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk</p>';
+          }
+          showToast('❌ Gagal memuat produk POS', 'error');
+          return;
+        }
+        
+        var produk = result.data || [];
+        console.log('✅ Data produk POS diterima:', produk);
+        produkList = produk;
+        var container = document.getElementById('posProducts');
+        if (!container) return;
+        
+        if (produkList.length === 0) {
+          container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
+          return;
+        }
+        
+        var html = '';
+        var hasDate = getTanggalTransaksi() !== '';
+        var processedKode = {};
+        
+        for (var i = 0; i < produkList.length; i++) {
+          var p = produkList[i];
+          if (processedKode[p.Kode]) continue;
+          processedKode[p.Kode] = true;
+          
+          var stok = parseInt(p.Stok) || 0;
+          var isOutOfStock = stok <= 0;
+          var disabledClass = isOutOfStock ? 'disabled' : '';
+          var posDisabledClass = !hasDate ? 'pos-disabled' : '';
+          var stockClass = isOutOfStock ? 'out-of-stock' : '';
+          var onclickAttr = (isOutOfStock || !hasDate) ? '' : 'onclick="addToCart(\'' + p.Kode + '\')"';
+          var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
+          
+          // 🔥 CEK HARGA RESELLER
+          var hargaNormal = p['Harga Jual'] || 0;
+          var hargaTampil = hargaNormal;
+          var isResellerPrice = false;
+          var selisih = 0;
+          
+          if (kodeReseller && hargaMap[p.Kode]) {
+            var hargaReseller = hargaMap[p.Kode].hargaReseller || 0;
+            if (hargaReseller > 0) {
+              hargaTampil = hargaReseller;
+              isResellerPrice = true;
+              selisih = hargaNormal - hargaReseller;
+            }
+          }
+          
+          // 🔥 FORMAT HARGA DENGAN INFORMASI RESELLER
+          var priceHtml = '';
+          if (isResellerPrice && selisih > 0) {
+            // Tampilkan harga coret + harga reseller
+            priceHtml = `
+              <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="text-decoration:line-through; color:#999; font-size:0.6rem;">
+                  ${formatRupiah(hargaNormal)}
+                </span>
+                <span style="color:#4CAF50; font-weight:bold; font-size:1rem;">
+                  ${formatRupiah(hargaTampil)}
+                </span>
+                <span style="color:#FF9800; font-size:0.6rem;">
+                  hemat ${formatRupiah(selisih)}
+                </span>
+              </div>
+            `;
+          } else if (isResellerPrice && selisih === 0) {
+            // Harga sama
+            priceHtml = `
+              <div style="color:#4CAF50; font-weight:bold; font-size:0.95rem;">
+                ${formatRupiah(hargaTampil)}
+                <span style="color:#999; font-size:0.55rem;">(sama)</span>
+              </div>
+            `;
+          } else {
+            // Harga normal
+            priceHtml = `<div class="price">${formatRupiah(hargaTampil)}</div>`;
+          }
+          
+          html += `<div class="product-item ${disabledClass} ${posDisabledClass}" ${onclickAttr} data-kode="${p.Kode}" data-harga="${hargaTampil}">
+            ${imgHtml}
+            ${isOutOfStock ? '<div class="badge-out-of-stock">⛔ HABIS</div>' : ''}
+            ${!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : ''}
+            ${isResellerPrice && selisih > 0 ? '<div class="badge-out-of-stock" style="background:#9C27B0; font-size:0.55rem;">👥 Reseller</div>' : ''}
+            <div class="name">${p['Nama Produk'] || '-'}</div>
+            ${priceHtml}
+            <div class="stock ${stockClass}">${isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.Satuan || 'pcs')}</div>
+          </div>`;
+        }
+        
+        container.innerHTML = html;
+        updatePosUI();
+        updateStokGridPOS();
+        
+        console.log('✅ Produk POS berhasil ditampilkan: ' + produkList.length + ' produk');
+      })
+      .catch(function(error) {
+        console.error('❌ Error loadPosProduk:', error);
+        var container = document.getElementById('posProducts');
+        if (container) {
+          container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk: ' + error.message + '</p>';
+        }
+        showToast('❌ Gagal memuat produk POS: ' + error.message, 'error');
+      });
   });
 }
 
@@ -4470,8 +4582,11 @@ function loadPosProduk() {
 // Modifikasi fungsi addToCart() yang sudah ada
 // Tambahkan panggilan refreshCartPrices() di akhir
 
+// ==================== ADD TO CART (DENGAN HARGA RESELLER) ====================
 function addToCart(kode) {
   if (!currentUser) { showToast('Silakan login terlebih dahulu!', 'warning'); return; }
+  
+  // Cari produk dari produkList
   var produk = null;
   for (var i = 0; i < produkList.length; i++) { 
     if (produkList[i].Kode === kode) { 
@@ -4495,33 +4610,77 @@ function addToCart(kode) {
   var stokTersedia = stokAsli - qtyDiCart;
   if (stokTersedia <= 0) { showToast('Stok produk habis!', 'error'); return; }
   
+  // 🔥 TENTUKAN HARGA (NORMAL ATAU RESELLER)
+  var harga = produk['Harga Jual'] || 0;
+  var selectReseller = document.getElementById('pilihReseller');
+  var kodeReseller = selectReseller ? selectReseller.value : '';
+  
+  if (kodeReseller) {
+    // Ambil harga reseller dari cache atau panggil API
+    callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
+      .then(function(result) {
+        if (result && result.success) {
+          var hargaMap = result.data || {};
+          if (hargaMap[kode] && hargaMap[kode].hargaReseller > 0) {
+            harga = hargaMap[kode].hargaReseller;
+          }
+        }
+        // Lanjutkan proses dengan harga yang sudah ditentukan
+        prosesAddToCart(produk, kode, harga, existing);
+      })
+      .catch(function(error) {
+        console.error('❌ Error get harga reseller:', error);
+        prosesAddToCart(produk, kode, harga, existing);
+      });
+  } else {
+    prosesAddToCart(produk, kode, harga, existing);
+  }
+}
+
+// ==================== PROSES ADD TO CART ====================
+function prosesAddToCart(produk, kode, harga, existing) {
   if (existing) {
-    if (existing.qty < stokAsli) { 
-      existing.qty++; 
-      existing.subtotal = existing.harga * existing.qty; 
-    } else { 
-      showToast('Stok tidak mencukupi!', 'error'); 
-      return; 
-    }
+    existing.qty++;
+    existing.harga = harga; // Update harga jika berubah
+    existing.subtotal = harga * existing.qty;
   } else {
     currentCart.push({ 
       kode: produk.Kode, 
       nama: produk['Nama Produk'], 
-      harga: produk['Harga Jual'] || 0, 
+      harga: harga,
       qty: 1, 
-      subtotal: produk['Harga Jual'] || 0, 
+      subtotal: harga,
       gambar: produk['URL Gambar'] || '' 
     });
   }
-  
-  // 🔥 REFRESH HARGA RESELLER SETELAH TAMBAH PRODUK
-  refreshCartPrices();
   
   updateCartDisplay();
   updateStokGridPOS();
   showToast(produk['Nama Produk'] + ' ditambahkan ke keranjang');
 }
 
+// ==================== RESET KE HARGA NORMAL ====================
+function resetToNormalPrice() {
+  // Reset semua produk di card ke harga normal
+  var productItems = document.querySelectorAll('#posProducts .product-item');
+  for (var i = 0; i < productItems.length; i++) {
+    var item = productItems[i];
+    var kode = item.dataset.kode;
+    // Cari produk di produkList
+    for (var j = 0; j < produkList.length; j++) {
+      if (produkList[j].Kode === kode) {
+        var hargaNormal = produkList[j]['Harga Jual'] || 0;
+        var priceEl = item.querySelector('.price');
+        if (priceEl) {
+          priceEl.textContent = formatRupiah(hargaNormal);
+        }
+        break;
+      }
+    }
+  }
+}
+
+  
 // ==================== UPDATE CART DISPLAY (PERBAIKI) ====================
 // Modifikasi fungsi updateCartDisplay() yang sudah ada
 // Cari fungsi updateCartDisplay() di kode Anda dan tambahkan data-kode
@@ -8695,11 +8854,17 @@ function onResellerChange() {
   var select = document.getElementById('pilihReseller');
   var kodeReseller = select.value;
   var infoDiv = document.getElementById('resellerInfo');
+  var namaPembeliInput = document.getElementById('namaPembeli');
   
   if (!kodeReseller) {
     infoDiv.style.display = 'none';
-    // 🔥 ENABLE KEMBALI NAMA PEMBELI
-    updateNamaPembeliStatus(); // Panggil fungsi ini
+    if (namaPembeliInput) {
+      namaPembeliInput.disabled = false;
+      namaPembeliInput.value = '';
+      namaPembeliInput.placeholder = 'Masukkan nama pembeli (opsional)';
+    }
+    // 🔥 REFRESH PRODUK KE HARGA NORMAL
+    loadPosProduk();
     resetCartPrices();
     return;
   }
@@ -8709,12 +8874,20 @@ function onResellerChange() {
   var resellerName = selectedOption.text;
   var diskon = parseInt(selectedOption.dataset.diskon) || 0;
   
+  // Tampilkan info reseller
   infoDiv.style.display = 'block';
   document.getElementById('resellerNamaDisplay').textContent = '👤 ' + resellerName;
-  document.getElementById('resellerDiskonDisplay').textContent = ''; // KOSONGKAN
+  document.getElementById('resellerDiskonDisplay').textContent = ''; // Kosongkan diskon
   
-  // 🔥 UPDATE NAMA PEMBELI
-  updateNamaPembeliStatus();
+  // 🔥 DISABLE NAMA PEMBELI DAN ISI OTOMATIS
+  if (namaPembeliInput) {
+    namaPembeliInput.disabled = true;
+    namaPembeliInput.value = resellerName.replace(/^[^-]+-\s*/, '').trim();
+    namaPembeliInput.placeholder = '✅ Nama reseller terisi otomatis';
+  }
+  
+  // 🔥 REFRESH PRODUK DENGAN HARGA RESELLER
+  loadPosProduk();
   
   // Refresh harga di cart
   refreshCartPrices();
