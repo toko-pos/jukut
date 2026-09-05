@@ -6766,7 +6766,6 @@ function loadProfile() {
 
 // ==================== CHECKOUT (POS) ====================
 function checkout() {
-  // Fungsi checkout - akan dipanggil saat tombol Proses Pembayaran diklik
   if (_isProcessingPayment) {
     showToast('⏳ Proses pembayaran sedang berjalan...', 'warning');
     return;
@@ -6794,7 +6793,6 @@ function checkout() {
     total += currentCart[i].subtotal;
   }
   
-  // Tampilkan modal pembayaran
   var html = '<div style="margin-bottom:15px;">';
   html += '<div style="background:#f5f5f5;padding:15px;border-radius:8px;margin-bottom:15px;">';
   html += '<p style="font-size:0.9rem;margin-bottom:5px;"><strong>Total Belanja:</strong> <span style="color:var(--primary);font-size:1.3rem;">' + formatRupiah(total) + '</span></p>';
@@ -6804,51 +6802,31 @@ function checkout() {
   html += '<div class="form-group">';
   html += '<label>💰 Nominal Pembayaran</label>';
   
-  // 🔥 TOMBOL QUICK NOMINAL
+  // 🔥 TOMBOL QUICK NOMINAL - STATIS
   html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;" id="quickNominalContainer">';
   
-  var quickNoms = [];
-  if (total <= 50000) quickNoms = [10000, 20000, 50000];
-  else if (total <= 100000) quickNoms = [20000, 50000, 100000];
-  else if (total <= 200000) quickNoms = [50000, 100000, 200000];
-  else if (total <= 500000) quickNoms = [100000, 200000, 500000];
-  else if (total <= 1000000) quickNoms = [100000, 200000, 500000, 1000000];
-  else quickNoms = [100000, 200000, 500000, 1000000, 2000000];
+  // 🔥 DAFTAR NOMINAL STATIS
+  var quickNoms = [10000, 15000, 20000, 30000, 50000, 60000, 90000, 100000, 120000, 160000, 200000];
   
-  // Filter quick nominal yang >= total
-  var filteredNoms = [];
   for (var i = 0; i < quickNoms.length; i++) {
-    if (quickNoms[i] >= total) {
-      filteredNoms.push(quickNoms[i]);
-    }
+    var nom = quickNoms[i];
+    // 🔥 SEMUA TOMBOL TETAP MUNCUL, TAPI YANG < TOTAL DISABLE
+    var isEnough = nom >= total;
+    var style = isEnough ? 
+      'padding:6px 12px;border:1px solid #4CAF50;border-radius:5px;background:white;color:#4CAF50;cursor:pointer;font-weight:600;font-size:0.8rem;' :
+      'padding:6px 12px;border:1px solid #ddd;border-radius:5px;background:#f5f5f5;color:#bbb;cursor:not-allowed;font-weight:400;font-size:0.8rem;';
+    
+    html += '<button type="button" class="btn-sm" onclick="setNominal(' + nom + ')" style="' + style + '" ' + (!isEnough ? 'disabled' : '') + '>' + formatRupiah(nom) + '</button>';
   }
   
-  // Jika tidak ada yang >= total, tambahkan total + 10000
-  if (filteredNoms.length === 0) {
-    var nextNom = Math.ceil(total / 10000) * 10000;
-    filteredNoms.push(nextNom);
-    if (nextNom + 10000 <= nextNom + 50000) {
-      filteredNoms.push(nextNom + 10000);
-      filteredNoms.push(nextNom + 20000);
-    }
-  }
-  
-  // Ambil 5 quick nominal teratas
-  if (filteredNoms.length > 5) {
-    filteredNoms = filteredNoms.slice(0, 5);
-  }
-  
-  for (var i = 0; i < filteredNoms.length; i++) {
-    html += '<button type="button" class="btn-sm" onclick="setNominal(' + filteredNoms[i] + ')" style="padding:6px 12px;border:1px solid #4CAF50;border-radius:5px;background:white;color:#4CAF50;cursor:pointer;font-weight:600;font-size:0.8rem;">' + formatRupiah(filteredNoms[i]) + '</button>';
-  }
-  
-  // Tombol "Tepat" - bayar sesuai total
+  // Tombol "Tepat" - bayar sesuai total (selalu aktif)
   html += '<button type="button" class="btn-sm" onclick="setNominal(' + total + ')" style="padding:6px 12px;border:1px solid #4CAF50;border-radius:5px;background:#4CAF50;color:white;cursor:pointer;font-weight:700;font-size:0.8rem;">💳 Tepat</button>';
   
   html += '</div>';
   
-  // 🔥 INPUT NOMINAL - PASTIKAN BISA DIISI
-  html += '<input type="number" id="fPembayaran" min="' + total + '" placeholder="Masukkan nominal pembayaran..." style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:bold;background:white;" oninput="hitungKembalian(' + total + ')">';
+  // 🔥 INPUT NOMINAL - SELALU BISA DIISI (TIDAK DISABLE)
+  html += '<input type="number" id="fPembayaran" min="0" placeholder="Masukkan nominal pembayaran..." style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:bold;background:white;" oninput="hitungKembalian(' + total + ')">';
+  html += '<small style="color:#999;display:block;margin-top:4px;">💡 Ketik nominal atau klik tombol cepat di atas</small>';
   html += '</div>';
   
   html += '<div class="form-group">';
@@ -6866,18 +6844,17 @@ function checkout() {
   document.getElementById('modalBody').innerHTML = html;
   document.getElementById('modal').classList.add('active');
   
-  // 🔥 FOCUS KE INPUT SETELAH MODAL TERBUKA
   setTimeout(function() {
     var input = document.getElementById('fPembayaran');
     if (input) { 
       input.focus(); 
       input.select();
-      input.value = total; // 🔥 AUTO ISI DENGAN TOTAL
+      // 🔥 ISI OTOMATIS DENGAN TOTAL (BISA DIUBAH KASIR)
+      input.value = total;
       hitungKembalian(total);
     }
   }, 300);
 }
-
 function setNominal(value) {
   var input = document.getElementById('fPembayaran');
   if (input) {
