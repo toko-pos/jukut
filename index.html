@@ -23,43 +23,102 @@
   <link rel="icon" type="image/png" href="iconbayamtabur.png">
   
 
-  <script>
-// ============================================================
-// FIX: Redirect 404 untuk PWA GitHub Pages
-// ============================================================
-(function() {
-  // Cek apakah ini halaman 404
-  var bodyText = document.body ? document.body.textContent : '';
-  var is404 = bodyText.includes('404') || 
-              bodyText.includes('Not Found') ||
-              bodyText.includes('Halaman tidak ditemukan') ||
-              document.title.includes('404');
-  
-  if (is404) {
-    console.log('⚠️ 404 detected, redirecting to index.html');
-    window.location.replace('index.html');
-  }
-  
-  // Deteksi PWA mode dan perbaiki path
-  if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('📱 Running as PWA');
-    
-    // Jika URL tidak mengandung index.html, redirect
-    if (!window.location.pathname.includes('index.html') && 
-        window.location.pathname !== '/' && 
-        window.location.pathname !== '') {
-      console.log('🔄 Redirecting to index.html');
-      window.location.replace('index.html');
-    }
-  }
-})();
-</script>
+ 
   
   <title>POS System - FIFO</title>
   
-  <!-- ===== CEGAH GOOGLE TRANSLATE ===== -->
+ <!-- ===== CEGAH GOOGLE TRANSLATE ===== -->
   <meta name="google" content="notranslate">
   <meta name="google-translate-custom" content="notranslate">
+  
+  <!-- ===== PWA FIX UNTUK ANDROID ===== -->
+  <script>
+  (function() {
+    console.log('🚀 PWA Fix for Android');
+    
+    // 🔥 1. Deteksi PWA Mode
+    var isPWA = window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isPWA) {
+      console.log('📱 Running in PWA mode (Android)');
+      
+      // 🔥 2. Cek apakah ini halaman 404
+      var bodyText = document.body ? document.body.textContent : '';
+      if (bodyText.includes('404') || bodyText.includes('Not Found')) {
+        console.log('⚠️ 404 detected, redirecting to index.html');
+        window.location.replace('index.html');
+        return;
+      }
+      
+      // 🔥 3. Cek session di localStorage
+      var savedUser = localStorage.getItem('pos_user');
+      var loginTime = localStorage.getItem('pos_login_time');
+      
+      if (savedUser && loginTime) {
+        try {
+          var user = JSON.parse(savedUser);
+          var timeDiff = Date.now() - parseInt(loginTime);
+          
+          // Jika session masih valid (kurang dari 24 jam)
+          if (timeDiff < 86400000) {
+            console.log('✅ Valid session found for:', user.username);
+            
+            // 🔥 4. Jika sudah login tapi masih di halaman login, redirect
+            var loginPage = document.getElementById('loginPage');
+            var app = document.getElementById('app');
+            
+            if (loginPage && app) {
+              if (loginPage.style.display !== 'none' && app.style.display === 'none') {
+                console.log('🔄 Redirecting to app (already logged in)');
+                // Simulate login success
+                currentUser = user;
+                app.style.display = 'block';
+                loginPage.style.display = 'none';
+                
+                // Load data
+                if (typeof loadAllData === 'function') {
+                  loadAllData();
+                }
+                if (typeof updateHeaderInfo === 'function') {
+                  updateHeaderInfo();
+                }
+                
+                // Update UI
+                var userEl = document.getElementById('currentUser');
+                var roleEl = document.getElementById('currentRole');
+                if (userEl) userEl.textContent = user.nama || user.username;
+                if (roleEl) roleEl.textContent = '(' + (user.role || 'admin') + ')';
+              }
+            }
+          } else {
+            // Session expired
+            console.log('⚠️ Session expired, clearing...');
+            localStorage.removeItem('pos_user');
+            localStorage.removeItem('pos_login_time');
+          }
+        } catch(e) {
+          console.warn('⚠️ Invalid user data:', e);
+          localStorage.removeItem('pos_user');
+        }
+      }
+      
+      // 🔥 5. Prevent duplicate reloads
+      if (!localStorage.getItem('pwa_initialized')) {
+        localStorage.setItem('pwa_initialized', 'true');
+        console.log('✅ PWA initialized');
+        
+        // Reload once to ensure clean state
+        setTimeout(function() {
+          if (document.getElementById('loginPage').style.display !== 'none') {
+            console.log('🔄 Reloading to clear cache...');
+            // Force reload from network
+            window.location.reload(true);
+          }
+        }, 500);
+      }
+    }
+  })();
+  </script>
   
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -3729,100 +3788,86 @@ document.getElementById('formLogin').addEventListener('submit', function(e) {
   e.preventDefault();
   var username = document.getElementById('loginUsername').value.trim();
   var password = document.getElementById('loginPassword').value.trim();
+  
   if (!username || !password) {
     showToast('Username dan password wajib diisi!', 'error');
     return;
   }
+  
   var btn = document.getElementById('btnLogin');
   btn.textContent = '⏳ Memproses...';
   btn.disabled = true;
   
-  callGAS('login', { username: username, password: password })
-  .then(function(result) {
+  // 🔥 Cek koneksi internet
+  if (!navigator.onLine) {
+    showToast('⚠️ Tidak ada koneksi internet!', 'error');
     btn.textContent = 'Login';
     btn.disabled = false;
+    return;
+  }
+  
+  // 🔥 Gunakan fetch dengan timeout
+  var timeoutId = setTimeout(function() {
+    btn.textContent = 'Login';
+    btn.disabled = false;
+    showToast('❌ Koneksi timeout, periksa internet Anda!', 'error');
+  }, 30000);
+  
+  callGAS('login', { username: username, password: password })
+  .then(function(result) {
+    clearTimeout(timeoutId);
+    btn.textContent = 'Login';
+    btn.disabled = false;
+    
     if (result.success) {
       currentUser = result.user;
+      
+      // 🔥 Simpan session dengan timestamp
       localStorage.setItem('pos_user', JSON.stringify(currentUser));
+      localStorage.setItem('pos_login_time', Date.now().toString());
+      localStorage.setItem('pwa_initialized', 'true');
+      
       var app = document.getElementById('app');
       var loginPage = document.getElementById('loginPage');
       if (app) app.style.display = 'block';
       if (loginPage) loginPage.style.display = 'none';
+      
       var currentUserEl = document.getElementById('currentUser');
       var currentRoleEl = document.getElementById('currentRole');
       if (currentUserEl) currentUserEl.textContent = currentUser.nama;
       if (currentRoleEl) currentRoleEl.textContent = '(' + currentUser.role + ')';
+      
       setupFilters();
       var today = getTodayString();
       var filterTanggal = document.getElementById('filterTanggal');
       if (filterTanggal) filterTanggal.value = today;
+      
       var savedPosTanggal = localStorage.getItem('pos_tanggal');
       if (savedPosTanggal) {
         var posTanggal = document.getElementById('tanggalTransaksi');
         if (posTanggal) posTanggal.value = savedPosTanggal;
       }
+      
       var savedStokTanggal = localStorage.getItem('stok_tanggal');
       if (savedStokTanggal) {
         var stokTanggal = document.getElementById('tanggalStokMasuk');
         if (stokTanggal) stokTanggal.value = savedStokTanggal;
       }
+      
       loadAllData();
       updateHeaderInfo();
       showToast('✅ Login berhasil! Selamat datang ' + currentUser.nama);
+      
     } else {
       showToast('❌ ' + (result.message || 'Login gagal!'), 'error');
     }
   })
   .catch(function(error) {
+    clearTimeout(timeoutId);
     btn.textContent = 'Login';
     btn.disabled = false;
     console.error('Login error:', error);
-    showToast('❌ Error: ' + error.message, 'error');
-  });
-});
-
-document.getElementById('formRegister').addEventListener('submit', function(e) {
-  e.preventDefault();
-  var username = document.getElementById('regUsername').value.trim();
-  var password = document.getElementById('regPassword').value.trim();
-  var confirmPassword = document.getElementById('regConfirmPassword').value.trim();
-  var nama = document.getElementById('regNama').value.trim();
-  if (!username || !password || !confirmPassword || !nama) {
-    showToast('Semua field wajib diisi!', 'error');
-    return;
-  }
-  if (password.length < 6) {
-    showToast('Password minimal 6 karakter!', 'error');
-    return;
-  }
-  if (password !== confirmPassword) {
-    showToast('Password dan konfirmasi password tidak cocok!', 'error');
-    return;
-  }
-  var btn = document.getElementById('btnRegister');
-  btn.textContent = '⏳ Memproses...';
-  btn.disabled = true;
-  
-  callGAS('registerUser', { username: username, password: password, nama: nama })
-  .then(function(result) {
-    btn.textContent = 'Daftar';
-    btn.disabled = false;
-    if (result.success) {
-      showToast('✅ Registrasi berhasil! Silakan login.', 'success');
-      showLogin();
-      document.getElementById('regUsername').value = '';
-      document.getElementById('regPassword').value = '';
-      document.getElementById('regConfirmPassword').value = '';
-      document.getElementById('regNama').value = '';
-    } else {
-      showToast('❌ ' + (result.message || 'Registrasi gagal!'), 'error');
-    }
-  })
-  .catch(function(error) {
-    btn.textContent = 'Daftar';
-    btn.disabled = false;
-    console.error('Register error:', error);
-    showToast('❌ Error: ' + error.message, 'error');
+    showToast('❌ Error: ' + error.message + '. Periksa koneksi internet.', 'error');
   });
 });
 
