@@ -8036,8 +8036,6 @@ function renderResellerTable(data) {
   var html = '';
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
-    var statusClass = r.active ? 'badge-reseller-active' : 'badge-reseller-inactive';
-    var statusText = r.active ? '✅ Aktif' : '❌ Nonaktif';
     
     html += '<tr>' +
       '<td><strong>' + escapeHtml(r.kode || '-') + '</strong></td>' +
@@ -8054,7 +8052,8 @@ function renderResellerTable(data) {
           '<span id="hargaCount_' + escapeHtml(r.kode) + '">0 produk</span>' +
         '</div>' +
       '</td>' +
-      '<td><span class="' + statusClass + '">' + statusText + '</span></td>' +
+      // 🔥 STATUS - PAKAI BULATAN HIJAU/MERAH (1 BARIS INI YANG DIUBAH)
+      '<td style="text-align:center;font-size:1.2rem;">' + (r.active ? '🟢' : '🔴') + '</td>' +
       '<td style="white-space:nowrap;">' +
         '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Edit">✏️</button>' +
         '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Toggle Status">' + (r.active ? '🔇' : '🔊') + '</button>' +
@@ -8063,6 +8062,10 @@ function renderResellerTable(data) {
       '</tr>';
   }
   tbody.innerHTML = html;
+  
+  // Load jumlah harga per reseller
+  loadHargaCountForResellers();
+}
 
 
 
