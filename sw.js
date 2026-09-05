@@ -1,38 +1,37 @@
 // ============================================================
 // SERVICE WORKER - PWA POS SYSTEM (TOKO + RESELLER)
+// UNTUK GITHUB PAGES
 // ============================================================
 
-const CACHE_NAME = 'pos-app-v3';
+const CACHE_NAME = 'pos-app-v4';
 
-// 🔥 FIX: Base path dari lokasi script saat ini
-const BASE_PATH = self.location.pathname.substring(0, self.location.pathname.lastIndexOf('/') + 1);
+// 🔥 FIX: Deteksi base path untuk GitHub Pages
+const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '/') || '/';
+const FULL_URL = self.location.origin + BASE_PATH;
 
+console.log('📁 Service Worker BASE_PATH:', BASE_PATH);
+console.log('📁 FULL_URL:', FULL_URL);
+
+// 🔥 HANYA CACHE FILE STATIS (TIDAK TERMASUK API GAS)
 const urlsToCache = [
-  BASE_PATH,
-  BASE_PATH + 'index.html',
-  BASE_PATH + 'manifest.json',
-  BASE_PATH + 'iconbayamtabur.png',
+  './',  // root
+  './index.html',
+  './manifest.json',
+  './iconbayamtabur.png',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
   'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
 ];
 
-console.log('📁 Service Worker BASE_PATH:', BASE_PATH);
-console.log('📁 urlsToCache:', urlsToCache);
-
 // ===== INSTALL =====
 self.addEventListener('install', function(event) {
   console.log('🔧 Service Worker: Installing...');
+  console.log('📁 Cache targets:', urlsToCache);
   
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
         console.log('✅ Cache opened');
-        // Coba cache semua file
-        return cache.addAll(urlsToCache).catch(function(err) {
-          console.error('❌ Cache addAll failed:', err);
-          // Fallback: cache minimal
-          return cache.add(BASE_PATH + 'index.html');
-        });
+        return cache.addAll(urlsToCache);
       })
       .then(function() {
         console.log('✅ All files cached');
@@ -40,7 +39,14 @@ self.addEventListener('install', function(event) {
       })
       .catch(function(err) {
         console.error('❌ Cache failed:', err);
-        return self.skipWaiting();
+        // Minimal cache: hanya index.html
+        return caches.open(CACHE_NAME)
+          .then(function(cache) {
+            return cache.add('./index.html');
+          })
+          .then(function() {
+            return self.skipWaiting();
+          });
       })
   );
 });
@@ -69,11 +75,12 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
   const requestUrl = event.request.url;
   
-  // Skip Google Apps Script API requests
+  // 🔥 SKIP SEMUA REQUEST KE GAS
   if (requestUrl.indexOf('script.google.com') > -1 || 
-      requestUrl.indexOf('googleapis.com') > -1) {
-    console.log('⏭️ Skip API request:', requestUrl);
-    return;
+      requestUrl.indexOf('googleapis.com') > -1 ||
+      requestUrl.indexOf('script.googleusercontent.com') > -1) {
+    console.log('⏭️ Skip GAS request:', requestUrl);
+    return; // Biarkan browser handle sendiri
   }
 
   // Skip chrome-extension requests
@@ -86,8 +93,7 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  console.log('🔄 Fetching:', requestUrl);
-
+  // 🔥 HANYA UNTUK FILE STATIS DI GITHUB PAGES
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
@@ -104,32 +110,36 @@ self.addEventListener('fetch', function(event) {
               return response;
             }
 
-            // Clone the response
-            var responseToCache = response.clone();
-            
-            // Cache the response
-            caches.open(CACHE_NAME)
-              .then(function(cache) {
-                try {
-                  cache.put(event.request, responseToCache);
-                } catch(e) {
-                  console.warn('⚠️ Failed to cache:', e);
-                }
-              });
+            // Only cache static assets (images, css, js, html)
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('text/html') || 
+                contentType.includes('text/css') || 
+                contentType.includes('application/javascript') ||
+                contentType.includes('image/')) {
+              
+              var responseToCache = response.clone();
+              caches.open(CACHE_NAME)
+                .then(function(cache) {
+                  try {
+                    cache.put(event.request, responseToCache);
+                  } catch(e) {
+                    console.warn('⚠️ Failed to cache:', e);
+                  }
+                });
+            }
 
             return response;
           })
           .catch(function(error) {
             console.log('❌ Fetch failed:', error);
             // 🔥 FIX: Coba ambil index.html dari cache
-            return caches.match(BASE_PATH + 'index.html')
+            return caches.match('./index.html')
               .then(function(cachedResponse) {
                 if (cachedResponse) {
                   console.log('✅ Returning cached index.html');
                   return cachedResponse;
                 }
-                // Fallback: coba root
-                return caches.match('index.html');
+                return new Response('Halaman tidak ditemukan', { status: 404 });
               });
           });
       })
@@ -137,3 +147,4 @@ self.addEventListener('fetch', function(event) {
 });
 
 console.log('✅ Service Worker loaded!');
+console.log('📁 GitHub Pages URL:', FULL_URL);
