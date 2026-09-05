@@ -2,7 +2,7 @@
   "name": "POS System - Toko & Reseller",
   "short_name": "POS System",
   "description": "Point of Sale dengan Manajemen Reseller dan FIFO Inventory",
-  "start_url": "index.html",
+  "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "background_color": "#4CAF50",
