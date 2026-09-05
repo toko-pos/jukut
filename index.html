@@ -7792,10 +7792,6 @@ if (typeof loadProduk === 'function') {
 }
 
   
-</script>
-
-
-<script>
 // ============================================================
 // REGISTER SERVICE WORKER - PWA
 // ============================================================
@@ -7862,7 +7858,7 @@ function closeInstallBanner() {
 }
 
 
-    // ============================================================
+// ============================================================
 // RESELLER FUNCTIONS - LENGKAP
 // ============================================================
 
@@ -8346,6 +8342,10 @@ function loadResellerDashboard() {
     });
 }
 
+
+// ============================================================
+// RESELLER - SHOW TAB
+// ============================================================  
 function showResellerTab(tab) {
   var tabs = document.querySelectorAll('#page-reseller .reseller-subpage');
   var btns = document.querySelectorAll('#page-reseller .reseller-tabs .tab-btn');
@@ -8414,6 +8414,99 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+
+  // ============================================================
+// RESELLER - DASHBOARD SENDIRI (untuk role reseller)
+// ============================================================
+
+function showResellerDashboardSelf() {
+  if (!currentUser || currentUser.role !== 'reseller') {
+    showToast('⚠️ Hanya reseller yang dapat mengakses!', 'warning');
+    return;
+  }
+
+  // Cari reseller ID dari username
+  callGAS('getResellers', {})
+    .then(function(result) {
+      if (!result || !result.success) throw new Error('Gagal memuat data reseller');
+      var data = result.data || [];
+      var resellerId = null;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].userId === currentUser.username) {
+          resellerId = data[i].id;
+          break;
+        }
+      }
+      if (!resellerId) {
+        showToast('⚠️ Data reseller tidak ditemukan! Hubungi admin.', 'error');
+        return;
+      }
+      
+      // Set dropdown dan load dashboard
+      var dropdown = document.getElementById('resellerDashboardSelect');
+      if (dropdown) dropdown.value = resellerId;
+      loadResellerDashboard();
+      
+      // Sembunyikan tab yang tidak perlu
+      hideResellerTabsForReseller();
+    })
+    .catch(function(error) {
+      showToast('❌ Error: ' + error.message, 'error');
+    });
+}
+
+function hideResellerTabsForReseller() {
+  var tabs = document.querySelectorAll('#page-reseller .reseller-tabs .tab-btn');
+  for (var i = 0; i < tabs.length; i++) {
+    var text = tabs[i].textContent.trim().toLowerCase();
+    if (text !== 'dashboard') {
+      tabs[i].style.display = 'none';
+    } else {
+      tabs[i].style.display = '';
+    }
+  }
+}
+
+
+  function updateResellerSummaryDashboard() {
+  callGAS('getAllResellerSummary', {})
+    .then(function(result) {
+      var container = document.getElementById('resellerSummaryDashboard');
+      if (!container) return;
+      if (!result || !result.success) {
+        container.innerHTML = '❌ Gagal memuat data reseller';
+        return;
+      }
+      var data = result.data || [];
+      if (data.length === 0) {
+        container.innerHTML = '📭 Belum ada reseller terdaftar';
+        return;
+      }
+      var totalPiutang = 0, totalPenjualan = 0, totalStok = 0;
+      for (var i = 0; i < data.length; i++) {
+        totalPiutang += data[i].totalPiutang || 0;
+        totalPenjualan += data[i].totalPenjualan || 0;
+        totalStok += data[i].totalStok || 0;
+      }
+      container.innerHTML = '👥 ' + data.length + ' reseller aktif · 📦 Total Stok: ' + totalStok + ' pcs · 💰 Total Penjualan: ' + formatRupiah(totalPenjualan) + ' · 💳 Total Piutang: ' + formatRupiah(totalPiutang);
+    })
+    .catch(function(error) {
+      console.error('❌ Error updateResellerSummaryDashboard:', error);
+    });
+}
+
+  if (page === 'reseller') { 
+  if (currentUser && currentUser.role === 'reseller') { 
+    // Reseller hanya bisa lihat dashboard sendiri
+    showResellerDashboardSelf(); 
+  } else { 
+    // Admin/Kasir bisa full akses
+    loadResellers(); 
+    loadResellerDropdowns(); 
+    updateResellerSummaryDashboard(); 
+  } 
+}
+  
   
 </script>
 
