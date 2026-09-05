@@ -39,7 +39,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxB9qP2jDNbn9fhIfxVsW8pHUB7DiurTBKcAkh4v7bOIzaXwzyHvESX4Fc6ZkJu_M05rQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyMVnDS2xkkvsTg9veGDGnvH_qK2VY_5ph2CvpACaNkpt6ZAkXfYWp3zKqkxhoCpRIZmA/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -7833,7 +7833,7 @@ function closeInstallBanner() {
 }
 
 
-    // ==================== RESELLER FUNCTIONS ====================
+   // ==================== RESELLER FUNCTIONS ====================
 var resellerList = [];
 var filteredResellerList = [];
 
@@ -7930,38 +7930,88 @@ function updateResellerFilterInfo(count) {
 
 // ==================== TAMBAH RESELLER ====================
 function showTambahReseller() {
-  document.getElementById('modalTitle').textContent = '➕ Tambah Reseller';
-  document.getElementById('modalBody').innerHTML = `
-    <form id="formTambahReseller">
-      <div class="form-group">
-        <label>Kode Reseller *</label>
-        <input type="text" id="fKodeReseller" required placeholder="Contoh: R-001" value="R-${new Date().getTime().toString().slice(-4)}">
-      </div>
-      <div class="form-group">
-        <label>Nama Reseller *</label>
-        <input type="text" id="fNamaReseller" required placeholder="Nama lengkap reseller">
-      </div>
-      <div class="form-group">
-        <label>Kontak</label>
-        <input type="text" id="fKontakReseller" placeholder="No HP / Telepon">
-      </div>
-      <div class="form-group">
-        <label>Alamat</label>
-        <textarea id="fAlamatReseller" rows="2" placeholder="Alamat reseller"></textarea>
-      </div>
-      <div class="form-group">
-        <label>Diskon (%)</label>
-        <input type="number" id="fDiskonReseller" value="0" min="0" max="100" placeholder="Diskon dalam persen">
-        <small style="color:#999;display:block;margin-top:3px;">Diskon akan diberikan saat transaksi POS</small>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block">💾 Simpan Reseller</button>
-    </form>
-  `;
-  document.getElementById('modal').classList.add('active');
-  
-  document.getElementById('formTambahReseller').addEventListener('submit', function(e) {
-    e.preventDefault();
-    simpanReseller();
+  // Generate kode otomatis dari server
+  callGAS('generateKodeReseller', {})
+  .then(function(result) {
+    var kodeOtomatis = (result && result.success) ? result.data : 'R-000000-001';
+    
+    document.getElementById('modalTitle').textContent = '➕ Tambah Reseller';
+    document.getElementById('modalBody').innerHTML = `
+      <form id="formTambahReseller">
+        <div class="form-group">
+          <label>Kode Reseller</label>
+          <input type="text" id="fKodeReseller" value="${kodeOtomatis}" readonly style="background:#f0f0f0;font-weight:bold;color:#4CAF50;">
+          <small style="color:#999;display:block;margin-top:3px;">✅ Kode otomatis (R-YYMMDD-XXX)</small>
+        </div>
+        <div class="form-group">
+          <label>Nama Reseller *</label>
+          <input type="text" id="fNamaReseller" required placeholder="Nama lengkap reseller">
+        </div>
+        <div class="form-group">
+          <label>Kontak</label>
+          <input type="text" id="fKontakReseller" placeholder="No HP / Telepon">
+        </div>
+        <div class="form-group">
+          <label>Alamat</label>
+          <textarea id="fAlamatReseller" rows="2" placeholder="Alamat reseller"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Diskon (%)</label>
+          <input type="number" id="fDiskonReseller" value="0" min="0" max="100" placeholder="Diskon dalam persen">
+          <small style="color:#999;display:block;margin-top:3px;">Diskon akan diberikan saat transaksi POS</small>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">💾 Simpan Reseller</button>
+      </form>
+    `;
+    document.getElementById('modal').classList.add('active');
+    
+    document.getElementById('formTambahReseller').addEventListener('submit', function(e) {
+      e.preventDefault();
+      simpanReseller();
+    });
+    
+    // Focus ke nama setelah modal terbuka
+    setTimeout(function() {
+      var inputNama = document.getElementById('fNamaReseller');
+      if (inputNama) inputNama.focus();
+    }, 300);
+  })
+  .catch(function(error) {
+    // Fallback jika gagal generate
+    showToast('⚠️ Gagal generate kode: ' + error.message, 'error');
+    // Tampilkan form dengan kode default
+    document.getElementById('modalTitle').textContent = '➕ Tambah Reseller';
+    document.getElementById('modalBody').innerHTML = `
+      <form id="formTambahReseller">
+        <div class="form-group">
+          <label>Kode Reseller</label>
+          <input type="text" id="fKodeReseller" value="R-000000-001" readonly style="background:#f0f0f0;font-weight:bold;color:#4CAF50;">
+          <small style="color:#999;display:block;margin-top:3px;">✅ Kode otomatis (R-YYMMDD-XXX)</small>
+        </div>
+        <div class="form-group">
+          <label>Nama Reseller *</label>
+          <input type="text" id="fNamaReseller" required placeholder="Nama lengkap reseller">
+        </div>
+        <div class="form-group">
+          <label>Kontak</label>
+          <input type="text" id="fKontakReseller" placeholder="No HP / Telepon">
+        </div>
+        <div class="form-group">
+          <label>Alamat</label>
+          <textarea id="fAlamatReseller" rows="2" placeholder="Alamat reseller"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Diskon (%)</label>
+          <input type="number" id="fDiskonReseller" value="0" min="0" max="100" placeholder="Diskon dalam persen">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">💾 Simpan Reseller</button>
+      </form>
+    `;
+    document.getElementById('modal').classList.add('active');
+    document.getElementById('formTambahReseller').addEventListener('submit', function(e) {
+      e.preventDefault();
+      simpanReseller();
+    });
   });
 }
 
@@ -7974,8 +8024,9 @@ function simpanReseller() {
     diskon: parseInt(document.getElementById('fDiskonReseller').value) || 0
   };
   
-  if (!data.kode || !data.nama) {
-    showToast('⚠️ Kode dan Nama Reseller wajib diisi!', 'error');
+  if (!data.nama) {
+    showToast('⚠️ Nama Reseller wajib diisi!', 'error');
+    document.getElementById('fNamaReseller').focus();
     return;
   }
   
@@ -7989,11 +8040,11 @@ function simpanReseller() {
     btn.disabled = false;
     
     if (result && result.success) {
-      showToast('✅ Reseller berhasil ditambahkan!', 'success');
+      showToast('✅ ' + result.message, 'success');
       closeModal();
       loadReseller();
     } else {
-      showToast('❌ Gagal menambahkan reseller: ' + (result ? result.error : 'Unknown error'), 'error');
+      showToast('❌ ' + (result ? result.error : 'Gagal menambahkan reseller!'), 'error');
     }
   })
   .catch(function(error) {
@@ -8078,11 +8129,11 @@ function updateReseller(kodeLama) {
     btn.disabled = false;
     
     if (result && result.success) {
-      showToast('✅ Reseller berhasil diupdate!', 'success');
+      showToast('✅ ' + result.message, 'success');
       closeModal();
       loadReseller();
     } else {
-      showToast('❌ Gagal update reseller: ' + (result ? result.error : 'Unknown error'), 'error');
+      showToast('❌ ' + (result ? result.error : 'Gagal update reseller!'), 'error');
     }
   })
   .catch(function(error) {
@@ -8117,10 +8168,10 @@ function toggleResellerStatus(kode) {
   callGAS('toggleResellerStatus', { kode: kode })
   .then(function(result) {
     if (result && result.success) {
-      showToast('✅ Status reseller berhasil diubah!', 'success');
+      showToast('✅ ' + result.message, 'success');
       loadReseller();
     } else {
-      showToast('❌ Gagal mengubah status: ' + (result ? result.error : 'Unknown error'), 'error');
+      showToast('❌ ' + (result ? result.error : 'Gagal mengubah status!'), 'error');
     }
   })
   .catch(function(error) {
@@ -8150,10 +8201,10 @@ function hapusReseller(kode) {
   callGAS('hapusReseller', { kode: kode })
   .then(function(result) {
     if (result && result.success) {
-      showToast('✅ Reseller berhasil dihapus!', 'success');
+      showToast('✅ ' + result.message, 'success');
       loadReseller();
     } else {
-      showToast('❌ Gagal hapus reseller: ' + (result ? result.error : 'Unknown error'), 'error');
+      showToast('❌ ' + (result ? result.error : 'Gagal hapus reseller!'), 'error');
     }
   })
   .catch(function(error) {
