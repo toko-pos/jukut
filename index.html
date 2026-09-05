@@ -7,23 +7,50 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+  <!-- ===== PWA MANIFEST ===== -->
+  <link rel="manifest" href="manifest.json">
 
- 
-<!-- ===== PWA MANIFEST ===== -->
-<link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <!-- ===== THEME COLOR ===== -->
+  <meta name="theme-color" content="#4CAF50">
+  <meta name="msapplication-TileColor" content="#4CAF50">
 
-<!-- ===== THEME COLOR ===== -->
-<meta name="theme-color" content="#4CAF50">
-<meta name="msapplication-TileColor" content="#4CAF50">
+  <!-- ===== APPLE TOUCH ICON ===== -->
+  <link rel="apple-touch-icon" href="iconbayamtabur.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<!-- ===== APPLE TOUCH ICON ===== -->
-<link rel="apple-touch-icon" href="iconbayamtabur.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<!-- ===== FAVICON ===== -->
-<link rel="icon" type="image/png" href="iconbayamtabur.png">
+  <!-- ===== FAVICON ===== -->
+  <link rel="icon" type="image/png" href="iconbayamtabur.png">
   
+  <!-- ===== BASE URL DETECTION UNTUK GITHUB PAGES ===== -->
+  <script>
+  // 🔥 FIX: Deteksi base URL untuk GitHub Pages
+  (function() {
+    // Simpan base URL
+    var baseUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/');
+    window.PWA_BASE_URL = baseUrl;
+    
+    // Cek apakah ini PWA mode
+    var isPWA = window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isPWA) {
+      console.log('📱 Running in PWA mode - GitHub Pages');
+      localStorage.setItem('pwa_mode', 'true');
+      
+      // Cek 404
+      var bodyText = document.body ? document.body.textContent : '';
+      var is404 = bodyText.includes('404') || 
+                  bodyText.includes('Not Found') ||
+                  bodyText.includes('Halaman tidak ditemukan') ||
+                  document.title.includes('404');
+      
+      if (is404) {
+        console.log('⚠️ Detected 404, redirecting to index.html');
+        window.location.replace('index.html');
+      }
+    }
+  })();
+  </script>
   
   <title>POS System - FIFO</title>
   
@@ -40,10 +67,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyamllX9iSDrhG1OrSvjGNQxmRpc63gIt6cP2GEdNCFT1ZlPV7wqQa-tG2odtJScK4Hbw/exec';
-    // ============================================
-    // GANTI URL DI ATAS dengan URL deploy GAS Anda
-    // Setelah deploy Code.gs, copy URL-nya dan paste di sini
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwKeAu3lyf7t9T6AABuSWJMk_cbOi7kyYOQQ_HOAUkyArnrX590KfUI46Vsuw7gAYQhPA/exec';
     // ============================================
   </script>
 
@@ -2811,11 +2835,13 @@ function showLogin() {
 }
 
 // ============================================================
-// 🔥 FUNGSI PANGGIL GAS VIA FETCH - SEMUA PAKAI INI! 🔥
+// 🔥 FUNGSI PANGGIL GAS VIA FETCH - UNTUK GITHUB PAGES
 // ============================================================
 function callGAS(action, data) {
   return new Promise(function(resolve, reject) {
     console.log('📤 callGAS:', action, data);
+    
+    // 🔥 FIX: Gunakan GAS_URL dari variabel global
     fetch(GAS_URL, {
       method: 'POST',
       headers: {
@@ -8310,20 +8336,55 @@ if (typeof loadProduk === 'function') {
 
 
 <script>
+<script>
 // ============================================================
-// REGISTER SERVICE WORKER - PWA
+// REGISTER SERVICE WORKER - PWA UNTUK GITHUB PAGES
 // ============================================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js')
-      .then(function(registration) {
-        console.log('✅ Service Worker registered with scope:', registration.scope);
-      })
-      .catch(function(error) {
-        console.log('❌ Service Worker registration failed:', error);
-      });
+    console.log('📦 Registering Service Worker...');
+    
+    // 🔥 FIX: Gunakan relative path untuk GitHub Pages
+    navigator.serviceWorker.register('sw.js', { 
+      scope: './'  // 🔥 Penting: scope harus relative
+    })
+    .then(function(registration) {
+      console.log('✅ Service Worker registered with scope:', registration.scope);
+      
+      // 🔥 Cek update setiap 60 detik
+      setInterval(function() {
+        registration.update();
+        console.log('🔄 Checking for updates...');
+      }, 60000);
+    })
+    .catch(function(error) {
+      console.log('❌ Service Worker registration failed:', error);
+    });
   });
 }
+
+// ============================================================
+// FIX: Handle 404 di PWA untuk GitHub Pages
+// ============================================================
+(function() {
+  // Deteksi jika aplikasi berjalan sebagai PWA
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('📱 Running as PWA - checking for 404');
+    
+    // Cek apakah ini halaman 404
+    var bodyText = document.body ? document.body.textContent : '';
+    var is404 = bodyText.includes('404') || 
+                bodyText.includes('Not Found') ||
+                bodyText.includes('Halaman tidak ditemukan') ||
+                document.title.includes('404');
+    
+    if (is404) {
+      console.log('⚠️ Detected 404 page, redirecting to index.html');
+      // Gunakan replace agar tidak kembali ke 404
+      window.location.replace('index.html');
+    }
+  }
+})();
 
 // ============================================================
 // DETEKSI APAKAH SUDAH TERINSTALL SEBAGAI PWA
@@ -8333,6 +8394,8 @@ window.addEventListener('load', function() {
     console.log('✅ Aplikasi berjalan sebagai PWA (standalone)');
     var banner = document.getElementById('installBanner');
     if (banner) banner.style.display = 'none';
+  } else {
+    console.log('ℹ️ Running in browser mode');
   }
 });
 
@@ -8374,6 +8437,7 @@ function closeInstallBanner() {
   var banner = document.getElementById('installBanner');
   if (banner) banner.style.display = 'none';
 }
+</script>
 
 
    // ==================== RESELLER FUNCTIONS ====================
