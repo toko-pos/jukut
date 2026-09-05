@@ -39,7 +39,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbw2yVoYxTDEVoN30eW92FUhs1BEYxNxjEGSH8iyO3JaU6rc07yOwhSsaIBRVGnKm6zqWw/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxB9qP2jDNbn9fhIfxVsW8pHUB7DiurTBKcAkh4v7bOIzaXwzyHvESX4Fc6ZkJu_M05rQ/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -1250,6 +1250,170 @@
 @media print {
   .struk-58mm { width: 58mm; }
 }
+
+    /* ===== RESELLER ===== */
+.sub-tab-reseller {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  flex-wrap: nowrap;
+}
+.sub-tab-reseller .tab-btn-reseller {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  transition: all 0.3s;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 4px;
+}
+.sub-tab-reseller .tab-refresh-reseller {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  transition: all 0.3s;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #2196F3;
+  color: white;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+  gap: 4px;
+}
+.sub-tab-reseller .tab-refresh-reseller:hover {
+  background: #1976D2;
+  transform: scale(1.03);
+}
+.sub-tab-reseller .tab-tambah-reseller {
+  background: #9C27B0;
+  color: white;
+  box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3);
+}
+.sub-tab-reseller .tab-tambah-reseller:hover {
+  background: #7B1FA2;
+  transform: scale(1.03);
+}
+@media (max-width: 768px) {
+  .sub-tab-reseller .tab-btn-reseller,
+  .sub-tab-reseller .tab-refresh-reseller {
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    height: 32px;
+    flex: 1 1 0;
+    min-width: 40px;
+    border-radius: 4px;
+  }
+}
+@media (max-width: 480px) {
+  .sub-tab-reseller .tab-btn-reseller,
+  .sub-tab-reseller .tab-refresh-reseller {
+    padding: 4px 8px;
+    font-size: 0.6rem;
+    height: 28px;
+    min-width: 30px;
+    border-radius: 3px;
+  }
+}
+
+.filter-reseller {
+  background: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.filter-reseller .filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.filter-reseller .filter-group label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.filter-reseller .filter-group input,
+.filter-reseller .filter-group select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 0.85rem;
+  background: white;
+  height: 34px;
+  min-width: 140px;
+}
+.filter-reseller .filter-group input:focus,
+.filter-reseller .filter-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+.filter-reseller .filter-info {
+  font-size: 0.8rem;
+  color: #999;
+  margin-left: auto;
+}
+@media (max-width: 768px) {
+  .filter-reseller {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .filter-reseller .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .filter-reseller .filter-group input,
+  .filter-reseller .filter-group select {
+    min-width: 100%;
+  }
+  .filter-reseller .filter-info {
+    margin-left: 0;
+    text-align: center;
+  }
+}
+
+.badge-reseller-active {
+  background: #4CAF50;
+  color: white;
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.badge-reseller-inactive {
+  background: #f44336;
+  color: white;
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
   
   </style>
 </head>
@@ -1370,6 +1534,13 @@
       <span class="nav-icon">📥</span>
       <span class="nav-label">Stok</span>
     </button>
+
+    <!-- ===== RESELLER TAB ===== -->
+<button onclick="showPage('reseller')">
+  <span class="nav-icon">👥</span>
+  <span class="nav-label">Reseller</span>
+</button>
+    
     <button onclick="showPage('profile')">
       <span class="nav-icon">⚙️</span>
       <span class="nav-label">SETTING</span>
@@ -1887,6 +2058,58 @@
         </div>
       </div>
     </div>
+
+
+<!-- ===== RESELLER ===== -->
+<div id="page-reseller" class="page">
+  <div class="card">
+    <h2>👥 Manajemen Reseller</h2>
+    
+    <!-- SUB NAV -->
+    <div class="sub-tab-reseller">
+      <button class="tab-btn-reseller tab-tambah-reseller" onclick="showTambahReseller()">➕ Tambah Reseller</button>
+      <button class="tab-refresh-reseller" onclick="loadReseller()">🔄 Refresh</button>
+    </div>
+    
+    <!-- FILTER -->
+    <div class="filter-reseller">
+      <div class="filter-group">
+        <label>🔍 Cari:</label>
+        <input type="text" id="cariReseller" placeholder="Nama atau Kode..." oninput="filterReseller()">
+      </div>
+      <div class="filter-group">
+        <label>📊 Status:</label>
+        <select id="filterStatusReseller" onchange="filterReseller()">
+          <option value="all">Semua</option>
+          <option value="active">✅ Aktif</option>
+          <option value="inactive">❌ Nonaktif</option>
+        </select>
+      </div>
+      <div class="filter-info" id="resellerFilterInfo">Menampilkan semua reseller (0 reseller)</div>
+    </div>
+    
+    <!-- TABEL RESELLER -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Kode</th>
+            <th>Nama</th>
+            <th>Kontak</th>
+            <th>Alamat</th>
+            <th>Diskon %</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="resellerTable">
+          <tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">⏳ Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
     
     <!-- ===== PROFIL ===== -->
     <div id="page-profile" class="page">
@@ -2012,6 +2235,12 @@
     </div>
   </div>
 </div>
+
+
+
+
+
+  
 
 <script>
 // ==================== UTILITY FUNCTIONS ====================
@@ -3421,6 +3650,9 @@ function showPage(page) {
   if (page === 'stok') { showSubPage('stok', 'masuk'); }
   if (page === 'produk') { loadProdukWithRetry(); }
   if (page === 'profile') { loadProfile(); }
+  
+  // 🔥 TAMBAHKAN INI 🔥
+  if (page === 'reseller') loadReseller();
 }
 
 // ==================== REFRESH DASHBOARD ====================
@@ -7599,6 +7831,337 @@ function closeInstallBanner() {
   var banner = document.getElementById('installBanner');
   if (banner) banner.style.display = 'none';
 }
+
+
+    // ==================== RESELLER FUNCTIONS ====================
+var resellerList = [];
+var filteredResellerList = [];
+
+function loadReseller() {
+  console.log('🔄 Memuat data reseller...');
+  var tbody = document.getElementById('resellerTable');
+  if (!tbody) return;
+  
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">⏳ Memuat data...</td></tr>';
+  
+  callGAS('getReseller', {})
+  .then(function(result) {
+    if (!result || !result.success) {
+      throw new Error(result ? result.error : 'Gagal memuat data');
+    }
+    resellerList = result.data || [];
+    filteredResellerList = resellerList;
+    renderResellerTable(resellerList);
+    updateResellerFilterInfo(resellerList.length);
+    console.log('✅ Reseller berhasil dimuat: ' + resellerList.length + ' reseller');
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadReseller:', error);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;padding:30px;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
+    showToast('❌ Gagal memuat reseller: ' + error.message, 'error');
+  });
+}
+
+function renderResellerTable(data) {
+  var tbody = document.getElementById('resellerTable');
+  if (!tbody) return;
+  
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">📭 Belum ada reseller</td></tr>';
+    return;
+  }
+  
+  var html = '';
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    var statusClass = r.active ? 'badge-reseller-active' : 'badge-reseller-inactive';
+    var statusText = r.active ? '✅ Aktif' : '❌ Nonaktif';
+    
+    html += '<tr>' +
+      '<td><strong>' + escapeHtml(r.kode || '-') + '</strong></td>' +
+      '<td>' + escapeHtml(r.nama || '-') + '</td>' +
+      '<td>' + escapeHtml(r.kontak || '-') + '</td>' +
+      '<td>' + escapeHtml(r.alamat || '-') + '</td>' +
+      '<td style="font-weight:bold;color:#FF9800;">' + (r.diskon || 0) + '%</td>' +
+      '<td><span class="' + statusClass + '">' + statusText + '</span></td>' +
+      '<td style="white-space:nowrap;">' +
+      '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Edit">✏️</button>' +
+      '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Toggle Status">' + (r.active ? '🔇' : '🔊') + '</button>' +
+      '<button class="btn btn-danger btn-sm" onclick="hapusReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Hapus">🗑️</button>' +
+      '</td>' +
+      '</tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+function filterReseller() {
+  var keyword = document.getElementById('cariReseller').value.toLowerCase().trim();
+  var statusFilter = document.getElementById('filterStatusReseller').value;
+  
+  var filtered = resellerList;
+  
+  if (keyword) {
+    filtered = filtered.filter(function(r) {
+      return (r.nama || '').toLowerCase().includes(keyword) ||
+             (r.kode || '').toLowerCase().includes(keyword) ||
+             (r.kontak || '').toLowerCase().includes(keyword);
+    });
+  }
+  
+  if (statusFilter !== 'all') {
+    var isActive = statusFilter === 'active';
+    filtered = filtered.filter(function(r) {
+      return r.active === isActive;
+    });
+  }
+  
+  filteredResellerList = filtered;
+  renderResellerTable(filtered);
+  updateResellerFilterInfo(filtered.length);
+}
+
+function updateResellerFilterInfo(count) {
+  var infoEl = document.getElementById('resellerFilterInfo');
+  if (infoEl) {
+    var total = resellerList.length;
+    infoEl.textContent = 'Menampilkan ' + count + ' reseller dari ' + total + ' total';
+  }
+}
+
+// ==================== TAMBAH RESELLER ====================
+function showTambahReseller() {
+  document.getElementById('modalTitle').textContent = '➕ Tambah Reseller';
+  document.getElementById('modalBody').innerHTML = `
+    <form id="formTambahReseller">
+      <div class="form-group">
+        <label>Kode Reseller *</label>
+        <input type="text" id="fKodeReseller" required placeholder="Contoh: R-001" value="R-${new Date().getTime().toString().slice(-4)}">
+      </div>
+      <div class="form-group">
+        <label>Nama Reseller *</label>
+        <input type="text" id="fNamaReseller" required placeholder="Nama lengkap reseller">
+      </div>
+      <div class="form-group">
+        <label>Kontak</label>
+        <input type="text" id="fKontakReseller" placeholder="No HP / Telepon">
+      </div>
+      <div class="form-group">
+        <label>Alamat</label>
+        <textarea id="fAlamatReseller" rows="2" placeholder="Alamat reseller"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Diskon (%)</label>
+        <input type="number" id="fDiskonReseller" value="0" min="0" max="100" placeholder="Diskon dalam persen">
+        <small style="color:#999;display:block;margin-top:3px;">Diskon akan diberikan saat transaksi POS</small>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">💾 Simpan Reseller</button>
+    </form>
+  `;
+  document.getElementById('modal').classList.add('active');
+  
+  document.getElementById('formTambahReseller').addEventListener('submit', function(e) {
+    e.preventDefault();
+    simpanReseller();
+  });
+}
+
+function simpanReseller() {
+  var data = {
+    kode: document.getElementById('fKodeReseller').value.trim(),
+    nama: document.getElementById('fNamaReseller').value.trim(),
+    kontak: document.getElementById('fKontakReseller').value.trim(),
+    alamat: document.getElementById('fAlamatReseller').value.trim(),
+    diskon: parseInt(document.getElementById('fDiskonReseller').value) || 0
+  };
+  
+  if (!data.kode || !data.nama) {
+    showToast('⚠️ Kode dan Nama Reseller wajib diisi!', 'error');
+    return;
+  }
+  
+  var btn = document.querySelector('#formTambahReseller button[type="submit"]');
+  btn.textContent = '⏳ Menyimpan...';
+  btn.disabled = true;
+  
+  callGAS('tambahReseller', data)
+  .then(function(result) {
+    btn.textContent = '💾 Simpan Reseller';
+    btn.disabled = false;
+    
+    if (result && result.success) {
+      showToast('✅ Reseller berhasil ditambahkan!', 'success');
+      closeModal();
+      loadReseller();
+    } else {
+      showToast('❌ Gagal menambahkan reseller: ' + (result ? result.error : 'Unknown error'), 'error');
+    }
+  })
+  .catch(function(error) {
+    btn.textContent = '💾 Simpan Reseller';
+    btn.disabled = false;
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+// ==================== EDIT RESELLER ====================
+function editReseller(kode) {
+  var reseller = null;
+  for (var i = 0; i < resellerList.length; i++) {
+    if (resellerList[i].kode === kode) {
+      reseller = resellerList[i];
+      break;
+    }
+  }
+  
+  if (!reseller) {
+    showToast('❌ Reseller tidak ditemukan!', 'error');
+    return;
+  }
+  
+  document.getElementById('modalTitle').textContent = '✏️ Edit Reseller';
+  document.getElementById('modalBody').innerHTML = `
+    <form id="formEditReseller">
+      <div class="form-group">
+        <label>Kode Reseller</label>
+        <input type="text" id="fEditKodeReseller" value="${escapeHtml(reseller.kode)}" readonly style="background:#f0f0f0;">
+        <small style="color:#999;display:block;margin-top:3px;">Kode tidak dapat diubah</small>
+      </div>
+      <div class="form-group">
+        <label>Nama Reseller *</label>
+        <input type="text" id="fEditNamaReseller" required value="${escapeHtml(reseller.nama || '')}">
+      </div>
+      <div class="form-group">
+        <label>Kontak</label>
+        <input type="text" id="fEditKontakReseller" value="${escapeHtml(reseller.kontak || '')}">
+      </div>
+      <div class="form-group">
+        <label>Alamat</label>
+        <textarea id="fEditAlamatReseller" rows="2">${escapeHtml(reseller.alamat || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Diskon (%)</label>
+        <input type="number" id="fEditDiskonReseller" value="${reseller.diskon || 0}" min="0" max="100">
+      </div>
+      <button type="submit" class="btn btn-warning btn-block">💾 Update Reseller</button>
+    </form>
+  `;
+  document.getElementById('modal').classList.add('active');
+  
+  document.getElementById('formEditReseller').addEventListener('submit', function(e) {
+    e.preventDefault();
+    updateReseller(kode);
+  });
+}
+
+function updateReseller(kodeLama) {
+  var data = {
+    kodeLama: kodeLama,
+    kode: kodeLama, // kode tidak berubah
+    nama: document.getElementById('fEditNamaReseller').value.trim(),
+    kontak: document.getElementById('fEditKontakReseller').value.trim(),
+    alamat: document.getElementById('fEditAlamatReseller').value.trim(),
+    diskon: parseInt(document.getElementById('fEditDiskonReseller').value) || 0
+  };
+  
+  if (!data.nama) {
+    showToast('⚠️ Nama Reseller wajib diisi!', 'error');
+    return;
+  }
+  
+  var btn = document.querySelector('#formEditReseller button[type="submit"]');
+  btn.textContent = '⏳ Menyimpan...';
+  btn.disabled = true;
+  
+  callGAS('updateReseller', data)
+  .then(function(result) {
+    btn.textContent = '💾 Update Reseller';
+    btn.disabled = false;
+    
+    if (result && result.success) {
+      showToast('✅ Reseller berhasil diupdate!', 'success');
+      closeModal();
+      loadReseller();
+    } else {
+      showToast('❌ Gagal update reseller: ' + (result ? result.error : 'Unknown error'), 'error');
+    }
+  })
+  .catch(function(error) {
+    btn.textContent = '💾 Update Reseller';
+    btn.disabled = false;
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+// ==================== TOGGLE STATUS RESELLER ====================
+function toggleResellerStatus(kode) {
+  var reseller = null;
+  for (var i = 0; i < resellerList.length; i++) {
+    if (resellerList[i].kode === kode) {
+      reseller = resellerList[i];
+      break;
+    }
+  }
+  
+  if (!reseller) {
+    showToast('❌ Reseller tidak ditemukan!', 'error');
+    return;
+  }
+  
+  var newStatus = !reseller.active;
+  var statusText = newStatus ? 'Aktif' : 'Nonaktif';
+  
+  if (!confirm('Yakin ingin mengubah status reseller "' + reseller.nama + '" menjadi ' + statusText + '?')) {
+    return;
+  }
+  
+  callGAS('toggleResellerStatus', { kode: kode })
+  .then(function(result) {
+    if (result && result.success) {
+      showToast('✅ Status reseller berhasil diubah!', 'success');
+      loadReseller();
+    } else {
+      showToast('❌ Gagal mengubah status: ' + (result ? result.error : 'Unknown error'), 'error');
+    }
+  })
+  .catch(function(error) {
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+// ==================== HAPUS RESELLER ====================
+function hapusReseller(kode) {
+  var reseller = null;
+  for (var i = 0; i < resellerList.length; i++) {
+    if (resellerList[i].kode === kode) {
+      reseller = resellerList[i];
+      break;
+    }
+  }
+  
+  if (!reseller) {
+    showToast('❌ Reseller tidak ditemukan!', 'error');
+    return;
+  }
+  
+  if (!confirm('⚠️ Yakin ingin menghapus reseller "' + reseller.nama + '" ?\nTindakan ini tidak dapat diundur!')) {
+    return;
+  }
+  
+  callGAS('hapusReseller', { kode: kode })
+  .then(function(result) {
+    if (result && result.success) {
+      showToast('✅ Reseller berhasil dihapus!', 'success');
+      loadReseller();
+    } else {
+      showToast('❌ Gagal hapus reseller: ' + (result ? result.error : 'Unknown error'), 'error');
+    }
+  })
+  .catch(function(error) {
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+  
 </script>
 
   
