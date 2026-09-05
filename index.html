@@ -39,7 +39,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbz1lnX1-8PxZOk5JdmZ7gV--oBVW5u3NUAgdkmVl9r9INST7F8AIt0GI1UdB49EAZMong/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwCA72KdPLDMfNPc7sXRincbCBniVAoELeSps1tnE38iaTNXduAz4WQJgTAHQdPRLimew/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -1388,6 +1388,7 @@
           <label>📅 Tanggal:</label>
           <input type="date" id="filterTanggal">
         </div>
+     
         <div class="filter-group" id="filterKasirGroup" style="display:none;">
           <label>👤 Kasir:</label>
           <select id="filterKasir">
@@ -3143,141 +3144,146 @@ document.getElementById('formRegister').addEventListener('submit', function(e) {
   });
 });
 
-// ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 DOM siap!');
   
-  // Load logo
-  loadAppLogo();
-  
-  document.getElementById('toggleLoginPassword').addEventListener('click', function() {
-    togglePasswordVisibility('loginPassword', this);
-  });
-  document.getElementById('toggleRegPassword').addEventListener('click', function() {
-    togglePasswordVisibility('regPassword', this);
-  });
-  document.getElementById('toggleRegConfirmPassword').addEventListener('click', function() {
-    togglePasswordVisibility('regConfirmPassword', this);
-  });
-  
-  document.getElementById('linkShowRegister').addEventListener('click', function(e) {
-    e.preventDefault();
-    showRegister();
-  });
-  document.getElementById('linkShowLogin').addEventListener('click', function(e) {
-    e.preventDefault();
-    showLogin();
-  });
-  
-  var manualInput = document.getElementById('manualBarcodeInput');
-  if (manualInput) {
-    manualInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        manualBarcodeSearch();
-      }
-    });
+  var filterTanggal = document.getElementById('filterTanggal');
+  if (filterTanggal) {
+    filterTanggal.value = getTodayString();
+    filterTanggal.addEventListener('change', function() { loadDashboard(); });
   }
-  
-  var scannerManualInput = document.getElementById('scannerManualInput');
-  if (scannerManualInput) {
-    scannerManualInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        manualScannerAdd();
-      }
-    });
-  }
-  
-  var tanggalInput = document.getElementById('filterTanggal');
-  if (tanggalInput) {
-    tanggalInput.addEventListener('change', function() { 
-      loadDashboard(); 
-    });
-  }
-  
-  var kasirInput = document.getElementById('filterKasir');
-  if (kasirInput) {
-    kasirInput.addEventListener('change', function() { 
-      loadDashboard(); 
-    });
-  }
-  
+
   var posTanggal = document.getElementById('tanggalTransaksi');
   if (posTanggal) {
     var savedPosTanggal = localStorage.getItem('pos_tanggal');
-    if (savedPosTanggal) {
-      posTanggal.value = savedPosTanggal;
-      console.log('📅 Restore tanggal POS:', savedPosTanggal);
-    }
+    if (savedPosTanggal) posTanggal.value = savedPosTanggal;
     posTanggal.addEventListener('change', function() {
-      if (this.value) {
-        localStorage.setItem('pos_tanggal', this.value);
-        console.log('📅 Simpan tanggal POS:', this.value);
-      } else {
-        localStorage.removeItem('pos_tanggal');
-      }
+      if (this.value) localStorage.setItem('pos_tanggal', this.value);
+      else localStorage.removeItem('pos_tanggal');
       updatePosUI();
-      loadPosProduk();
+      if (posMode === 'toko') loadPosProduk();
+      else if (posMode === 'reseller' && activeResellerId) loadPosResellerStok();
     });
-    setTimeout(function() {
-      updatePosUI();
-    }, 100);
   }
-  
+
   var stokTanggal = document.getElementById('tanggalStokMasuk');
   if (stokTanggal) {
     var savedStokTanggal = localStorage.getItem('stok_tanggal');
-    if (savedStokTanggal) {
-      stokTanggal.value = savedStokTanggal;
-      console.log('📅 Restore tanggal Stok:', savedStokTanggal);
-    }
+    if (savedStokTanggal) stokTanggal.value = savedStokTanggal;
     stokTanggal.addEventListener('change', function() {
-      if (this.value) {
-        localStorage.setItem('stok_tanggal', this.value);
-        console.log('📅 Simpan tanggal Stok:', this.value);
-      } else {
-        localStorage.removeItem('stok_tanggal');
-      }
+      if (this.value) localStorage.setItem('stok_tanggal', this.value);
+      else localStorage.removeItem('stok_tanggal');
       updateStokMasukUI();
     });
-    setTimeout(function() {
-      updateStokMasukUI();
-    }, 100);
   }
-  
+
   var filterMulai = document.getElementById('filterTransaksiMulai');
   var filterSampai = document.getElementById('filterTransaksiSampai');
-  
   if (filterMulai && filterSampai) {
     var today = getTodayString();
     filterMulai.value = today;
     filterSampai.value = today;
-    
-    filterMulai.addEventListener('change', function() {
-      console.log('📅 Tanggal mulai berubah:', this.value);
-      loadTransaksi();
+    filterMulai.addEventListener('change', loadTransaksi);
+    filterSampai.addEventListener('change', loadTransaksi);
+  }
+
+  // CEK NULL UNTUK FILTER RESELLER
+  var resTransMulai = document.getElementById('filterResTransMulai');
+  var resTransSampai = document.getElementById('filterResTransSampai');
+  if (resTransMulai && resTransSampai) {
+    var today = getTodayString();
+    resTransMulai.value = today;
+    resTransSampai.value = today;
+    resTransMulai.addEventListener('change', loadTransaksiReseller);
+    resTransSampai.addEventListener('change', loadTransaksiReseller);
+  }
+
+  var resPenjualanMulai = document.getElementById('filterResPenjualanMulai');
+  var resPenjualanSampai = document.getElementById('filterResPenjualanSampai');
+  if (resPenjualanMulai && resPenjualanSampai) {
+    var today = getTodayString();
+    resPenjualanMulai.value = today;
+    resPenjualanSampai.value = today;
+    resPenjualanMulai.addEventListener('change', loadPenjualanReseller);
+    resPenjualanSampai.addEventListener('change', loadPenjualanReseller);
+  }
+
+  var scannerModal = document.getElementById('scannerModal');
+  if (scannerModal) {
+    scannerModal.addEventListener('click', function(e) {
+      if (e.target === this) stopScanner();
     });
-    
-    filterSampai.addEventListener('change', function() {
-      console.log('📅 Tanggal sampai berubah:', this.value);
-      loadTransaksi();
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var modal = document.getElementById('scannerModal');
+      if (modal && modal.classList.contains('active')) stopScanner();
+      var logoutModal = document.getElementById('logoutModal');
+      if (logoutModal && logoutModal.classList.contains('active')) closeLogoutModal();
+      var editModal = document.getElementById('editHargaModal');
+      if (editModal && editModal.classList.contains('active')) closeEditHargaModal();
+    }
+  });
+
+  // CEK ELEMEN LOGIN
+  var toggleLogin = document.getElementById('toggleLoginPassword');
+  if (toggleLogin) {
+    toggleLogin.addEventListener('click', function() {
+      togglePasswordVisibility('loginPassword', this);
     });
   }
   
+  var toggleReg = document.getElementById('toggleRegPassword');
+  if (toggleReg) {
+    toggleReg.addEventListener('click', function() {
+      togglePasswordVisibility('regPassword', this);
+    });
+  }
+  
+  var toggleRegConfirm = document.getElementById('toggleRegConfirmPassword');
+  if (toggleRegConfirm) {
+    toggleRegConfirm.addEventListener('click', function() {
+      togglePasswordVisibility('regConfirmPassword', this);
+    });
+  }
+
+  var linkShowRegister = document.getElementById('linkShowRegister');
+  if (linkShowRegister) {
+    linkShowRegister.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'block';
+    });
+  }
+  
+  var linkShowLogin = document.getElementById('linkShowLogin');
+  if (linkShowLogin) {
+    linkShowLogin.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('registerForm').style.display = 'none';
+    });
+  }
+
   checkSession();
 });
 
-// ==================== SETUP FILTERS ====================
 function setupFilters() {
   var kasirGroup = document.getElementById('filterKasirGroup');
   var filterKasir = document.getElementById('filterKasir');
+  
+  // CEK NULL
+  if (!kasirGroup || !filterKasir) {
+    console.log('⚠️ Elemen filter tidak ditemukan, skip setup');
+    return;
+  }
+  
   if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'owner')) {
     kasirGroup.style.display = 'flex';
     loadKasirList();
   } else {
     kasirGroup.style.display = 'none';
-    if (filterKasir) filterKasir.value = 'all';
+    filterKasir.value = 'all';
   }
   
   var navUser = document.getElementById('navUser');
@@ -3292,25 +3298,23 @@ function setupFilters() {
 
 function loadKasirList() {
   callGAS('getUsers', {})
-  .then(function(result) {
-    if (result && result.success) {
-      allUsers = result.data || [];
-      var filterKasir = document.getElementById('filterKasir');
-      if (!filterKasir) return;
-      filterKasir.innerHTML = '<option value="all">Semua Kasir</option>';
-      for (var i = 0; i < allUsers.length; i++) {
-        if (allUsers[i].role === 'kasir' && allUsers[i].active !== false) {
-          var opt = document.createElement('option');
-          opt.value = allUsers[i].nama || allUsers[i].username;
-          opt.textContent = allUsers[i].nama || allUsers[i].username;
-          filterKasir.appendChild(opt);
+    .then(function(result) {
+      if (result && result.success) {
+        allUsers = result.data || [];
+        var filterKasir = document.getElementById('filterKasir');
+        if (!filterKasir) return;
+        filterKasir.innerHTML = '<option value="all">Semua Kasir</option>';
+        for (var i = 0; i < allUsers.length; i++) {
+          if (allUsers[i].role === 'kasir' && allUsers[i].active !== false) {
+            var opt = document.createElement('option');
+            opt.value = allUsers[i].nama || allUsers[i].username;
+            opt.textContent = allUsers[i].nama || allUsers[i].username;
+            filterKasir.appendChild(opt);
+          }
         }
       }
-    }
-  })
-  .catch(function(error) {
-    console.error('❌ Error loadKasirList:', error);
-  });
+    })
+    .catch(function(error) { console.error('❌ Error loadKasirList:', error); });
 }
 
 // ==================== UPDATE HEADER INFO ====================
@@ -3395,34 +3399,82 @@ function loadAllData() {
 
 // ==================== NAVIGATION ====================
 function showPage(page) {
+  // CEK AKSES BERDASARKAN ROLE
+  if (currentUser) {
+    var role = currentUser.role;
+    var access = {
+      'admin': ['dashboard', 'pos', 'transaksi', 'produk', 'stok', 'reseller', 'user', 'profile'],
+      'owner': ['dashboard', 'pos', 'transaksi', 'produk', 'stok', 'reseller', 'user', 'profile'],
+      'kasir': ['dashboard', 'pos', 'transaksi', 'produk', 'stok', 'reseller', 'profile'],
+      'reseller': ['dashboard', 'pos', 'profile']
+    };
+    var allowed = access[role] || ['dashboard', 'profile'];
+    if (allowed.indexOf(page) === -1) {
+      showToast('⚠️ Anda tidak memiliki akses ke halaman ini!', 'warning');
+      page = role === 'reseller' ? 'dashboard' : 'dashboard';
+    }
+  }
+
   var pages = document.querySelectorAll('.page');
   var navs = document.querySelectorAll('.nav button');
-  for (var i = 0; i < pages.length; i++) {
-    pages[i].classList.remove('active');
-  }
-  for (var i = 0; i < navs.length; i++) {
-    navs[i].classList.remove('active');
-  }
+  for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+  for (var i = 0; i < navs.length; i++) navs[i].classList.remove('active');
+  
   var targetPage = document.getElementById('page-' + page);
   if (targetPage) targetPage.classList.add('active');
+  
   var navButtons = document.querySelectorAll('.nav button');
   for (var i = 0; i < navButtons.length; i++) {
     if (navButtons[i].getAttribute('onclick') === "showPage('" + page + "')") {
       navButtons[i].classList.add('active');
     }
   }
+
   if (page === 'dashboard') loadDashboard();
   if (page === 'pos') { loadPosProduk(); updateCartDisplay(); }
-  if (page === 'transaksi') { 
-    loadTransaksi(); 
-    loadLogPembatalan(); 
-  }
+  if (page === 'transaksi') { loadTransaksi(); loadLogPembatalan(); loadTransaksiReseller(); loadPenjualanReseller(); }
   if (page === 'user') loadUsers();
-  if (page === 'stok') { showSubPage('stok', 'masuk'); }
-  if (page === 'produk') { loadProdukWithRetry(); }
+  if (page === 'stok') showStokSubPage('masuk');
+  if (page === 'produk') { loadProdukWithRetry(); var hs = document.getElementById('hutangVendorSection'); if (hs) { if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'kasir')) { hs.style.display = 'block'; loadHutangVendor(); } else { hs.style.display = 'none'; } } }
+  if (page === 'reseller') { if (currentUser && currentUser.role === 'reseller') { showResellerDashboardSelf(); } else { loadResellers(); loadResellerDropdowns(); updateResellerSummaryDashboard(); } }
   if (page === 'profile') { loadProfile(); }
 }
 
+
+
+  function setupNavigation() {
+  if (!currentUser) return;
+  var role = currentUser.role;
+  var navButtons = document.querySelectorAll('.nav button');
+
+  // Sembunyikan semua
+  for (var i = 0; i < navButtons.length; i++) {
+    navButtons[i].style.display = 'none';
+  }
+
+  var menus = {
+    'admin': ['dashboard', 'pos', 'transaksi', 'produk', 'stok', 'reseller', 'user', 'profile'],
+    'owner': ['dashboard', 'pos', 'transaksi', 'produk', 'stok', 'reseller', 'user', 'profile'],
+    'kasir': ['dashboard', 'pos', 'transaksi', 'produk', 'stok', 'reseller', 'profile'],
+    'reseller': ['dashboard', 'pos', 'profile']
+  };
+
+  var allowedMenus = menus[role] || ['dashboard', 'profile'];
+
+  for (var i = 0; i < navButtons.length; i++) {
+    var btn = navButtons[i];
+    var onclick = btn.getAttribute('onclick') || '';
+    for (var j = 0; j < allowedMenus.length; j++) {
+      if (onclick.indexOf("showPage('" + allowedMenus[j] + "')") > -1) {
+        btn.style.display = '';
+        break;
+      }
+    }
+  }
+}
+
+
+  
 // ==================== REFRESH DASHBOARD ====================
 function refreshDashboard() {
   if (isRefreshing) {
@@ -3460,6 +3512,52 @@ function resetRefreshButton() {
   console.log('✅ Tombol refresh direset');
 }
 
+function updateStatusBadge() {
+  var badge = document.getElementById('statusBadge');
+  if (!badge || !currentUser) return;
+
+  var role = currentUser.role || 'kasir';
+  var roleConfig = {
+    'admin': { text: '🛡️ ADMIN - Akses Penuh', class: 'admin' },
+    'owner': { text: '🛡️ OWNER - Akses Penuh', class: 'admin' },
+    'kasir': { text: '🛒 KASIR - Akses Terbatas', class: 'kasir' },
+    'reseller': { text: '👥 RESELLER - Mode Penjualan', class: 'reseller' }
+  };
+  var config = roleConfig[role] || { text: '👤 USER', class: 'kasir' };
+  badge.textContent = config.text;
+  badge.className = 'status-badge ' + config.class;
+}
+
+  function setupPosMode() {
+  if (!currentUser) return;
+
+  var btnToko = document.getElementById('btnPosToko');
+  var btnReseller = document.getElementById('btnPosReseller');
+  var modeLabel = document.getElementById('posModeLabel');
+
+  if (currentUser.role === 'reseller') {
+    if (btnToko) btnToko.style.display = 'none';
+    if (btnReseller) btnReseller.style.display = 'none';
+    if (modeLabel) {
+      modeLabel.textContent = '🔵 Mode: Reseller (Stok Sendiri)';
+      modeLabel.style.color = '#2196F3';
+    }
+    setPosMode('reseller');
+    autoSelectResellerForPOS();
+  } else {
+    if (btnToko) btnToko.style.display = '';
+    if (btnReseller) btnReseller.style.display = '';
+    if (modeLabel) {
+      modeLabel.textContent = '🏪 Mode: Toko';
+      modeLabel.style.color = 'var(--primary)';
+    }
+    setPosMode('toko');
+  }
+}
+
+
+  
+  
 // ==================== DASHBOARD ====================
 function loadDashboard() {
   var tanggalInput = document.getElementById('filterTanggal');
