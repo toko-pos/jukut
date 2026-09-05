@@ -22,86 +22,24 @@
   <!-- ===== FAVICON ===== -->
   <link rel="icon" type="image/png" href="iconbayamtabur.png">
   
-
- 
-  
   <title>POS System - FIFO</title>
   
- <!-- ===== CEGAH GOOGLE TRANSLATE ===== -->
+  <!-- ===== CEGAH GOOGLE TRANSLATE ===== -->
   <meta name="google" content="notranslate">
   <meta name="google-translate-custom" content="notranslate">
   
-   <!-- ===== PWA FIX UNTUK ANDROID ===== -->
+  <!-- ===== PWA DETECTION - TANPA AUTO-LOGIN! ===== -->
   <script>
   (function() {
-    console.log('🚀 PWA Fix for Android');
-    
-    // 🔥 1. Deteksi PWA Mode
+    // 🔥 HANYA DETEKSI PWA MODE, TANPA AUTO-LOGIN!
     var isPWA = window.matchMedia('(display-mode: standalone)').matches;
     
     if (isPWA) {
-      console.log('📱 Running in PWA mode (Android)');
+      console.log('📱 Running in PWA mode');
       
-      // 🔥 2. Cek apakah ini halaman 404
-      var bodyText = document.body ? document.body.textContent : '';
-      if (bodyText.includes('404') || bodyText.includes('Not Found')) {
-        console.log('⚠️ 404 detected, redirecting to index.html');
+      // 🔥 Cek 404 - redirect tanpa reload loop
+      if (document.body && document.body.textContent.includes('404')) {
         window.location.replace('index.html');
-        return;
-      }
-      
-      // 🔥 3. Cek session di localStorage
-      var savedUser = localStorage.getItem('pos_user');
-      var loginTime = localStorage.getItem('pos_login_time');
-      
-      if (savedUser && loginTime) {
-        try {
-          var user = JSON.parse(savedUser);
-          var timeDiff = Date.now() - parseInt(loginTime);
-          
-          // Jika session masih valid (kurang dari 24 jam)
-          if (timeDiff < 86400000) {
-            console.log('✅ Valid session found for:', user.username);
-            
-            // 🔥 4. Jika sudah login tapi masih di halaman login, redirect
-            var loginPage = document.getElementById('loginPage');
-            var app = document.getElementById('app');
-            
-            if (loginPage && app) {
-              if (loginPage.style.display !== 'none' && app.style.display === 'none') {
-                console.log('🔄 Redirecting to app (already logged in)');
-                // Simulate login success
-                currentUser = user;
-                app.style.display = 'block';
-                loginPage.style.display = 'none';
-                
-                // Load data
-                if (typeof loadAllData === 'function') {
-                  loadAllData();
-                }
-                if (typeof updateHeaderInfo === 'function') {
-                  updateHeaderInfo();
-                }
-                
-                // Update UI
-                var userEl = document.getElementById('currentUser');
-                var roleEl = document.getElementById('currentRole');
-                if (userEl) userEl.textContent = user.nama || user.username;
-                if (roleEl) roleEl.textContent = '(' + (user.role || 'admin') + ')';
-                
-                showToast('✅ Selamat datang kembali, ' + (user.nama || user.username));
-              }
-            }
-          } else {
-            // Session expired
-            console.log('⚠️ Session expired, clearing...');
-            localStorage.removeItem('pos_user');
-            localStorage.removeItem('pos_login_time');
-          }
-        } catch(e) {
-          console.warn('⚠️ Invalid user data:', e);
-          localStorage.removeItem('pos_user');
-        }
       }
     }
   })();
@@ -8390,11 +8328,11 @@ if (typeof loadProduk === 'function') {
 }
 
   
-</script>
 
 
 
-<script>
+
+
 // ============================================================
 // REGISTER SERVICE WORKER - TANPA RELOAD LOOP
 // ============================================================
@@ -8405,11 +8343,8 @@ if ('serviceWorker' in navigator) {
     // 🔥 Cek apakah SW sudah terdaftar
     navigator.serviceWorker.getRegistrations()
       .then(function(registrations) {
-        var hasOldSW = registrations.length > 0;
-        
-        if (hasOldSW) {
+        if (registrations.length > 0) {
           console.log('⚠️ Found existing SW, updating...');
-          // Update existing SW
           return navigator.serviceWorker.register('sw.js?v=' + Date.now(), { 
             scope: '/'
           });
@@ -8422,18 +8357,12 @@ if ('serviceWorker' in navigator) {
       })
       .then(function(registration) {
         console.log('✅ Service Worker registered with scope:', registration.scope);
-        
-        // 🔥 Check for updates every 60 seconds (tidak agresif)
-        setInterval(function() {
-          registration.update();
-        }, 60000);
       })
       .catch(function(error) {
         console.log('❌ Service Worker registration failed:', error);
       });
   });
 }
-
 
 // ============================================================
 // DETEKSI APAKAH SUDAH TERINSTALL SEBAGAI PWA
@@ -9406,43 +9335,7 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
 
   
 </script>
-<script>
-// ============================================================
-// FIX: Redirect jika terjadi 404 di PWA
-// ============================================================
-(function() {
-  // Deteksi jika aplikasi berjalan sebagai PWA
-  if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('📱 Running as PWA');
-    
-    // Cek apakah halaman saat ini adalah 404
-    var is404 = document.title.includes('404') || 
-                document.body.textContent.includes('404') ||
-                document.body.textContent.includes('Not Found');
-    
-    if (is404) {
-      console.log('⚠️ Detected 404 page, redirecting...');
-      
-      // Coba akses index.html
-      fetch('index.html')
-        .then(function(response) {
-          if (response.ok) {
-            window.location.href = 'index.html';
-          } else {
-            // Fallback: reload dengan base path
-            var path = window.location.pathname;
-            var basePath = path.substring(0, path.lastIndexOf('/') + 1);
-            window.location.href = basePath + 'index.html';
-          }
-        })
-        .catch(function() {
-          // Reload current page
-          window.location.reload();
-        });
-    }
-  }
-})();
-</script>
+
 
 <script>
 // ============================================================
@@ -9466,63 +9359,7 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
 })();
 </script>
 
-<script>
-// ============================================================
-// FIX: Android PWA - Prevent Infinite Reload
-// ============================================================
-(function() {
-  // 🔥 Cek apakah ini PWA mode
-  var isPWA = window.matchMedia('(display-mode: standalone)').matches;
-  
-  if (!isPWA) {
-    return; // Bukan PWA, skip
-  }
-  
-  console.log('📱 Android PWA - Checking session');
-  
-  // 🔥 CEK: Apakah sudah login?
-  var savedUser = localStorage.getItem('pos_user');
-  var loginPage = document.getElementById('loginPage');
-  var app = document.getElementById('app');
-  
-  if (savedUser && loginPage && app) {
-    // Jika user sudah login tapi masih di halaman login
-    if (loginPage.style.display !== 'none' && app.style.display === 'none') {
-      console.log('🔄 Auto-login from localStorage');
-      try {
-        var user = JSON.parse(savedUser);
-        currentUser = user;
-        app.style.display = 'block';
-        loginPage.style.display = 'none';
-        
-        // Update UI
-        var userEl = document.getElementById('currentUser');
-        var roleEl = document.getElementById('currentRole');
-        if (userEl) userEl.textContent = user.nama || user.username;
-        if (roleEl) roleEl.textContent = '(' + (user.role || 'admin') + ')';
-        
-        // Load data
-        if (typeof loadAllData === 'function') {
-          setTimeout(function() {
-            loadAllData();
-          }, 100);
-        }
-        
-        showToast('✅ Selamat datang kembali, ' + (user.nama || user.username));
-      } catch(e) {
-        console.warn('⚠️ Auto-login failed:', e);
-        localStorage.removeItem('pos_user');
-      }
-    }
-  }
-  
-  // 🔥 CEK: Mencegah reload loop dengan flag
-  if (!sessionStorage.getItem('pwa_checked')) {
-    sessionStorage.setItem('pwa_checked', 'true');
-    console.log('✅ PWA checked (no reload)');
-  }
-})();
-</script>
+
   
 </body>
 </html>
