@@ -5586,7 +5586,10 @@ function loadTransaksi() {
       return;
     }
     
-    document.getElementById('thLaba').style.display = showLaba ? '' : 'none';
+    var thLaba = document.getElementById('thLaba');
+if (thLaba) {
+    thLaba.style.display = showLaba ? '' : 'none';
+}
     
     callGAS('getTransaksiFilteredWithLaba', {
       tanggalMulai: tanggalMulai,
@@ -5703,16 +5706,17 @@ function printTransaksiPreview() {
 // ==================== LOG PEMBALATAN TRANSAKSI ====================
 function loadLogPembatalan() {
   try {
+    var logTable = document.getElementById('logPembatalanTable');
+    
+    // TAMBAHKAN PENGAMAN INI (Jika tabel tidak ada, langsung berhenti agar tidak error)
+    if (!logTable) return; 
+
     if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'owner')) {
-      document.getElementById('logPembatalanTable').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">🔒 Hanya Admin & Owner yang dapat melihat log pembatalan</td></tr>';
+      logTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">🔒 Hanya Admin & Owner yang dapat melihat log pembatalan</td></tr>';
       return;
     }
     
-    var tbody = document.getElementById('logPembatalanTable');
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
-    
-    var tanggalMulai = document.getElementById('filterTransaksiMulai').value;
-    var tanggalSampai = document.getElementById('filterTransaksiSampai').value;
+    logTable.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
     
     callGAS('getLogPembatalanFiltered', {
       tanggalMulai: tanggalMulai,
@@ -8653,7 +8657,9 @@ function hideResellerTabsForReseller() {
 
 function loadTransaksiReseller() {
   var tbody = document.getElementById('transaksiResellerTable');
-  if (!tbody) return;
+  // TAMBAHKAN BARIS INI
+  if (!tbody) return; 
+
   tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
   
   callGAS('getResellerTransaksi', {})
@@ -8679,7 +8685,9 @@ function loadTransaksiReseller() {
 
 function loadPenjualanReseller() {
   var tbody = document.getElementById('penjualanResellerTable');
-  if (!tbody) return;
+  // TAMBAHKAN BARIS INI
+  if (!tbody) return; 
+
   tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
   
   callGAS('getResellerPenjualan', {})
@@ -8718,7 +8726,7 @@ function showStokSubPage(sub) {
   }
   if (target) target.classList.add('active');
   
-  // Update tombol
+  // TAMBAHKAN PENGAMAN DI SINI (Cek apakah tombolnya ada dulu)
   var btnMasuk = document.getElementById('btnStokMasuk');
   var btnBatch = document.getElementById('btnStokBatch');
   var btnBatal = document.getElementById('btnStokBatal');
