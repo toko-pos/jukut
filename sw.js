@@ -3,7 +3,9 @@
 // ============================================================
 
 const CACHE_NAME = 'pos-app-v2';
-const BASE_PATH = '/'; // GANTI DENGAN PATH APLIKASI ANDA
+
+// 🔥 PERUBAHAN: Deteksi base path secara otomatis
+const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '/') || '/';
 
 const urlsToCache = [
   BASE_PATH,
@@ -17,6 +19,8 @@ const urlsToCache = [
 // ===== INSTALL =====
 self.addEventListener('install', function(event) {
   console.log('🔧 Service Worker: Installing...');
+  console.log('📁 BASE_PATH:', BASE_PATH);
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
@@ -29,7 +33,14 @@ self.addEventListener('install', function(event) {
       })
       .catch(function(err) {
         console.error('❌ Cache failed:', err);
-        return self.skipWaiting();
+        // Coba cache minimal
+        return caches.open(CACHE_NAME)
+          .then(function(cache) {
+            return cache.add(BASE_PATH + 'index.html');
+          })
+          .then(function() {
+            return self.skipWaiting();
+          });
       })
   );
 });
@@ -97,10 +108,22 @@ self.addEventListener('fetch', function(event) {
           })
           .catch(function(error) {
             console.log('❌ Fetch failed:', error);
-            return caches.match(BASE_PATH + 'index.html');
+            // 🔥 PERBAIKAN: Coba ambil index.html dari cache
+            return caches.match(BASE_PATH + 'index.html')
+              .then(function(cachedIndex) {
+                if (cachedIndex) {
+                  return cachedIndex;
+                }
+                // Fallback ke root
+                return caches.match('/index.html');
+              })
+              .catch(function() {
+                return new Response('Halaman tidak ditemukan', { status: 404 });
+              });
           });
       })
   );
 });
 
 console.log('✅ Service Worker loaded!');
+console.log('📁 BASE_PATH:', BASE_PATH);
