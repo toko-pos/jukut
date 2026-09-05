@@ -39,7 +39,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxb08OHvF72rs0WZGptcu5zy5MiY3YGwDGi8hpD8Lp0k7_0BjKANo6clXMxsS0X18NS7g/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyamllX9iSDrhG1OrSvjGNQxmRpc63gIt6cP2GEdNCFT1ZlPV7wqQa-tG2odtJScK4Hbw/exec';
     // ============================================
     // GANTI URL DI ATAS dengan URL deploy GAS Anda
     // Setelah deploy Code.gs, copy URL-nya dan paste di sini
@@ -2109,24 +2109,25 @@
     </div>
     
     <!-- TABEL RESELLER -->
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Kode</th>
-            <th>Nama</th>
-            <th>Kontak</th>
-            <th>Alamat</th>
-            <th>Diskon %</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="resellerTable">
-          <tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">⏳ Memuat data...</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- ===== TABEL RESELLER ===== -->
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Kode</th>
+        <th>Nama</th>
+        <th>Kontak</th>
+        <th>Alamat</th>
+        <th style="text-align:center;min-width:120px;">Harga Khusus</th>
+        <th>Status</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="resellerTable">
+      <tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">⏳ Memuat data...</td></tr>
+    </tbody>
+  </table>
+</div>
   </div>
 </div>
 
@@ -7906,18 +7907,62 @@ function renderResellerTable(data) {
       '<td>' + escapeHtml(r.nama || '-') + '</td>' +
       '<td>' + escapeHtml(r.kontak || '-') + '</td>' +
       '<td>' + escapeHtml(r.alamat || '-') + '</td>' +
-      '<td style="font-weight:bold;color:#FF9800;">' + (r.diskon || 0) + '%</td>' +
+      // 🔥 KOLOM HARGA KHUSUS - TOMBOL ATUR HARGA
+      '<td style="text-align:center;">' +
+        '<button class="btn-atuharga" onclick="aturHargaReseller(\'' + escapeHtml(r.kode) + '\')" ' +
+                'style="padding:6px 14px;font-size:0.75rem;border-radius:8px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);color:white;border:none;cursor:pointer;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(156,39,176,0.3);transition:all 0.3s;">' +
+          '💲 Atur Harga' +
+        '</button>' +
+        '<div style="font-size:0.6rem;color:#999;margin-top:2px;">' +
+          '<span id="hargaCount_' + escapeHtml(r.kode) + '">0 produk</span>' +
+        '</div>' +
+      '</td>' +
       '<td><span class="' + statusClass + '">' + statusText + '</span></td>' +
       '<td style="white-space:nowrap;">' +
-      '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Edit">✏️</button>' +
-      '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Toggle Status">' + (r.active ? '🔇' : '🔊') + '</button>' +
-      '<button class="btn btn-danger btn-sm" onclick="hapusReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Hapus">🗑️</button>' +
+        '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Edit">✏️</button>' +
+        '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Toggle Status">' + (r.active ? '🔇' : '🔊') + '</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="hapusReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Hapus">🗑️</button>' +
       '</td>' +
       '</tr>';
   }
   tbody.innerHTML = html;
+
+
+
+  // ==================== LOAD JUMLAH HARGA PER RESELLER ====================
+function loadHargaCountForResellers() {
+  callGAS('getHargaReseller', {})
+  .then(function(result) {
+    if (!result || !result.success) return;
+    
+    var allHarga = result.data || [];
+    var countMap = {};
+    
+    for (var i = 0; i < allHarga.length; i++) {
+      var kodeReseller = allHarga[i].kodeReseller;
+      if (!countMap[kodeReseller]) countMap[kodeReseller] = 0;
+      countMap[kodeReseller]++;
+    }
+    
+    for (var kode in countMap) {
+      var el = document.getElementById('hargaCount_' + kode);
+      if (el) {
+        el.textContent = countMap[kode] + ' produk';
+      }
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadHargaCount:', error);
+  });
+}
+  
+  // 🔥 LOAD JUMLAH HARGA UNTUK SETIAP RESELLER
+  loadHargaCountForResellers();
 }
 
+
+
+  
 function filterReseller() {
   var keyword = document.getElementById('cariReseller').value.toLowerCase().trim();
   var statusFilter = document.getElementById('filterStatusReseller').value;
@@ -7954,18 +7999,18 @@ function updateResellerFilterInfo(count) {
 
 // ==================== TAMBAH RESELLER ====================
 function showTambahReseller() {
-  // Generate kode otomatis dari server
-  callGAS('generateKodeReseller', {})
-  .then(function(result) {
-    var kodeOtomatis = (result && result.success) ? result.data : 'R-000000-001';
-    
+  getKodeResellerOtomatis()
+  .then(function(kodeOtomatis) {
     document.getElementById('modalTitle').textContent = '➕ Tambah Reseller';
     document.getElementById('modalBody').innerHTML = `
       <form id="formTambahReseller">
         <div class="form-group">
-          <label>Kode Reseller</label>
-          <input type="text" id="fKodeReseller" value="${kodeOtomatis}" readonly style="background:#f0f0f0;font-weight:bold;color:#4CAF50;">
-          <small style="color:#999;display:block;margin-top:3px;">✅ Kode otomatis (R-YYMMDD-XXX)</small>
+          <label>Kode Reseller *</label>
+          <input type="text" id="fKodeReseller" value="${kodeOtomatis}" readonly 
+                 style="background:#f0f0f0;font-weight:bold;color:#4CAF50;font-size:1.1rem;">
+          <small style="color:#999;display:block;margin-top:3px;">
+            ✅ Kode otomatis (R-YYMMDD-XXX) - Tidak bisa diubah
+          </small>
         </div>
         <div class="form-group">
           <label>Nama Reseller *</label>
@@ -7979,12 +8024,18 @@ function showTambahReseller() {
           <label>Alamat</label>
           <textarea id="fAlamatReseller" rows="2" placeholder="Alamat reseller"></textarea>
         </div>
-        <div class="form-group">
-          <label>Diskon (%)</label>
-          <input type="number" id="fDiskonReseller" value="0" min="0" max="100" placeholder="Diskon dalam persen">
-          <small style="color:#999;display:block;margin-top:3px;">Diskon akan diberikan saat transaksi POS</small>
+        
+        <!-- 🔥 INFORMASI HARGA KHUSUS -->
+        <div style="background:#f0f8ff;padding:12px 15px;border-radius:8px;border-left:4px solid #9C27B0;margin-bottom:15px;">
+          <p style="margin:0;font-size:0.85rem;color:#555;">
+            💡 <strong>Harga Khusus:</strong> Setelah reseller dibuat, klik tombol 
+            <strong>"💲 Atur Harga"</strong> di tabel untuk mengatur harga negosiasi per produk.
+          </p>
         </div>
-        <button type="submit" class="btn btn-primary btn-block">💾 Simpan Reseller</button>
+        
+        <button type="submit" class="btn btn-primary btn-block" style="padding:14px;font-size:1.1rem;font-weight:700;border-radius:10px;">
+          💾 Simpan Reseller
+        </button>
       </form>
     `;
     document.getElementById('modal').classList.add('active');
@@ -7993,59 +8044,20 @@ function showTambahReseller() {
       e.preventDefault();
       simpanReseller();
     });
-    
-    // Focus ke nama setelah modal terbuka
-    setTimeout(function() {
-      var inputNama = document.getElementById('fNamaReseller');
-      if (inputNama) inputNama.focus();
-    }, 300);
   })
   .catch(function(error) {
-    // Fallback jika gagal generate
+    // Fallback
     showToast('⚠️ Gagal generate kode: ' + error.message, 'error');
-    // Tampilkan form dengan kode default
-    document.getElementById('modalTitle').textContent = '➕ Tambah Reseller';
-    document.getElementById('modalBody').innerHTML = `
-      <form id="formTambahReseller">
-        <div class="form-group">
-          <label>Kode Reseller</label>
-          <input type="text" id="fKodeReseller" value="R-000000-001" readonly style="background:#f0f0f0;font-weight:bold;color:#4CAF50;">
-          <small style="color:#999;display:block;margin-top:3px;">✅ Kode otomatis (R-YYMMDD-XXX)</small>
-        </div>
-        <div class="form-group">
-          <label>Nama Reseller *</label>
-          <input type="text" id="fNamaReseller" required placeholder="Nama lengkap reseller">
-        </div>
-        <div class="form-group">
-          <label>Kontak</label>
-          <input type="text" id="fKontakReseller" placeholder="No HP / Telepon">
-        </div>
-        <div class="form-group">
-          <label>Alamat</label>
-          <textarea id="fAlamatReseller" rows="2" placeholder="Alamat reseller"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Diskon (%)</label>
-          <input type="number" id="fDiskonReseller" value="0" min="0" max="100" placeholder="Diskon dalam persen">
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">💾 Simpan Reseller</button>
-      </form>
-    `;
-    document.getElementById('modal').classList.add('active');
-    document.getElementById('formTambahReseller').addEventListener('submit', function(e) {
-      e.preventDefault();
-      simpanReseller();
-    });
   });
 }
 
+  
 function simpanReseller() {
   var data = {
-    
     nama: document.getElementById('fNamaReseller').value.trim(),
     kontak: document.getElementById('fKontakReseller').value.trim(),
-    alamat: document.getElementById('fAlamatReseller').value.trim(),
-    diskon: parseInt(document.getElementById('fDiskonReseller').value) || 0
+    alamat: document.getElementById('fAlamatReseller').value.trim()
+    // 🔥 TIDAK ADA DISKON
   };
   
   if (!data.nama) {
