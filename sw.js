@@ -2,10 +2,10 @@
 // SERVICE WORKER - PWA POS SYSTEM (TOKO + RESELLER)
 // ============================================================
 
-const CACHE_NAME = 'pos-app-v2';
+const CACHE_NAME = 'pos-app-v3';
 
-// 🔥 PERUBAHAN: Deteksi base path secara otomatis
-const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '/') || '/';
+// 🔥 FIX: Base path dari lokasi script saat ini
+const BASE_PATH = self.location.pathname.substring(0, self.location.pathname.lastIndexOf('/') + 1);
 
 const urlsToCache = [
   BASE_PATH,
@@ -16,16 +16,23 @@ const urlsToCache = [
   'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
 ];
 
+console.log('📁 Service Worker BASE_PATH:', BASE_PATH);
+console.log('📁 urlsToCache:', urlsToCache);
+
 // ===== INSTALL =====
 self.addEventListener('install', function(event) {
   console.log('🔧 Service Worker: Installing...');
-  console.log('📁 BASE_PATH:', BASE_PATH);
   
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
         console.log('✅ Cache opened');
-        return cache.addAll(urlsToCache);
+        // Coba cache semua file
+        return cache.addAll(urlsToCache).catch(function(err) {
+          console.error('❌ Cache addAll failed:', err);
+          // Fallback: cache minimal
+          return cache.add(BASE_PATH + 'index.html');
+        });
       })
       .then(function() {
         console.log('✅ All files cached');
@@ -33,14 +40,7 @@ self.addEventListener('install', function(event) {
       })
       .catch(function(err) {
         console.error('❌ Cache failed:', err);
-        // Coba cache minimal
-        return caches.open(CACHE_NAME)
-          .then(function(cache) {
-            return cache.add(BASE_PATH + 'index.html');
-          })
-          .then(function() {
-            return self.skipWaiting();
-          });
+        return self.skipWaiting();
       })
   );
 });
@@ -67,13 +67,17 @@ self.addEventListener('activate', function(event) {
 
 // ===== FETCH =====
 self.addEventListener('fetch', function(event) {
-  // Skip Google Apps Script requests
-  if (event.request.url.indexOf('script.google.com') > -1) {
+  const requestUrl = event.request.url;
+  
+  // Skip Google Apps Script API requests
+  if (requestUrl.indexOf('script.google.com') > -1 || 
+      requestUrl.indexOf('googleapis.com') > -1) {
+    console.log('⏭️ Skip API request:', requestUrl);
     return;
   }
 
   // Skip chrome-extension requests
-  if (event.request.url.indexOf('chrome-extension') > -1) {
+  if (requestUrl.indexOf('chrome-extension') > -1) {
     return;
   }
 
@@ -82,43 +86,50 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
+  console.log('🔄 Fetching:', requestUrl);
+
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
         if (response) {
+          console.log('✅ From cache:', requestUrl);
           return response;
         }
 
-        var fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest)
+        return fetch(event.request)
           .then(function(response) {
-            if (!response || response.status !== 200 || response.type !== 'basic') {
+            // Check if we received a valid response
+            if (!response || response.status !== 200) {
+              console.log('⚠️ Response not OK:', response ? response.status : 'no response');
               return response;
             }
 
+            // Clone the response
             var responseToCache = response.clone();
-
+            
+            // Cache the response
             caches.open(CACHE_NAME)
               .then(function(cache) {
-                cache.put(event.request, responseToCache);
+                try {
+                  cache.put(event.request, responseToCache);
+                } catch(e) {
+                  console.warn('⚠️ Failed to cache:', e);
+                }
               });
 
             return response;
           })
           .catch(function(error) {
             console.log('❌ Fetch failed:', error);
-            // 🔥 PERBAIKAN: Coba ambil index.html dari cache
+            // 🔥 FIX: Coba ambil index.html dari cache
             return caches.match(BASE_PATH + 'index.html')
-              .then(function(cachedIndex) {
-                if (cachedIndex) {
-                  return cachedIndex;
+              .then(function(cachedResponse) {
+                if (cachedResponse) {
+                  console.log('✅ Returning cached index.html');
+                  return cachedResponse;
                 }
-                // Fallback ke root
-                return caches.match('/index.html');
-              })
-              .catch(function() {
-                return new Response('Halaman tidak ditemukan', { status: 404 });
+                // Fallback: coba root
+                return caches.match('index.html');
               });
           });
       })
@@ -126,4 +137,3 @@ self.addEventListener('fetch', function(event) {
 });
 
 console.log('✅ Service Worker loaded!');
-console.log('📁 BASE_PATH:', BASE_PATH);
