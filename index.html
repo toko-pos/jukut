@@ -1535,6 +1535,47 @@
     padding: 12px 14px;
   }
 }
+
+
+    /* ===== BADGE STATUS RESELLER - BULAT TANPA TEKS ===== */
+.status-badge {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  vertical-align: middle;
+  transition: all 0.3s ease;
+}
+
+.status-badge.active {
+  background: #4CAF50;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+}
+
+.status-badge.inactive {
+  background: #f44336;
+  box-shadow: 0 0 6px rgba(244, 67, 54, 0.5);
+}
+
+.status-badge:hover {
+  transform: scale(1.2);
+}
+
+/* Tooltip untuk status */
+.status-badge[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  background: #333;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-top: 20px;
+  margin-left: -10px;
+  white-space: nowrap;
+  z-index: 100;
+}
     
   
   </style>
@@ -8021,15 +8062,17 @@ function renderResellerTable(data) {
   var html = '';
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
-    var statusClass = r.active ? 'badge-reseller-active' : 'badge-reseller-inactive';
-    var statusText = r.active ? '✅ Aktif' : '❌ Nonaktif';
+    
+    // 🔥 HANYA BADGE WARNA - TANPA TULISAN
+    var statusBadge = r.active 
+      ? '<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#4CAF50;box-shadow:0 0 4px rgba(76,175,80,0.5);" title="Aktif"></span>' 
+      : '<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#f44336;box-shadow:0 0 4px rgba(244,67,54,0.5);" title="Nonaktif"></span>';
     
     html += '<tr>' +
       '<td><strong>' + escapeHtml(r.kode || '-') + '</strong></td>' +
       '<td>' + escapeHtml(r.nama || '-') + '</td>' +
       '<td>' + escapeHtml(r.kontak || '-') + '</td>' +
       '<td>' + escapeHtml(r.alamat || '-') + '</td>' +
-      // 🔥 KOLOM HARGA KHUSUS - TOMBOL ATUR HARGA
       '<td style="text-align:center;">' +
         '<button class="btn-atuharga" onclick="aturHargaReseller(\'' + escapeHtml(r.kode) + '\')" ' +
                 'style="padding:6px 14px;font-size:0.75rem;border-radius:8px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);color:white;border:none;cursor:pointer;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(156,39,176,0.3);transition:all 0.3s;">' +
@@ -8039,15 +8082,20 @@ function renderResellerTable(data) {
           '<span id="hargaCount_' + escapeHtml(r.kode) + '">0 produk</span>' +
         '</div>' +
       '</td>' +
-      '<td><span class="' + statusClass + '">' + statusText + '</span></td>' +
+      // 🔥 KOLOM STATUS - HANYA BADGE BULAT
+      '<td style="text-align:center;">' + statusBadge + '</td>' +
       '<td style="white-space:nowrap;">' +
         '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Edit">✏️</button>' +
-        '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Toggle Status">' + (r.active ? '🔇' : '🔊') + '</button>' +
+        '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="' + (r.active ? 'Nonaktifkan' : 'Aktifkan') + '">' + (r.active ? '🔇' : '🔊') + '</button>' +
         '<button class="btn btn-danger btn-sm" onclick="hapusReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Hapus">🗑️</button>' +
       '</td>' +
       '</tr>';
   }
   tbody.innerHTML = html;
+  
+  // Load jumlah harga per reseller
+  loadHargaCountForResellers();
+}
 
 
 
