@@ -4415,35 +4415,59 @@ function loadDashboard() {
 // ==================== LOAD LOW STOCK ====================
 
 function loadLowStock() {
+  console.log('🔄 loadLowStock() dipanggil...');
+  
+  var container = document.getElementById('lowStockList');
+  if (!container) {
+    console.error('❌ Elemen lowStockList tidak ditemukan!');
+    return;
+  }
+  
+  // 🔥 TAMPILKAN LOADING
+  container.innerHTML = '⏳ Memuat data stok...';
+  
   callGAS('getProduk', {})
   .then(function(prodResult) {
-    if (prodResult && prodResult.success) {
-      var produk = prodResult.data || [];
-      var lowStock = produk.filter(function(p) { 
-        return parseInt(p.Stok) <= parseInt(p['Minimum Stok'] || 0); 
-      });
-      var container = document.getElementById('lowStockList');
-      if (container) {
-        if (lowStock.length === 0) { 
-          container.innerHTML = '✅ Semua produk stok aman'; 
-        } else { 
-          var html = ''; 
-          for (var i = 0; i < lowStock.length; i++) { 
-            html += '⚠️ ' + lowStock[i]['Nama Produk'] + ' - Stok: ' + lowStock[i].Stok + ' ' + (lowStock[i].Satuan || 'pcs') + '<br>'; 
-          } 
-          container.innerHTML = html; 
-        }
-      }
+    console.log('📥 Result getProduk:', prodResult);
+    
+    if (!prodResult || !prodResult.success) {
+      container.innerHTML = '❌ Gagal memuat data produk: ' + (prodResult ? prodResult.error : 'Unknown error');
+      return;
+    }
+    
+    var produk = prodResult.data || [];
+    console.log('📦 Total produk:', produk.length);
+    
+    // 🔥 FILTER STOK RENDAH
+    var lowStock = produk.filter(function(p) { 
+      var stok = parseInt(p.Stok) || 0;
+      var minStok = parseInt(p['Minimum Stok']) || 0;
+      return stok <= minStok; 
+    });
+    
+    console.log('⚠️ Produk stok rendah:', lowStock.length);
+    
+    if (lowStock.length === 0) { 
+      container.innerHTML = '✅ Semua produk stok aman'; 
+    } else { 
+      var html = ''; 
+      for (var i = 0; i < lowStock.length; i++) { 
+        var stok = lowStock[i].Stok || 0;
+        var nama = lowStock[i]['Nama Produk'] || '-';
+        var satuan = lowStock[i].Satuan || 'pcs';
+        var minStok = lowStock[i]['Minimum Stok'] || 0;
+        html += '⚠️ <strong>' + nama + '</strong> - Stok: ' + stok + ' ' + satuan + ' (Minimum: ' + minStok + ')<br>'; 
+      } 
+      container.innerHTML = html; 
     }
   })
   .catch(function(error) { 
-    console.error('Error load low stock:', error); 
-    var container = document.getElementById('lowStockList');
-    if (container) {
-      container.innerHTML = '❌ Gagal memuat data stok';
-    }
+    console.error('❌ Error load low stock:', error); 
+    container.innerHTML = '❌ Error: ' + error.message;
   });
 }
+
+  
 // ==================== LOAD CHART ====================
 function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
   try {
