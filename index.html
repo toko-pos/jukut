@@ -58,7 +58,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbznKjVW27O0WUA6yJppEFSvHhc3CDDF4bZBzEWxIhkTPibgRA0s580yTHU-KvLg0e_tyQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzj0W1XssmnFPFTvg_wCv-BUM8TJJry4KI-iT7jER5gQFkjRsAzBbH2HUf-AyoVrvYNqA/exec';
     // ============================================
   </script>
 
@@ -4035,38 +4035,30 @@ function setupFilters() {
   console.log('📊 isAdmin:', isAdmin, 'Role:', role);
   
   if (isAdmin) {
-    // 🔥 TAMPILKAN FILTER KASIR
+    // 🔥 TAMPILKAN FILTER KASIR UNTUK ADMIN
     if (kasirGroup) {
       kasirGroup.style.display = 'flex';
       console.log('✅ Filter Kasir ditampilkan');
-    } else {
-      console.warn('⚠️ filterKasirGroup tidak ditemukan di DOM!');
     }
     
-    // 🔥 TAMPILKAN MENU USER
     if (navUser) {
       navUser.style.display = 'inline-block';
       console.log('✅ Menu User ditampilkan');
-    } else {
-      console.warn('⚠️ navUser tidak ditemukan di DOM!');
     }
     
-    // 🔥 LOAD DAFTAR KASIR
     loadKasirList();
     
-    // 🔥🔥🔥 TAMBAHKAN EVENT LISTENER UNTUK FILTER KASIR 🔥🔥🔥
     if (filterKasir) {
-      // Hapus listener lama untuk menghindari duplikasi
       filterKasir.removeEventListener('change', onKasirFilterChange);
       filterKasir.addEventListener('change', onKasirFilterChange);
       console.log('✅ Event listener filter kasir terpasang');
     }
     
   } else {
-    // Sembunyikan untuk kasir/reseller
+    // 🔥 SEMBUNYIKAN FILTER KASIR UNTUK KASIR/RESELLER
     if (kasirGroup) {
       kasirGroup.style.display = 'none';
-      console.log('❌ Filter Kasir disembunyikan');
+      console.log('❌ Filter Kasir disembunyikan untuk non-admin');
     }
     if (filterKasir) {
       filterKasir.value = 'all';
@@ -4342,16 +4334,21 @@ function loadDashboard() {
   // 🔥 AMBIL KASIR DARI DROPDOWN
   var kasir = kasirInput ? kasirInput.value : 'all';
   
-  // 🔥 LOG UNTUK DEBUG
-  console.log('📊 loadDashboard - Tanggal:', tanggal, 'Kasir:', kasir);
-  
   var namaUser = currentUser ? currentUser.nama : '';
   var role = currentUser ? currentUser.role : 'kasir';
   
-  // 🔥 JIKA ROLE KASIR, FORCE KASIR = NAMA USER
-  if (role === 'kasir') {
+  // 🔥 LOG UNTUK DEBUG
+  console.log('📊 loadDashboard - Tanggal:', tanggal, 'Kasir:', kasir, 'Role:', role, 'NamaUser:', namaUser);
+  
+  // 🔥 JIKA ROLE KASIR, FORCE KASIR = NAMA USER (abaikan dropdown)
+  var roleUpper = (role || '').toUpperCase();
+  if (roleUpper !== 'ADMIN' && roleUpper !== 'OWNER') {
     kasir = namaUser;
-    console.log('📊 Kasir mode, force kasir:', kasir);
+    console.log('🔒 Kasir mode - FORCE kasir:', kasir);
+    
+    // 🔥 SEMBUNYIKAN DROPDOWN KASIR UNTUK KASIR
+    var kasirGroup = document.getElementById('filterKasirGroup');
+    if (kasirGroup) kasirGroup.style.display = 'none';
   }
   
   var dateParts = tanggal.split('-');
@@ -4384,7 +4381,7 @@ function loadDashboard() {
   document.getElementById('nilaiStok').textContent = '⏳';
   document.getElementById('potensiPenjualan').textContent = '⏳';
   
-  // 🔥 PANGGIL API DENGAN PARAMETER KASIR
+  // 🔥 PANGGIL API DENGAN PARAMETER YANG BENAR
   callGAS('getDashboardDataBulanan', {
     tanggal: tanggal,
     kasir: kasir,
@@ -4415,7 +4412,18 @@ function loadDashboard() {
   })
   .catch(function(error) {
     console.error('Error loadDashboard:', error);
-    // ... error handling ...
+    document.getElementById('keuntunganHari').textContent = '❌ Error';
+    document.getElementById('penjualanHari').textContent = '❌ Error';
+    document.getElementById('quantityHari').textContent = '❌';
+    document.getElementById('totalTransaksi').textContent = '❌';
+    document.getElementById('keuntunganBulan').textContent = '❌';
+    document.getElementById('stokRendah').textContent = '❌';
+    document.getElementById('totalQuantityBulan').textContent = '❌';
+    document.getElementById('totalTransaksiBulan').textContent = '❌';
+    document.getElementById('nilaiStok').textContent = '❌';
+    document.getElementById('potensiPenjualan').textContent = '❌';
+    showToast('❌ Gagal memuat dashboard: ' + error.message, 'error');
+    resetRefreshButton();
   });
 }
 
