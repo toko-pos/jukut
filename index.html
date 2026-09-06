@@ -3530,6 +3530,40 @@ function getTanggalStokMasuk() {
   return input.value || '';
 }
 
+// ==================== LOAD LOW STOCK ====================
+
+function loadLowStock() {
+  callGAS('getProduk', {})
+  .then(function(prodResult) {
+    if (prodResult && prodResult.success) {
+      var produk = prodResult.data || [];
+      var lowStock = produk.filter(function(p) { 
+        return parseInt(p.Stok) <= parseInt(p['Minimum Stok'] || 0); 
+      });
+      var container = document.getElementById('lowStockList');
+      if (container) {
+        if (lowStock.length === 0) { 
+          container.innerHTML = '✅ Semua produk stok aman'; 
+        } else { 
+          var html = ''; 
+          for (var i = 0; i < lowStock.length; i++) { 
+            html += '⚠️ ' + lowStock[i]['Nama Produk'] + ' - Stok: ' + lowStock[i].Stok + ' ' + (lowStock[i].Satuan || 'pcs') + '<br>'; 
+          } 
+          container.innerHTML = html; 
+        }
+      }
+    }
+  })
+  .catch(function(error) { 
+    console.error('Error load low stock:', error); 
+    var container = document.getElementById('lowStockList');
+    if (container) {
+      container.innerHTML = '❌ Gagal memuat data stok';
+    }
+  });
+}
+
+  
 // ==================== SHOW SUB PAGE ====================
 function showSubPage(parent, sub) {
   var parentId = parent;
@@ -4407,9 +4441,7 @@ function loadDashboard() {
     // 🔥 LOAD GRAFIK DENGAN FILTER KASIR
     loadBulananChart(tanggal, kasir, namaUser, role);
     
-    // 🔥 LOAD STOK RENDAH
-    loadLowStock();
-  })
+   })
   .catch(function(error) {
     console.error('Error loadDashboard:', error);
     document.getElementById('keuntunganHari').textContent = '❌ Error';
