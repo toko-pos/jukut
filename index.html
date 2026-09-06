@@ -3601,8 +3601,12 @@ function showSubPage(parent, sub) {
   // ==================== SHOW APP BY ROLE ====================
 
 function showAppByRole() {
-  if (!currentUser) return;
+  if (!currentUser) {
+    console.warn('⚠️ currentUser null, tidak bisa menampilkan app');
+    return;
+  }
   
+  // 🔥 CASE INSENSITIVE
   var role = currentUser.role ? currentUser.role.toUpperCase() : 'KASIR';
   console.log('🎯 Menampilkan app untuk role:', role);
   
@@ -3621,12 +3625,18 @@ function showAppByRole() {
       navAdmin.style.display = 'flex';
       console.log('✅ Navigasi Admin ditampilkan');
     }
-    // Aktifkan menu User
-    var navUser = document.getElementById('navUser');
-    if (navUser) navUser.style.display = 'inline-block';
-    // Tampilkan filter kasir
+    // 🔥 TAMPILKAN FILTER KASIR
     var kasirGroup = document.getElementById('filterKasirGroup');
-    if (kasirGroup) kasirGroup.style.display = 'flex';
+    if (kasirGroup) {
+      kasirGroup.style.display = 'flex';
+      console.log('✅ Filter Kasir ditampilkan');
+    }
+    // 🔥 TAMPILKAN MENU USER
+    var navUser = document.getElementById('navUser');
+    if (navUser) {
+      navUser.style.display = 'inline-block';
+      console.log('✅ Menu User ditampilkan');
+    }
     // Load daftar kasir
     loadKasirList();
     
@@ -3638,9 +3648,6 @@ function showAppByRole() {
     // Sembunyikan filter kasir
     var kasirGroup = document.getElementById('filterKasirGroup');
     if (kasirGroup) kasirGroup.style.display = 'none';
-    // Sembunyikan menu User
-    var navUser = document.getElementById('navUser');
-    if (navUser) navUser.style.display = 'none';
     
   } else {
     // KASIR / DEFAULT
@@ -3655,6 +3662,9 @@ function showAppByRole() {
     var navUser = document.getElementById('navUser');
     if (navUser) navUser.style.display = 'none';
   }
+  
+  // 🔥 SETUP FILTERS (panggil lagi untuk memastikan)
+  setupFilters();
 }
 
 // ==================== SESSION MANAGEMENT ====================
@@ -3675,13 +3685,9 @@ function checkSession() {
           // 🔥 UPDATE currentUser dengan data terbaru dari server
           if (result.user) {
             currentUser = result.user;
-            // Simpan kembali ke localStorage dengan data terbaru
             localStorage.setItem('pos_user', JSON.stringify(currentUser));
             console.log('✅ User updated dari server:', currentUser);
           }
-          
-          // 🔥 TAMPILKAN APP SESUAI ROLE
-          showAppByRole();
           
           // 🔥 TAMPILKAN APP
           var app = document.getElementById('app');
@@ -3692,11 +3698,11 @@ function checkSession() {
           // 🔥 UPDATE HEADER
           var currentUserEl = document.getElementById('currentUser');
           var currentRoleEl = document.getElementById('currentRole');
-          if (currentUserEl) currentUserEl.textContent = currentUser.nama;
-          if (currentRoleEl) currentRoleEl.textContent = '(' + currentUser.role + ')';
+          if (currentUserEl) currentUserEl.textContent = currentUser.nama || currentUser.username;
+          if (currentRoleEl) currentRoleEl.textContent = '(' + (currentUser.role || 'kasir') + ')';
           
-          // 🔥 SETUP FILTERS
-          setupFilters();
+          // 🔥 TAMPILKAN NAVIGASI SESUAI ROLE
+          showAppByRole();
           
           // 🔥 SETUP TANGGAL
           var today = getTodayString();
@@ -4016,31 +4022,38 @@ document.addEventListener('DOMContentLoaded', function() {
 // ==================== SETUP FILTERS ====================
 
 function setupFilters() {
-  console.log('🔧 Setup filters untuk role:', currentUser ? currentUser.role : 'none');
+  console.log('🔧 Setup filters - currentUser:', currentUser);
   
   var kasirGroup = document.getElementById('filterKasirGroup');
   var filterKasir = document.getElementById('filterKasir');
   var navUser = document.getElementById('navUser');
   
-  // 🔥 CEK ROLE
+  // 🔥 CEK ROLE - case insensitive
   var role = currentUser ? currentUser.role.toUpperCase() : 'KASIR';
   var isAdmin = (role === 'ADMIN' || role === 'OWNER');
   
   console.log('📊 isAdmin:', isAdmin, 'Role:', role);
   
   if (isAdmin) {
-    // Tampilkan filter kasir untuk admin
+    // 🔥 TAMPILKAN FILTER KASIR
     if (kasirGroup) {
       kasirGroup.style.display = 'flex';
       console.log('✅ Filter Kasir ditampilkan');
+    } else {
+      console.warn('⚠️ filterKasirGroup tidak ditemukan di DOM!');
     }
-    // Tampilkan menu User untuk admin
+    
+    // 🔥 TAMPILKAN MENU USER
     if (navUser) {
       navUser.style.display = 'inline-block';
       console.log('✅ Menu User ditampilkan');
+    } else {
+      console.warn('⚠️ navUser tidak ditemukan di DOM!');
     }
-    // Load daftar kasir
+    
+    // 🔥 LOAD DAFTAR KASIR
     loadKasirList();
+    
   } else {
     // Sembunyikan untuk kasir/reseller
     if (kasirGroup) {
@@ -6729,10 +6742,16 @@ function prosesBatalTransaksi(idTransaksi) {
 
 // ==================== USER MANAGEMENT ====================
 function loadUsers() {
-  if (!currentUser || currentUser.role !== 'admin') {
-    document.getElementById('userTable').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">Hanya admin yang dapat mengelola user</td></tr>';
+  // 🔥 PERBAIKI: Gunakan toUpperCase() untuk case insensitive
+  var role = currentUser ? currentUser.role.toUpperCase() : '';
+  var isAdmin = (role === 'ADMIN' || role === 'OWNER');
+  
+  if (!isAdmin) {
+    document.getElementById('userTable').innerHTML = 
+      '<tr><td colspan="5" style="text-align:center;color:#999;">Hanya admin yang dapat mengelola user</td></tr>';
     return;
   }
+  
   callGAS('getUsers', {})
   .then(function(result) {
     if (!result || !result.success) {
@@ -6740,13 +6759,16 @@ function loadUsers() {
     }
     allUsers = result.data || [];
     var tbody = document.getElementById('userTable');
-    if (allUsers.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">Belum ada user</td></tr>'; return; }
+    if (allUsers.length === 0) { 
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">Belum ada user</td></tr>'; 
+      return; 
+    }
     var html = '';
     for (var i = 0; i < allUsers.length; i++) {
       var u = allUsers[i];
       var statusColor = u.active ? 'green' : 'red';
       var statusText = u.active ? '✅ Aktif' : '❌ Nonaktif';
-      var roleColor = u.role === 'admin' ? '#4CAF50' : '#ff9800';
+      var roleColor = u.role === 'admin' || u.role === 'ADMIN' || u.role === 'owner' || u.role === 'OWNER' ? '#4CAF50' : '#ff9800';
       var actionBtn = u.username !== currentUser.username ?
         '<button onclick="toggleUser(\'' + u.username + '\')" class="btn ' + (u.active ? 'btn-warning' : 'btn-success') + '" style="padding:5px 10px;font-size:0.8rem;">' + (u.active ? 'Nonaktifkan' : 'Aktifkan') + '</button>' :
         '<span style="color:#999;">Anda</span>';
