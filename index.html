@@ -66,7 +66,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwm8IBkaxMsZm2NPdJs8gbXdR8yMzPdZK5I_iNjp26oPtO2kSgOrgrLpd8gNbBDoO9BgQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwktz4Y9bMz4D1k72pJ8YI6Nh-rBgyv8TkGQBQWiPGthQcdB4Fs8mlXYlhx_MRni9OKtA/exec';
     // ============================================
   </script>
 
@@ -6399,7 +6399,22 @@ function loadTransaksi() {
           var tanggal = formatTanggalDisplay(t.tanggal) + ' ' + (t.waktu || '');
           var showCancel = (currentUser.role === 'admin' || currentUser.role === 'owner' || 
                            t.kasir.toLowerCase() === (currentUser.nama || '').toLowerCase());
-          
+
+
+      // Di dalam loadTransaksi() - bagian render tabel
+
+var isReseller = t.isReseller || String(t.kasir).toLowerCase().indexOf('reseller') !== -1;
+var badgeReseller = isReseller ? '<span class="badge-reseller" style="background:#9C27B0;color:white;padding:2px 8px;border-radius:10px;font-size:0.6rem;margin-left:5px;">👥 Reseller</span>' : '';
+
+html += '<tr>' +
+  '<td>' + (i + 1) + '</td>' +
+  '<td>' + tanggal + '</td>' +
+  '<td><strong>' + t.id + '</strong></td>' +
+  '<td>' + t.kasir + badgeReseller + '</td>' + // 🔥 TAMBAHKAN BADGE
+  '<td>' + formatRupiah(t.total) + '</td>' +
+
+
+  
           html += '<tr>' +
             '<td>' + (i + 1) + '</td>' +
             '<td>' + tanggal + '</td>' +
@@ -6411,7 +6426,10 @@ function loadTransaksi() {
             html += '<td style="color:' + (t.laba >= 0 ? '#4CAF50' : '#f44336') + ';">' + formatRupiah(t.laba) + '</td>';
             totalLaba += t.laba;
           }
-          
+
+
+
+  
           html += '<td><span style="background:#4CAF50;color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + t.status + '</span></td>' +
             '<td style="white-space:nowrap;">' +
             '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + t.id + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Cetak Struk">🖨️</button>';
