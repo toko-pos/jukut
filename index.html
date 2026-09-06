@@ -66,7 +66,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzxu4nI9Svo5-Px_415EvslMMD3cFLxB0Pf-UD-L3ZTGtkS7GEtIn5Jl2jsd9nlRzogBA/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwkWpgBidRViyJaaPasaT6owV2gVX2bTa3C61SO3WFHE_cm4AttyZSfOyMlUC2QuRHzoQ/exec';
     // ============================================
   </script>
 
@@ -4470,6 +4470,7 @@ function loadAllData() {
   updatePosUI();
   updateStokMasukUI();
   generateNoNotaStok();
+  loadResellerOptions(); // 🔥 TAMBAHKAN INI
 }
 
 // ==================== NAVIGATION ====================
@@ -9788,16 +9789,32 @@ function loadResellerOptions() {
   
   var previousValue = select.value;
   
+  // Reset dropdown
   select.innerHTML = '<option value="">-- Tanpa Reseller (Harga Normal) --</option>';
   
-  callGAS('getResellerActive', {})
+  // 🔥 GUNAKAN getReseller BUKAN getResellerActive
+  callGAS('getReseller', {})
   .then(function(result) {
-    if (!result || !result.success) return;
+    console.log('📥 Response loadResellerOptions:', result); // DEBUG
+    
+    if (!result || !result.success) {
+      console.warn('⚠️ Gagal load reseller:', result ? result.error : 'Unknown');
+      return;
+    }
     
     var resellers = result.data || [];
+    console.log('📋 Jumlah reseller:', resellers.length);
     
-    for (var i = 0; i < resellers.length; i++) {
-      var r = resellers[i];
+    // 🔥 FILTER HANYA YANG AKTIF
+    var activeResellers = resellers.filter(function(r) { return r.active !== false; });
+    
+    if (activeResellers.length === 0) {
+      console.log('ℹ️ Tidak ada reseller aktif');
+      return;
+    }
+    
+    for (var i = 0; i < activeResellers.length; i++) {
+      var r = activeResellers[i];
       var option = document.createElement('option');
       option.value = r.kode;
       option.textContent = r.kode + ' - ' + r.nama;
@@ -9805,22 +9822,22 @@ function loadResellerOptions() {
       select.appendChild(option);
     }
     
+    // Restore previous value if exists
     if (previousValue) {
       select.value = previousValue;
     }
     
-    // 🔥 UPDATE STATUS NAMA PEMBELI
+    // Update UI
     updateNamaPembeliStatus();
-    
-    // 🔥 JIKA ADA RESELLER TERPILIH, PANGGIL onResellerChange
     if (select.value) {
       onResellerChange();
     }
     
-    console.log('✅ Reseller options loaded: ' + resellers.length);
+    console.log('✅ Reseller options loaded: ' + activeResellers.length);
   })
   .catch(function(error) {
     console.error('❌ Error loadResellerOptions:', error);
+    showToast('⚠️ Gagal memuat daftar reseller: ' + error.message, 'error');
   });
 }
 
