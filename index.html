@@ -4070,23 +4070,85 @@ function setupFilters() {
   }
 }
 
+// ==================== LOAD KASIR LIST ====================
+
 function loadKasirList() {
+  console.log('🔄 loadKasirList() dipanggil...');
+  
+  // 🔥 CEK currentUser
+  if (!currentUser) {
+    console.warn('⚠️ currentUser null, tidak bisa load kasir');
+    return;
+  }
+  
+  // 🔥 CEK ROLE ADMIN
+  var role = currentUser.role ? currentUser.role.toUpperCase() : '';
+  if (role !== 'ADMIN' && role !== 'OWNER') {
+    console.log('ℹ️ Bukan admin, tidak perlu load kasir');
+    return;
+  }
+  
   callGAS('getUsers', {})
   .then(function(result) {
-    if (result && result.success) {
-      allUsers = result.data || [];
-      var filterKasir = document.getElementById('filterKasir');
-      if (!filterKasir) return;
-      filterKasir.innerHTML = '<option value="all">Semua Kasir</option>';
-      for (var i = 0; i < allUsers.length; i++) {
-        if (allUsers[i].role === 'kasir' && allUsers[i].active !== false) {
-          var opt = document.createElement('option');
-          opt.value = allUsers[i].nama || allUsers[i].username;
-          opt.textContent = allUsers[i].nama || allUsers[i].username;
-          filterKasir.appendChild(opt);
-        }
+    console.log('📥 Result getUsers:', result);
+    
+    if (!result || !result.success) {
+      console.error('❌ Gagal getUsers:', result ? result.error : 'Unknown error');
+      return;
+    }
+    
+    allUsers = result.data || [];
+    console.log('📋 Total users:', allUsers.length);
+    
+    var filterKasir = document.getElementById('filterKasir');
+    if (!filterKasir) {
+      console.error('❌ Elemen filterKasir tidak ditemukan!');
+      return;
+    }
+    
+    // 🔥 SIMPAN VALUE SEBELUMNYA
+    var previousValue = filterKasir.value;
+    
+    // 🔥 RESET DROPDOWN
+    filterKasir.innerHTML = '<option value="all">Semua Kasir</option>';
+    
+    var countKasir = 0;
+    
+    // 🔥 LOOP SEMUA USER - CASE INSENSITIVE
+    for (var i = 0; i < allUsers.length; i++) {
+      var user = allUsers[i];
+      var userRole = user.role ? user.role.toUpperCase() : '';
+      var isActive = user.active !== false;
+      
+      console.log('🔍 User:', user.username, 'Role:', userRole, 'Active:', isActive);
+      
+      // 🔥 TAMPILKAN USER DENGAN ROLE KASIR (case insensitive)
+      if ((userRole === 'KASIR' || userRole === 'CASHIER') && isActive) {
+        var option = document.createElement('option');
+        option.value = user.nama || user.username;
+        option.textContent = user.nama || user.username;
+        filterKasir.appendChild(option);
+        countKasir++;
+        console.log('✅ Kasir ditambahkan:', option.textContent);
       }
     }
+    
+    console.log('✅ Total kasir ditambahkan:', countKasir);
+    
+    // 🔥 RESTORE VALUE SEBELUMNYA
+    if (previousValue && previousValue !== 'all') {
+      var exists = false;
+      for (var i = 0; i < filterKasir.options.length; i++) {
+        if (filterKasir.options[i].value === previousValue) {
+          exists = true;
+          break;
+        }
+      }
+      if (exists) {
+        filterKasir.value = previousValue;
+      }
+    }
+    
   })
   .catch(function(error) {
     console.error('❌ Error loadKasirList:', error);
