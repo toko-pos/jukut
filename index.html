@@ -2906,6 +2906,31 @@ function escapeHtml(v) {
 function showRegister() {
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('registerForm').style.display = 'block';
+  
+  // Reset form
+  document.getElementById('formRegister').reset();
+  
+  // Set default role KASIR
+  var defaultRadio = document.querySelector('input[name="regRole"][value="KASIR"]');
+  if (defaultRadio) {
+    defaultRadio.checked = true;
+  }
+  
+  // Sembunyikan kode reseller
+  var group = document.getElementById('kodeResellerGroup');
+  if (group) {
+    group.style.display = 'none';
+  }
+  
+  // Kosongkan input kode reseller
+  var inputKode = document.getElementById('regKodeReseller');
+  if (inputKode) {
+    inputKode.value = '';
+    inputKode.required = false;
+  }
+  
+  // Fokus ke username
+  document.getElementById('regUsername').focus();
 }
 
 function showLogin() {
@@ -4088,6 +4113,21 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
 
+// 🔥 PASANG EVENT LISTENER UNTUK RADIO BUTTON
+  var roleRadios = document.querySelectorAll('input[name="regRole"]');
+  roleRadios.forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      console.log('🔄 Radio berubah ke:', this.value);
+      toggleKodeReseller();
+    });
+  });
+  
+  // 🔥 PANGGIL SEKALI UNTUK SET DEFAULT (KASIR)
+  setTimeout(function() {
+    toggleKodeReseller();
+  }, 200);
+
+  
   // JavaScript untuk toggle field Kode Reseller
 document.querySelectorAll('input[name="role"]').forEach(function(radio) {
   radio.addEventListener('change', function() {
@@ -9309,6 +9349,50 @@ function loadReseller() {
   });
 }
 
+// ==================== TOGGLE KODE RESELLER ====================
+function toggleKodeReseller() {
+  console.log('🔄 toggleKodeReseller() dipanggil');
+  
+  var roleRadios = document.querySelectorAll('input[name="regRole"]');
+  var kodeResellerGroup = document.getElementById('kodeResellerGroup');
+  var kodeResellerInput = document.getElementById('regKodeReseller');
+  
+  if (!roleRadios.length) {
+    console.warn('⚠️ Radio button regRole tidak ditemukan!');
+    return;
+  }
+  if (!kodeResellerGroup) {
+    console.warn('⚠️ Elemen kodeResellerGroup tidak ditemukan!');
+    return;
+  }
+  
+  var selectedRole = '';
+  for (var i = 0; i < roleRadios.length; i++) {
+    if (roleRadios[i].checked) {
+      selectedRole = roleRadios[i].value;
+      break;
+    }
+  }
+  
+  console.log('📋 Role terpilih:', selectedRole);
+  
+  if (selectedRole === 'RESELLER') {
+    kodeResellerGroup.style.display = 'block';
+    if (kodeResellerInput) {
+      kodeResellerInput.required = true;
+      kodeResellerInput.focus();
+    }
+    console.log('✅ Kode Reseller ditampilkan');
+  } else {
+    kodeResellerGroup.style.display = 'none';
+    if (kodeResellerInput) {
+      kodeResellerInput.required = false;
+      kodeResellerInput.value = '';
+    }
+    console.log('❌ Kode Reseller disembunyikan');
+  }
+}
+  
 function renderResellerTable(data) {
   var tbody = document.getElementById('resellerTable');
   if (!tbody) return;
