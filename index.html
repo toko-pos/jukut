@@ -1,19 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  
-<base target="_top">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<!-- ===== PWA META TAGS ===== -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">  <!-- 🔥 TAMBAHKAN INI -->
-
-<!-- ===== THEME COLOR ===== -->
-<meta name="theme-color" content="#4CAF50">
-<meta name="msapplication-TileColor" content="#4CAF50">
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <!-- ===== PWA MANIFEST ===== -->
   <link rel="manifest" href="manifest.json">
@@ -2688,7 +2680,9 @@
   
 
 <script>
-// ==================== UTILITY FUNCTIONS ====================
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
 function formatTanggalDisplay(tanggal, withTime) {
   if (!tanggal) return '-';
   try {
@@ -2786,7 +2780,7 @@ function getProductImage(gambarUrl, namaProduk) {
         url = 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w400';
       }
     }
-    return `<img src="${url}" alt="${namaProduk}" style="width:100%; height:100px; object-fit:cover;" onerror="this.outerHTML='<div class=&quot;no-image&quot;>📷</div>'">`;
+    return '<img src="' + url + '" alt="' + namaProduk + '" style="width:100%; height:100px; object-fit:cover;" onerror="this.outerHTML=\'<div class=&quot;no-image&quot;>📷</div>\'">';
   }
   return '<div class="no-image">📷</div>';
 }
@@ -2808,23 +2802,12 @@ function showToast(message, type) {
   }, 1500);
 }
 
-function showDebug(message) {
-  var debugEl = document.getElementById('debugInfo');
-  if (debugEl) {
-    debugEl.textContent = '🔍 ' + message;
-    debugEl.classList.add('show');
-    console.log('🔍 DEBUG:', message);
-  }
+function escapeHtml(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(m) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m];
+  });
 }
 
-function hideDebug() {
-  var debugEl = document.getElementById('debugInfo');
-  if (debugEl) {
-    debugEl.classList.remove('show');
-  }
-}
-
-  
 function togglePasswordVisibility(inputId, button) {
   var input = document.getElementById(inputId);
   if (!input) return;
@@ -2835,12 +2818,6 @@ function togglePasswordVisibility(inputId, button) {
     input.type = 'password';
     if (button) button.textContent = '👁️';
   }
-}
-
-function escapeHtml(v) {
-  return String(v == null ? '' : v).replace(/[&<>"']/g, function(m) {
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m];
-  });
 }
 
 function showRegister() {
@@ -2854,13 +2831,12 @@ function showLogin() {
 }
 
 // ============================================================
-// 🔥 FUNGSI PANGGIL GAS VIA FETCH - UNTUK GITHUB PAGES
+// 🔥 FUNGSI PANGGIL GAS VIA FETCH
 // ============================================================
 function callGAS(action, data) {
   return new Promise(function(resolve, reject) {
     console.log('📤 callGAS:', action, data);
     
-    // 🔥 FIX: Gunakan GAS_URL dari variabel global
     fetch(GAS_URL, {
       method: 'POST',
       headers: {
@@ -2888,23 +2864,121 @@ function callGAS(action, data) {
   });
 }
 
-// ==================== LOAD LOGO ====================
+// ============================================================
+// REGISTER SERVICE WORKER - TANPA RELOAD LOOP
+// ============================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    console.log('📦 Checking Service Worker...');
+    
+    navigator.serviceWorker.getRegistrations()
+      .then(function(registrations) {
+        if (registrations.length > 0) {
+          console.log('⚠️ Found existing SW, updating...');
+          return navigator.serviceWorker.register('sw.js?v=' + Date.now(), { 
+            scope: '/'
+          });
+        } else {
+          console.log('📦 Registering new SW...');
+          return navigator.serviceWorker.register('sw.js', { 
+            scope: '/'
+          });
+        }
+      })
+      .then(function(registration) {
+        console.log('✅ Service Worker registered with scope:', registration.scope);
+      })
+      .catch(function(error) {
+        console.log('❌ Service Worker registration failed:', error);
+      });
+  });
+}
+
+// ============================================================
+// DETEKSI APAKAH SUDAH TERINSTALL SEBAGAI PWA
+// ============================================================
+window.addEventListener('load', function() {
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('✅ Aplikasi berjalan sebagai PWA (standalone)');
+    var banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'none';
+  } else {
+    console.log('ℹ️ Running in browser mode');
+  }
+});
+
+// ============================================================
+// INSTALL PROMPT
+// ============================================================
+var deferredPrompt;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('✅ beforeinstallprompt event fired');
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  var banner = document.getElementById('installBanner');
+  if (banner) {
+    banner.style.display = 'flex';
+  }
+}
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(choiceResult) {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('✅ User accepted the install prompt');
+        var banner = document.getElementById('installBanner');
+        if (banner) banner.style.display = 'none';
+      } else {
+        console.log('❌ User dismissed the install prompt');
+      }
+      deferredPrompt = null;
+    });
+  }
+}
+
+function closeInstallBanner() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+}
+
+// ============================================================
+// NONAKTIFKAN GOOGLE TRANSLATE
+// ============================================================
+(function() {
+  var elements = document.querySelectorAll('.goog-te-banner-frame, .goog-te-menu-frame, #goog-gt-tt');
+  elements.forEach(function(el) {
+    if (el && el.parentNode) {
+      el.parentNode.removeChild(el);
+    }
+  });
+  
+  document.body.style.top = '0px';
+  document.body.style.position = 'static';
+  document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+})();
+
+// ============================================================
+// LOAD LOGO
+// ============================================================
 function loadAppLogo() {
   var img = document.getElementById('appLogoImg');
   if (img) {
     img.onerror = function() {
-      // Jika icon tidak ditemukan, tampilkan fallback
       this.style.display = 'none';
       document.getElementById('logoTextFallback').style.display = 'block';
     };
-    // Coba load icon
     img.src = 'iconbayamtabur.png';
   }
 }
 
-// ==================== DROPDOWN EXCEL TOGGLE ====================
-
-
+// ============================================================
+// DROPDOWN EXCEL TOGGLE
+// ============================================================
 function toggleExcelDropdownStok() {
   var dropdown = document.getElementById('excelDropdownStok');
   if (dropdown) {
@@ -2925,7 +2999,9 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// ==================== EXPORT FUNCTIONS ====================
+// ============================================================
+// EXPORT FUNCTIONS
+// ============================================================
 function downloadCSV(data, headers, filename) {
   try {
     if (!data || data.length === 0) {
@@ -2973,7 +3049,7 @@ function downloadCSV(data, headers, filename) {
   }
 }
 
-function exportTransaksiCSV(type) {
+function exportTransaksiCSV() {
   try {
     var tanggalMulai = document.getElementById('filterTransaksiMulai').value;
     var tanggalSampai = document.getElementById('filterTransaksiSampai').value;
@@ -3008,7 +3084,6 @@ function exportTransaksiCSV(type) {
         return;
       }
       
-      // HEADER - SEMUA DATA DALAM 1 FILE
       var headers = ['No', 'Tanggal', 'Waktu', 'ID Transaksi', 'Kasir', 'Nama Pembeli', 'Total', 'Qty'];
       if (showLaba) headers.push('Laba');
       headers.push('Status', 'Pembayaran', 'Kembalian');
@@ -3043,7 +3118,6 @@ function exportTransaksiCSV(type) {
         totalQty += item.qty || 0;
       }
       
-      // TAMBAHKAN BARIS TOTAL
       var totalRow = {
         'No': '',
         'Tanggal': '',
@@ -9188,33 +9262,6 @@ function renderResellerTable(data) {
   }
   tbody.innerHTML = html;
 }  // <-- FUNGSI SELESAI DI SINI
-
-// ==================== LOAD JUMLAH HARGA PER RESELLER ====================
-function loadHargaCountForResellers() {
-  callGAS('getHargaReseller', {})
-  .then(function(result) {
-    if (!result || !result.success) return;
-    
-    var allHarga = result.data || [];
-    var countMap = {};
-    
-    for (var i = 0; i < allHarga.length; i++) {
-      var kodeReseller = allHarga[i].kodeReseller;
-      if (!countMap[kodeReseller]) countMap[kodeReseller] = 0;
-      countMap[kodeReseller]++;
-    }
-    
-    for (var kode in countMap) {
-      var el = document.getElementById('hargaCount_' + kode);
-      if (el) {
-        el.textContent = countMap[kode] + ' produk';
-      }
-    }
-  })
-  .catch(function(error) {
-    console.error('❌ Error loadHargaCount:', error);
-  });
-}
 
 
 
