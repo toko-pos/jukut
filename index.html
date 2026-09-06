@@ -1945,11 +1945,12 @@
               
               <input type="radio" name="regRole" value="KASIR" checked>
               💼 KASIR
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="radio" name="regRole" value="RESELLER">
-              👥 RESELLER
-            </label>
+      
+            <!-- ✅ BENAR - TANPA onchange, gunakan event listener di JS -->
+<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border:2px solid #e0e0e0;border-radius:8px;">
+  <input type="radio" name="regRole" value="RESELLER">
+  👥 RESELLER
+</label>
           </div>
           <small style="color:#999;display:block;margin-top:3px;">
             💡 Pilih <strong>RESELLER</strong> jika Anda memiliki kode reseller dari Admin/Kasir
