@@ -3530,40 +3530,7 @@ function getTanggalStokMasuk() {
   return input.value || '';
 }
 
-// ==================== LOAD LOW STOCK ====================
-
-function loadLowStock() {
-  callGAS('getProduk', {})
-  .then(function(prodResult) {
-    if (prodResult && prodResult.success) {
-      var produk = prodResult.data || [];
-      var lowStock = produk.filter(function(p) { 
-        return parseInt(p.Stok) <= parseInt(p['Minimum Stok'] || 0); 
-      });
-      var container = document.getElementById('lowStockList');
-      if (container) {
-        if (lowStock.length === 0) { 
-          container.innerHTML = '✅ Semua produk stok aman'; 
-        } else { 
-          var html = ''; 
-          for (var i = 0; i < lowStock.length; i++) { 
-            html += '⚠️ ' + lowStock[i]['Nama Produk'] + ' - Stok: ' + lowStock[i].Stok + ' ' + (lowStock[i].Satuan || 'pcs') + '<br>'; 
-          } 
-          container.innerHTML = html; 
-        }
-      }
-    }
-  })
-  .catch(function(error) { 
-    console.error('Error load low stock:', error); 
-    var container = document.getElementById('lowStockList');
-    if (container) {
-      container.innerHTML = '❌ Gagal memuat data stok';
-    }
-  });
-}
-
-  
+ 
 // ==================== SHOW SUB PAGE ====================
 function showSubPage(parent, sub) {
   var parentId = parent;
@@ -4365,57 +4332,36 @@ function loadDashboard() {
     if (tanggalInput) tanggalInput.value = tanggal;
   }
   
-  // 🔥 AMBIL KASIR DARI DROPDOWN
   var kasir = kasirInput ? kasirInput.value : 'all';
-  
   var namaUser = currentUser ? currentUser.nama : '';
   var role = currentUser ? currentUser.role : 'kasir';
   
-  // 🔥 LOG UNTUK DEBUG
-  console.log('📊 loadDashboard - Tanggal:', tanggal, 'Kasir:', kasir, 'Role:', role, 'NamaUser:', namaUser);
-  
-  // 🔥 JIKA ROLE KASIR, FORCE KASIR = NAMA USER (abaikan dropdown)
+  // 🔥 JIKA ROLE KASIR, FORCE KASIR = NAMA USER
   var roleUpper = (role || '').toUpperCase();
   if (roleUpper !== 'ADMIN' && roleUpper !== 'OWNER') {
     kasir = namaUser;
-    console.log('🔒 Kasir mode - FORCE kasir:', kasir);
-    
-    // 🔥 SEMBUNYIKAN DROPDOWN KASIR UNTUK KASIR
     var kasirGroup = document.getElementById('filterKasirGroup');
     if (kasirGroup) kasirGroup.style.display = 'none';
   }
   
-  var dateParts = tanggal.split('-');
-  var bulan = dateParts[1] || '01';
-  var tahun = dateParts[0] || '2026';
-  var namaBulan = getMonthName(parseInt(bulan));
+  // ... update label ...
   
-  document.getElementById('keuntunganBulanLabel').textContent = '💰 Keuntungan ' + namaBulan + ' ' + tahun + ' (FIFO)';
-  document.getElementById('totalQuantityBulanLabel').textContent = '📦 Total Quantity ' + namaBulan + ' ' + tahun;
-  document.getElementById('totalTransaksiBulanLabel').textContent = '📋 Jumlah Transaksi ' + namaBulan + ' ' + tahun;
-
-  var infoEl = document.getElementById('dashboardInfo');
-  if (infoEl) {
-    var infoText = 'Menampilkan data ' + formatTanggalDisplay(tanggal);
-    if (kasir && kasir !== 'all' && kasir !== '') {
-      infoText += ' · Kasir: ' + kasir;
-    }
-    infoEl.textContent = infoText;
-  }
-  
-  // 🔥 RESET UI
   document.getElementById('keuntunganHari').textContent = '⏳';
   document.getElementById('penjualanHari').textContent = '⏳';
   document.getElementById('quantityHari').textContent = '⏳';
   document.getElementById('totalTransaksi').textContent = '⏳';
   document.getElementById('keuntunganBulan').textContent = '⏳';
-  document.getElementById('stokRendah').textContent = '⏳';
+  document.getElementById('stokRendah').textContent = '⏳';  // 🔥 STAT CARD
   document.getElementById('totalQuantityBulan').textContent = '⏳';
   document.getElementById('totalTransaksiBulan').textContent = '⏳';
   document.getElementById('nilaiStok').textContent = '⏳';
   document.getElementById('potensiPenjualan').textContent = '⏳';
+  document.getElementById('nilaiStokSub').textContent = '-';
+  document.getElementById('potensiPenjualanSub').textContent = '-';
+  document.getElementById('bulananLegend').innerHTML = '⏳ Memuat grafik...';
+  document.getElementById('bulananTotal').textContent = '⏳ Memuat total...';
+  document.getElementById('lowStockList').innerHTML = '⏳ Memuat data stok...';
   
-  // 🔥 PANGGIL API DENGAN PARAMETER YANG BENAR
   callGAS('getDashboardDataBulanan', {
     tanggal: tanggal,
     kasir: kasir,
@@ -4424,12 +4370,13 @@ function loadDashboard() {
   })
   .then(function(data) {
     console.log('📊 Dashboard data received:', data);
+    
     document.getElementById('keuntunganHari').textContent = formatRupiah(data.keuntunganHariIni || 0);
     document.getElementById('penjualanHari').textContent = formatRupiah(data.penjualanHariIni || 0);
     document.getElementById('quantityHari').textContent = data.quantityHari || 0;
     document.getElementById('totalTransaksi').textContent = data.totalTransaksi || 0;
     document.getElementById('keuntunganBulan').textContent = formatRupiah(data.keuntunganBulan || 0);
-    document.getElementById('stokRendah').textContent = data.stokRendah || 0;
+    document.getElementById('stokRendah').textContent = data.stokRendah || 0;  // 🔥 JUMLAH
     document.getElementById('totalQuantityBulan').textContent = data.totalQuantityBulan || 0;
     document.getElementById('totalTransaksiBulan').textContent = data.totalTransaksiBulan || 0;
     document.getElementById('nilaiStok').textContent = formatRupiah(data.nilaiStok || 0);
@@ -4438,10 +4385,13 @@ function loadDashboard() {
     document.getElementById('potensiPenjualanSub').textContent = (data.totalStokPcs || 0) + ' pcs';
     resetRefreshButton();
     
-    // 🔥 LOAD GRAFIK DENGAN FILTER KASIR
+    // 🔥 LOAD GRAFIK
     loadBulananChart(tanggal, kasir, namaUser, role);
     
-   })
+    // 🔥🔥🔥 PANGGIL FUNGSI loadLowStock() UNTUK DAFTAR PRODUK 🔥🔥🔥
+    loadLowStock();
+    
+  })
   .catch(function(error) {
     console.error('Error loadDashboard:', error);
     document.getElementById('keuntunganHari').textContent = '❌ Error';
@@ -4454,11 +4404,46 @@ function loadDashboard() {
     document.getElementById('totalTransaksiBulan').textContent = '❌';
     document.getElementById('nilaiStok').textContent = '❌';
     document.getElementById('potensiPenjualan').textContent = '❌';
+    document.getElementById('bulananLegend').innerHTML = '❌ Gagal memuat grafik';
+    document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
+    document.getElementById('lowStockList').innerHTML = '❌ Gagal memuat data stok';
     showToast('❌ Gagal memuat dashboard: ' + error.message, 'error');
     resetRefreshButton();
   });
 }
 
+// ==================== LOAD LOW STOCK ====================
+
+function loadLowStock() {
+  callGAS('getProduk', {})
+  .then(function(prodResult) {
+    if (prodResult && prodResult.success) {
+      var produk = prodResult.data || [];
+      var lowStock = produk.filter(function(p) { 
+        return parseInt(p.Stok) <= parseInt(p['Minimum Stok'] || 0); 
+      });
+      var container = document.getElementById('lowStockList');
+      if (container) {
+        if (lowStock.length === 0) { 
+          container.innerHTML = '✅ Semua produk stok aman'; 
+        } else { 
+          var html = ''; 
+          for (var i = 0; i < lowStock.length; i++) { 
+            html += '⚠️ ' + lowStock[i]['Nama Produk'] + ' - Stok: ' + lowStock[i].Stok + ' ' + (lowStock[i].Satuan || 'pcs') + '<br>'; 
+          } 
+          container.innerHTML = html; 
+        }
+      }
+    }
+  })
+  .catch(function(error) { 
+    console.error('Error load low stock:', error); 
+    var container = document.getElementById('lowStockList');
+    if (container) {
+      container.innerHTML = '❌ Gagal memuat data stok';
+    }
+  });
+}
 // ==================== LOAD CHART ====================
 function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
   try {
