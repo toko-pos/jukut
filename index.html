@@ -9025,14 +9025,12 @@ if ('serviceWorker' in navigator) {
       .then(function(registrations) {
         if (registrations.length > 0) {
           console.log('⚠️ Found existing SW, updating...');
-          return navigator.serviceWorker.register('sw.js?v=' + Date.now(), { 
-            scope: '/'
-          });
+          // 🔥 HAPUS scope, biarkan default (otomatis mengikuti lokasi file)
+          return navigator.serviceWorker.register('sw.js?v=' + Date.now());
         } else {
           console.log('📦 Registering new SW...');
-          return navigator.serviceWorker.register('sw.js', { 
-            scope: '/'
-          });
+          // 🔥 HAPUS scope, biarkan default (otomatis mengikuti lokasi file)
+          return navigator.serviceWorker.register('sw.js');
         }
       })
       .then(function(registration) {
