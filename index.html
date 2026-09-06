@@ -3598,44 +3598,128 @@ function showSubPage(parent, sub) {
   }
 }
 
+  // ==================== SHOW APP BY ROLE ====================
+
+function showAppByRole() {
+  if (!currentUser) return;
+  
+  var role = currentUser.role ? currentUser.role.toUpperCase() : 'KASIR';
+  console.log('🎯 Menampilkan app untuk role:', role);
+  
+  // 🔥 SEMBUNYIKAN SEMUA NAVIGASI
+  var navKasir = document.getElementById('navKasir');
+  var navReseller = document.getElementById('navReseller');
+  var navAdmin = document.getElementById('navAdmin');
+  
+  if (navKasir) navKasir.style.display = 'none';
+  if (navReseller) navReseller.style.display = 'none';
+  if (navAdmin) navAdmin.style.display = 'none';
+  
+  // 🔥 TAMPILKAN SESUAI ROLE
+  if (role === 'ADMIN' || role === 'OWNER') {
+    if (navAdmin) {
+      navAdmin.style.display = 'flex';
+      console.log('✅ Navigasi Admin ditampilkan');
+    }
+    // Aktifkan menu User
+    var navUser = document.getElementById('navUser');
+    if (navUser) navUser.style.display = 'inline-block';
+    // Tampilkan filter kasir
+    var kasirGroup = document.getElementById('filterKasirGroup');
+    if (kasirGroup) kasirGroup.style.display = 'flex';
+    // Load daftar kasir
+    loadKasirList();
+    
+  } else if (role === 'RESELLER') {
+    if (navReseller) {
+      navReseller.style.display = 'flex';
+      console.log('✅ Navigasi Reseller ditampilkan');
+    }
+    // Sembunyikan filter kasir
+    var kasirGroup = document.getElementById('filterKasirGroup');
+    if (kasirGroup) kasirGroup.style.display = 'none';
+    // Sembunyikan menu User
+    var navUser = document.getElementById('navUser');
+    if (navUser) navUser.style.display = 'none';
+    
+  } else {
+    // KASIR / DEFAULT
+    if (navKasir) {
+      navKasir.style.display = 'flex';
+      console.log('✅ Navigasi Kasir ditampilkan');
+    }
+    // Sembunyikan filter kasir
+    var kasirGroup = document.getElementById('filterKasirGroup');
+    if (kasirGroup) kasirGroup.style.display = 'none';
+    // Sembunyikan menu User
+    var navUser = document.getElementById('navUser');
+    if (navUser) navUser.style.display = 'none';
+  }
+}
+
 // ==================== SESSION MANAGEMENT ====================
+
 function checkSession() {
   console.log('🔍 Memeriksa session...');
   try {
     var savedUser = localStorage.getItem('pos_user');
     if (savedUser) {
       currentUser = JSON.parse(savedUser);
-      console.log('📋 User ditemukan di localStorage:', currentUser.username);
+      console.log('📋 User ditemukan di localStorage:', currentUser.username, 'Role:', currentUser.role);
       
       callGAS('verifySession', { username: currentUser.username })
       .then(function(result) {
         if (result && result.valid) {
           console.log('✅ Session valid untuk:', currentUser.nama);
+          
+          // 🔥 UPDATE currentUser dengan data terbaru dari server
+          if (result.user) {
+            currentUser = result.user;
+            // Simpan kembali ke localStorage dengan data terbaru
+            localStorage.setItem('pos_user', JSON.stringify(currentUser));
+            console.log('✅ User updated dari server:', currentUser);
+          }
+          
+          // 🔥 TAMPILKAN APP SESUAI ROLE
+          showAppByRole();
+          
+          // 🔥 TAMPILKAN APP
           var app = document.getElementById('app');
           var loginPage = document.getElementById('loginPage');
           if (app) app.style.display = 'block';
           if (loginPage) loginPage.style.display = 'none';
+          
+          // 🔥 UPDATE HEADER
           var currentUserEl = document.getElementById('currentUser');
           var currentRoleEl = document.getElementById('currentRole');
           if (currentUserEl) currentUserEl.textContent = currentUser.nama;
           if (currentRoleEl) currentRoleEl.textContent = '(' + currentUser.role + ')';
+          
+          // 🔥 SETUP FILTERS
           setupFilters();
+          
+          // 🔥 SETUP TANGGAL
           var today = getTodayString();
           var filterTanggal = document.getElementById('filterTanggal');
           if (filterTanggal) filterTanggal.value = today;
+          
           var savedPosTanggal = localStorage.getItem('pos_tanggal');
           if (savedPosTanggal) {
             var posTanggal = document.getElementById('tanggalTransaksi');
             if (posTanggal) posTanggal.value = savedPosTanggal;
           }
+          
           var savedStokTanggal = localStorage.getItem('stok_tanggal');
           if (savedStokTanggal) {
             var stokTanggal = document.getElementById('tanggalStokMasuk');
             if (stokTanggal) stokTanggal.value = savedStokTanggal;
           }
+          
+          // 🔥 LOAD DATA
           loadAllData();
           updateHeaderInfo();
           console.log('✅ Semua data dimuat');
+          
         } else {
           console.log('❌ Session tidak valid');
           localStorage.removeItem('pos_user');
@@ -3674,7 +3758,6 @@ function checkSession() {
     showToast('❌ Error: ' + e.message, 'error');
   }
 }
-
 // ==================== LOGOUT ====================
 function showLogoutModal() {
   var modal = document.getElementById('logoutModal');
@@ -3724,7 +3807,6 @@ document.getElementById('formLogin').addEventListener('submit', function(e) {
   btn.textContent = '⏳ Memproses...';
   btn.disabled = true;
   
-  // 🔥 Cek koneksi internet
   if (!navigator.onLine) {
     showToast('⚠️ Tidak ada koneksi internet!', 'error');
     btn.textContent = 'Login';
@@ -3732,7 +3814,6 @@ document.getElementById('formLogin').addEventListener('submit', function(e) {
     return;
   }
   
-  // 🔥 Gunakan fetch dengan timeout
   var timeoutId = setTimeout(function() {
     btn.textContent = 'Login';
     btn.disabled = false;
@@ -3747,23 +3828,33 @@ document.getElementById('formLogin').addEventListener('submit', function(e) {
     
     if (result.success) {
       currentUser = result.user;
+      console.log('✅ Login success! User:', currentUser);
+      console.log('📋 Role:', currentUser.role);
       
-      // 🔥 Simpan session dengan timestamp
+      // 🔥 SIMPAN SESSION
       localStorage.setItem('pos_user', JSON.stringify(currentUser));
       localStorage.setItem('pos_login_time', Date.now().toString());
       localStorage.setItem('pwa_initialized', 'true');
       
+      // 🔥 TAMPILKAN APP
       var app = document.getElementById('app');
       var loginPage = document.getElementById('loginPage');
       if (app) app.style.display = 'block';
       if (loginPage) loginPage.style.display = 'none';
       
+      // 🔥 UPDATE UI
       var currentUserEl = document.getElementById('currentUser');
       var currentRoleEl = document.getElementById('currentRole');
       if (currentUserEl) currentUserEl.textContent = currentUser.nama;
       if (currentRoleEl) currentRoleEl.textContent = '(' + currentUser.role + ')';
       
+      // 🔥 TAMPILKAN NAVIGASI SESUAI ROLE
+      showAppByRole();
+      
+      // 🔥 SETUP FILTERS
       setupFilters();
+      
+      // 🔥 LOAD DATA
       var today = getTodayString();
       var filterTanggal = document.getElementById('filterTanggal');
       if (filterTanggal) filterTanggal.value = today;
@@ -3923,23 +4014,45 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ==================== SETUP FILTERS ====================
+
 function setupFilters() {
+  console.log('🔧 Setup filters untuk role:', currentUser ? currentUser.role : 'none');
+  
   var kasirGroup = document.getElementById('filterKasirGroup');
   var filterKasir = document.getElementById('filterKasir');
-  if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'owner')) {
-    kasirGroup.style.display = 'flex';
+  var navUser = document.getElementById('navUser');
+  
+  // 🔥 CEK ROLE
+  var role = currentUser ? currentUser.role.toUpperCase() : 'KASIR';
+  var isAdmin = (role === 'ADMIN' || role === 'OWNER');
+  
+  console.log('📊 isAdmin:', isAdmin, 'Role:', role);
+  
+  if (isAdmin) {
+    // Tampilkan filter kasir untuk admin
+    if (kasirGroup) {
+      kasirGroup.style.display = 'flex';
+      console.log('✅ Filter Kasir ditampilkan');
+    }
+    // Tampilkan menu User untuk admin
+    if (navUser) {
+      navUser.style.display = 'inline-block';
+      console.log('✅ Menu User ditampilkan');
+    }
+    // Load daftar kasir
     loadKasirList();
   } else {
-    kasirGroup.style.display = 'none';
-    if (filterKasir) filterKasir.value = 'all';
-  }
-  
-  var navUser = document.getElementById('navUser');
-  if (navUser) {
-    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'owner')) {
-      navUser.style.display = 'inline-block';
-    } else {
+    // Sembunyikan untuk kasir/reseller
+    if (kasirGroup) {
+      kasirGroup.style.display = 'none';
+      console.log('❌ Filter Kasir disembunyikan');
+    }
+    if (filterKasir) {
+      filterKasir.value = 'all';
+    }
+    if (navUser) {
       navUser.style.display = 'none';
+      console.log('❌ Menu User disembunyikan');
     }
   }
 }
