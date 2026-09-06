@@ -66,7 +66,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyMOHFtSvm6uMIWgmtLR4PynJ5EndmxVpT8fgKhdazTNsGWL3vFn25Uz_Pa8KjQIfqg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzP0JDk5A9RtY02ixnodt25Z6p9hCs6F4Y5iGS-8ywkvd-ropVCGLVy5cePWcfhBVLuNQ/exec';
     // ============================================
   </script>
 
@@ -2913,6 +2913,104 @@ function showLogin() {
   document.getElementById('registerForm').style.display = 'none';
 }
 
+
+// ============================================================
+// REGISTER FORM SUBMIT
+// ============================================================
+document.getElementById('formRegister').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // Ambil semua data dari form
+  var username = document.getElementById('regUsername').value.trim();
+  var password = document.getElementById('regPassword').value.trim();
+  var confirmPassword = document.getElementById('regConfirmPassword').value.trim();
+  var nama = document.getElementById('regNama').value.trim();
+  var namaToko = document.getElementById('regNamaToko').value.trim();
+  var alamat = document.getElementById('regAlamat').value.trim();
+  var noTelepon = document.getElementById('regNoTelepon').value.trim();
+  
+  // Ambil role dari radio button
+  var roleRadios = document.querySelectorAll('input[name="regRole"]');
+  var role = 'KASIR';
+  for (var i = 0; i < roleRadios.length; i++) {
+    if (roleRadios[i].checked) {
+      role = roleRadios[i].value;
+      break;
+    }
+  }
+  
+  // Ambil kode reseller
+  var kodeReseller = document.getElementById('regKodeReseller').value.trim();
+  
+  // 🔥 VALIDASI
+  if (!username) { showToast('Username wajib diisi!', 'error'); return; }
+  if (password.length < 6) { showToast('Password minimal 6 karakter!', 'error'); return; }
+  if (password !== confirmPassword) { showToast('Konfirmasi password tidak cocok!', 'error'); return; }
+  if (!nama) { showToast('Nama lengkap wajib diisi!', 'error'); return; }
+  if (!namaToko) { showToast('Nama toko wajib diisi!', 'error'); return; }
+  if (!alamat) { showToast('Alamat toko wajib diisi!', 'error'); return; }
+  if (!noTelepon) { showToast('No telepon wajib diisi!', 'error'); return; }
+  
+  // Jika role RESELLER, wajib isi kode reseller
+  if (role === 'RESELLER' && !kodeReseller) {
+    showToast('Kode Reseller wajib diisi!', 'error');
+    document.getElementById('regKodeReseller').focus();
+    return;
+  }
+  
+  // 🔥 LOG DATA SEBELUM KIRIM
+  console.log('📤 Mengirim data register:', {
+    username: username,
+    nama: nama,
+    role: role,
+    kodeReseller: kodeReseller,
+    namaToko: namaToko,
+    alamat: alamat,
+    noTelepon: noTelepon
+  });
+  
+  // Disable tombol
+  var btn = document.getElementById('btnRegister');
+  btn.textContent = '⏳ Memproses...';
+  btn.disabled = true;
+  
+  // 🔥 KIRIM KE BACKEND (8 PARAMETER)
+  callGAS('registerUser', {
+    username: username,
+    password: password,
+    nama: nama,
+    role: role,
+    kodeReseller: kodeReseller,
+    namaToko: namaToko,
+    alamat: alamat,
+    noTelepon: noTelepon
+  })
+  .then(function(result) {
+    console.log('📥 Response register:', result);
+    
+    // Enable tombol
+    btn.textContent = 'Daftar';
+    btn.disabled = false;
+    
+    if (result && result.success) {
+      showToast(result.message, 'success');
+      // Reset form
+      document.getElementById('formRegister').reset();
+      // Kembali ke login
+      showLogin();
+    } else {
+      showToast(result ? result.message : 'Registrasi gagal!', 'error');
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error register:', error);
+    btn.textContent = 'Daftar';
+    btn.disabled = false;
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+});
+
+  
 // ============================================================
 // 🔥 FUNGSI PANGGIL GAS VIA FETCH - UNTUK GITHUB PAGES
 // ============================================================
@@ -10097,11 +10195,48 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
 }
 
 
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
   
-</script>
+  // ===== LOGIN FORM =====
+  document.getElementById('formLogin').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // ... kode login ...
+  });
+  
+  // ===== TOGGLE SHOW REGISTER =====
+  document.getElementById('linkShowRegister').addEventListener('click', function(e) {
+    e.preventDefault();
+    showRegister();
+  });
+  
+  document.getElementById('linkShowLogin').addEventListener('click', function(e) {
+    e.preventDefault();
+    showLogin();
+  });
+  
+  // 🔥🔥🔥 TARUH DI SINI 🔥🔥🔥
+  // ===== REGISTER FORM =====
+  document.getElementById('formRegister').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // ... kode register di atas ...
+  });
+  
+  // ===== TOGGLE PASSWORD =====
+  document.getElementById('toggleLoginPassword').addEventListener('click', function() {
+    togglePasswordVisibility('loginPassword', this);
+  });
+  // ... dan seterusnya ...
+  
+});
+
+  
 
 
-<script>
+
+
 // ============================================================
 // NONAKTIFKAN GOOGLE TRANSLATE
 // ============================================================
