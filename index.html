@@ -6419,6 +6419,7 @@ function refreshStokSubtab() {
 }
 
 // ==================== TRANSAKSI - LOAD ====================
+// ==================== TRANSAKSI - LOAD ====================
 function loadTransaksi() {
   try {
     var tbody = document.getElementById('transaksiTable');
@@ -6470,11 +6471,13 @@ function loadTransaksi() {
           var showCancel = (currentUser.role === 'admin' || currentUser.role === 'owner' || 
                            t.kasir.toLowerCase() === (currentUser.nama || '').toLowerCase());
           
-          // 🔥🔥🔥 CEK APAKAH RESELLER 🔥🔥🔥
+          // ============================================================
+          // 🔥🔥🔥 KODE BADGE RESELLER (TARUH DI SINI) 🔥🔥🔥
+          // ============================================================
           var isReseller = t.isReseller || String(t.kasir).toLowerCase().indexOf('reseller') !== -1;
           var badgeReseller = isReseller ? '<span class="badge-reseller" style="background:#9C27B0;color:white;padding:2px 8px;border-radius:10px;font-size:0.6rem;margin-left:5px;">👥 Reseller</span>' : '';
           
-          // 🔥🔥🔥 MULAI BARIS HTML - PERHATIKAN STRUKTURNYA 🔥🔥🔥
+          // 🔥 BUILD HTML BARIS TABEL
           html += '<tr>' +
             '<td>' + (i + 1) + '</td>' +
             '<td>' + tanggal + '</td>' +
@@ -6482,13 +6485,11 @@ function loadTransaksi() {
             '<td>' + t.kasir + badgeReseller + '</td>' +
             '<td>' + formatRupiah(t.total) + '</td>';
           
-          // 🔥 LABA (JIKA DIAKTIFKAN)
           if (showLaba) {
             html += '<td style="color:' + (t.laba >= 0 ? '#4CAF50' : '#f44336') + ';">' + formatRupiah(t.laba) + '</td>';
             totalLaba += t.laba;
           }
           
-          // 🔥 STATUS & AKSI
           html += '<td><span style="background:#4CAF50;color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + t.status + '</span></td>' +
             '<td style="white-space:nowrap;">' +
             '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + t.id + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Cetak Struk">🖨️</button>';
