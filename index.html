@@ -9352,20 +9352,11 @@ function loadReseller() {
 
 // ==================== TOGGLE KODE RESELLER ====================
 function toggleKodeReseller() {
-  console.log('🔄 toggleKodeReseller() dipanggil');
-  
   var roleRadios = document.querySelectorAll('input[name="regRole"]');
   var kodeResellerGroup = document.getElementById('kodeResellerGroup');
   var kodeResellerInput = document.getElementById('regKodeReseller');
   
-  if (!roleRadios.length) {
-    console.warn('⚠️ Radio button regRole tidak ditemukan!');
-    return;
-  }
-  if (!kodeResellerGroup) {
-    console.warn('⚠️ Elemen kodeResellerGroup tidak ditemukan!');
-    return;
-  }
+  if (!roleRadios.length || !kodeResellerGroup) return;
   
   var selectedRole = '';
   for (var i = 0; i < roleRadios.length; i++) {
@@ -9375,22 +9366,16 @@ function toggleKodeReseller() {
     }
   }
   
-  console.log('📋 Role terpilih:', selectedRole);
-  
+  // 🔥 INI YANG MEMUNCULKAN KOLOM
   if (selectedRole === 'RESELLER') {
-    kodeResellerGroup.style.display = 'block';
-    if (kodeResellerInput) {
-      kodeResellerInput.required = true;
-      kodeResellerInput.focus();
-    }
-    console.log('✅ Kode Reseller ditampilkan');
+    kodeResellerGroup.style.display = 'block';   // <-- MUNCUL
+    if (kodeResellerInput) kodeResellerInput.required = true;
   } else {
-    kodeResellerGroup.style.display = 'none';
+    kodeResellerGroup.style.display = 'none';    // <-- SEMBUNYI
     if (kodeResellerInput) {
       kodeResellerInput.required = false;
       kodeResellerInput.value = '';
     }
-    console.log('❌ Kode Reseller disembunyikan');
   }
 }
   
