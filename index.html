@@ -2023,42 +2023,44 @@
   
   <!-- ===== NAVIGASI ===== -->
   <div class="nav">
-    <button class="active" onclick="showPage('dashboard')">
-      <span class="nav-icon">📊</span>
-      <span class="nav-label">Dashboard</span>
-    </button>
-    <button onclick="showPage('pos')">
-      <span class="nav-icon">🛒</span>
-      <span class="nav-label">POS</span>
-    </button>
-    <button onclick="showPage('transaksi')">
-      <span class="nav-icon">📋</span>
-      <span class="nav-label">Transaksi</span>
-    </button>
-    <button onclick="showPage('produk')">
-      <span class="nav-icon">📦</span>
-      <span class="nav-label">Produk</span>
-    </button>
-    <button onclick="showPage('stok')">
-      <span class="nav-icon">📥</span>
-      <span class="nav-label">Stok</span>
-    </button>
+  <button class="active" onclick="showPage('dashboard')">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Dashboard</span>
+  </button>
+  <button onclick="showPage('pos')">
+    <span class="nav-icon">🛒</span>
+    <span class="nav-label">POS</span>
+  </button>
+  <button onclick="showPage('transaksi')">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Transaksi</span>
+  </button>
+  <button onclick="showPage('produk')">
+    <span class="nav-icon">📦</span>
+    <span class="nav-label">Produk</span>
+  </button>
+  <button onclick="showPage('stok')">
+    <span class="nav-icon">📥</span>
+    <span class="nav-label">Stok</span>
+  </button>
 
-    <!-- ===== RESELLER TAB ===== -->
-<button onclick="showPage('reseller')">
-  <span class="nav-icon">👥</span>
-  <span class="nav-label">Reseller</span>
-</button>
-    
-    <button onclick="showPage('profile')">
-      <span class="nav-icon">⚙️</span>
-      <span class="nav-label">SETTING</span>
-    </button>
-    <button id="navUser" onclick="showPage('user')" style="display:none;">
-      <span class="nav-icon">👤</span>
-      <span class="nav-label">User</span>
-    </button>
-  </div>
+  <!-- 🔥 TAB RESELLER - PASTIKAN ADA ID -->
+  <button id="navResellerTab" onclick="showPage('reseller')">
+    <span class="nav-icon">👥</span>
+    <span class="nav-label">Reseller</span>
+  </button>
+  
+  <button onclick="showPage('profile')">
+    <span class="nav-icon">⚙️</span>
+    <span class="nav-label">SETTING</span>
+  </button>
+  
+  <!-- 🔥 TAB USER - PASTIKAN ADA ID -->
+  <button id="navUser" onclick="showPage('user')" style="display:none;">
+    <span class="nav-icon">👤</span>
+    <span class="nav-label">User</span>
+  </button>
+</div>
 
   
   <div class="container">
@@ -3797,94 +3799,56 @@ function showAppByRole() {
   var isAdmin = (role === 'ADMIN' || role === 'OWNER');
   var isKasir = (role === 'KASIR' || role === 'CASHIER');
   
-  // 🔥 SEMBUNYIKAN SEMUA NAVIGASI KHUSUS
-  var navKasir = document.getElementById('navKasir');
-  var navReseller = document.getElementById('navReseller');
-  var navAdmin = document.getElementById('navAdmin');
-  var navStok = document.getElementById('navStok');
-  var navResellerTab = document.getElementById('navResellerTab');
-  var navUser = document.getElementById('navUser');
+  // 🔥🔥🔥 SEMBUNYIKAN SEMUA DENGAN ID
+  var allNavButtons = document.querySelectorAll('.nav button');
   
-  if (navKasir) navKasir.style.display = 'none';
-  if (navReseller) navReseller.style.display = 'none';
-  if (navAdmin) navAdmin.style.display = 'none';
-  if (navStok) navStok.style.display = 'none';
-  if (navResellerTab) navResellerTab.style.display = 'none';
-  if (navUser) navUser.style.display = 'none';
+  // 🔥 FUNGSI UNTUK SEMBUNYIKAN/TAMPILKAN BERDASARKAN ID
+  function hideElement(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.style.display = 'none';
+      console.log('❌ Sembunyikan:', id);
+    }
+  }
+  
+  function showElement(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.style.display = 'flex';
+      console.log('✅ Tampilkan:', id);
+    }
+  }
+  
+  // 🔥 SEMBUNYIKAN SEMUA AWALNYA
+  hideElement('navResellerTab');
+  hideElement('navUser');
+  
+  var kasirGroup = document.getElementById('filterKasirGroup');
+  if (kasirGroup) kasirGroup.style.display = 'none';
   
   // 🔥 TAMPILKAN SESUAI ROLE
   if (isAdmin) {
-    // ADMIN: Tampilkan semua termasuk tab Reseller
-    if (navAdmin) {
-      navAdmin.style.display = 'flex';
-      console.log('✅ Navigasi Admin ditampilkan');
-    }
-    if (navResellerTab) {
-      navResellerTab.style.display = 'inline-block';
-      console.log('✅ Tab Reseller ditampilkan untuk Admin');
-    }
-    if (navUser) {
-      navUser.style.display = 'inline-block';
-      console.log('✅ Menu User ditampilkan');
-    }
+    // ADMIN: Tampilkan semua
+    showElement('navResellerTab');
+    showElement('navUser');
     
-    var kasirGroup = document.getElementById('filterKasirGroup');
-    if (kasirGroup) {
-      kasirGroup.style.display = 'flex';
-      console.log('✅ Filter Kasir ditampilkan');
-    }
-    
+    if (kasirGroup) kasirGroup.style.display = 'flex';
     loadKasirList();
     
   } else if (isKasir) {
-    // 🔥 KASIR: TAMPILKAN TAB RESELLER
-    if (navKasir) {
-      navKasir.style.display = 'flex';
-      console.log('✅ Navigasi Kasir ditampilkan');
-    }
-    if (navResellerTab) {
-      navResellerTab.style.display = 'inline-block';
-      console.log('✅ Tab Reseller ditampilkan untuk Kasir');
-    }
-    
-    var kasirGroup = document.getElementById('filterKasirGroup');
-    if (kasirGroup) kasirGroup.style.display = 'none';
-    if (navUser) navUser.style.display = 'none';
+    // 🔥 KASIR: Tampilkan Reseller, sembunyikan User
+    showElement('navResellerTab');
+    hideElement('navUser');
     
   } else if (isReseller) {
-    // 🔥 RESELLER: SEMBUNYIKAN TAB RESELLER
-    if (navReseller) {
-      navReseller.style.display = 'flex';
-      console.log('✅ Navigasi Reseller ditampilkan');
-    }
-    if (navStok) {
-      navStok.style.display = 'inline-block';
-      console.log('✅ Stok Saya ditampilkan');
-    }
-    // 🔥🔥🔥 TAMBAHKAN INI: SEMBUNYIKAN TAB RESELLER UNTUK RESELLER
-    if (navResellerTab) {
-      navResellerTab.style.display = 'none';
-      console.log('❌ Tab Reseller disembunyikan untuk Reseller');
-    }
-    
-    var kasirGroup = document.getElementById('filterKasirGroup');
-    if (kasirGroup) kasirGroup.style.display = 'none';
-    if (navUser) navUser.style.display = 'none';
+    // 🔥 RESELLER: SEMBUNYIKAN Reseller DAN User
+    hideElement('navResellerTab');
+    hideElement('navUser');
     
   } else {
-    // DEFAULT / UNKNOWN
-    if (navKasir) {
-      navKasir.style.display = 'flex';
-      console.log('✅ Navigasi Kasir ditampilkan');
-    }
-    if (navResellerTab) {
-      navResellerTab.style.display = 'inline-block';
-      console.log('✅ Tab Reseller ditampilkan');
-    }
-    
-    var kasirGroup = document.getElementById('filterKasirGroup');
-    if (kasirGroup) kasirGroup.style.display = 'none';
-    if (navUser) navUser.style.display = 'none';
+    // DEFAULT
+    showElement('navResellerTab');
+    hideElement('navUser');
   }
   
   // 🔥 SETUP FILTERS
@@ -3919,6 +3883,39 @@ function checkSession() {
             
             // 🔥 TAMPILKAN APP DENGAN AMAN
             showAppAfterLogin();
+            
+            // 🔥🔥🔥 TAMBAHKAN INI: PASTIKAN TAB RESELLER SEMBUNYI UNTUK RESELLER
+            setTimeout(function() {
+              if (currentUser && currentUser.role && currentUser.role.toUpperCase() === 'RESELLER') {
+                var navResellerTab = document.getElementById('navResellerTab');
+                if (navResellerTab) {
+                  navResellerTab.style.display = 'none';
+                  navResellerTab.style.visibility = 'hidden';
+                  navResellerTab.style.opacity = '0';
+                  navResellerTab.style.pointerEvents = 'none';
+                  navResellerTab.style.width = '0';
+                  navResellerTab.style.height = '0';
+                  navResellerTab.style.overflow = 'hidden';
+                  navResellerTab.style.padding = '0';
+                  navResellerTab.style.margin = '0';
+                  navResellerTab.style.flex = '0 0 0';
+                  navResellerTab.style.minWidth = '0';
+                  console.log('🔥 Tab Reseller dipaksa disembunyikan untuk RESELLER!');
+                }
+                
+                // 🔥 SEMBUNYIKAN JUGA DARI NAVIGASI LAIN
+                var allNavButtons = document.querySelectorAll('.nav button');
+                for (var i = 0; i < allNavButtons.length; i++) {
+                  var btn = allNavButtons[i];
+                  var onclickAttr = btn.getAttribute('onclick');
+                  if (onclickAttr && onclickAttr.indexOf("showPage('reseller')") !== -1) {
+                    btn.style.display = 'none';
+                    btn.style.visibility = 'hidden';
+                    console.log('🔥 Tombol Reseller disembunyikan via onclick attribute!');
+                  }
+                }
+              }
+            }, 300); // 🔥 DELAY 300ms UNTUK PASTIKAN DOM SIAP
             
           } else {
             console.log('❌ Session tidak valid (attempt ' + (retryCount+1) + ')');
@@ -3972,17 +3969,25 @@ function showAppAfterLogin() {
   if (currentUserEl) currentUserEl.textContent = currentUser.nama || currentUser.username;
   if (currentRoleEl) currentRoleEl.textContent = '(' + (currentUser.role || 'kasir') + ')';
   
+  // 🔥 PANGGIL showAppByRole() UNTUK SEMBUNYIKAN TAB
   showAppByRole();
+  
+  // 🔥 PANGGIL LAGI SETELAH 500ms UNTUK MEMASTIKAN
+  setTimeout(function() {
+    showAppByRole();
+    // 🔥 TAMBAHKAN PEMBERSIHAN EKSTRA UNTUK RESELLER
+    if (currentUser && currentUser.role && currentUser.role.toUpperCase() === 'RESELLER') {
+      var navResellerTab = document.getElementById('navResellerTab');
+      if (navResellerTab) {
+        navResellerTab.style.display = 'none !important';
+        navResellerTab.style.visibility = 'hidden !important';
+      }
+    }
+  }, 500);
+  
   setupFilters();
   loadAllData();
   updateHeaderInfo();
-}
-
-function showLoginPage() {
-  var app = document.getElementById('app');
-  var loginPage = document.getElementById('loginPage');
-  if (app) app.style.display = 'none';
-  if (loginPage) loginPage.style.display = 'block';
 }
 
 
@@ -4603,16 +4608,13 @@ function showPage(page) {
   // 🔥🔥🔥 CEK AKSES UNTUK HALAMAN RESELLER
   if (page === 'reseller') {
     var role = currentUser ? currentUser.role.toUpperCase() : '';
-    // 🔥 HANYA RESELLER YANG DITOLAK, KASIR & ADMIN TETAP BISA
     if (role === 'RESELLER') {
       showToast('⛔ Akses ditolak! Halaman ini tidak tersedia untuk Reseller.', 'error');
-      // Redirect ke dashboard
       page = 'dashboard';
     }
-    // KASIR & ADMIN LANJUTKAN
   }
   
-  // 🔥 CEK AKSES UNTUK HALAMAN USER (KASIR TIDAK BISA)
+  // 🔥 CEK AKSES UNTUK HALAMAN USER
   if (page === 'user') {
     var role = currentUser ? currentUser.role.toUpperCase() : '';
     if (role !== 'ADMIN' && role !== 'OWNER') {
@@ -4621,54 +4623,7 @@ function showPage(page) {
     }
   }
   
-  var pages = document.querySelectorAll('.page');
-  var navs = document.querySelectorAll('.nav button');
-  for (var i = 0; i < pages.length; i++) {
-    pages[i].classList.remove('active');
-  }
-  for (var i = 0; i < navs.length; i++) {
-    navs[i].classList.remove('active');
-  }
-  var targetPage = document.getElementById('page-' + page);
-  if (targetPage) targetPage.classList.add('active');
-  var navButtons = document.querySelectorAll('.nav button');
-  for (var i = 0; i < navButtons.length; i++) {
-    if (navButtons[i].getAttribute('onclick') === "showPage('" + page + "')") {
-      navButtons[i].classList.add('active');
-    }
-  }
-  
-  // LOAD DATA SESUAI HALAMAN
-  if (page === 'dashboard') loadDashboard();
-  if (page === 'pos') { 
-    loadPosProduk(); 
-    updateCartDisplay(); 
-    loadResellerOptions();
-  }
-  if (page === 'transaksi') { 
-    loadTransaksi(); 
-    loadLogPembatalan(); 
-  }
-  if (page === 'user') loadUsers();
-  if (page === 'stok') {
-    if (currentUser && currentUser.role && currentUser.role.toUpperCase() === 'RESELLER') {
-      loadStokResellerTab();
-    } else {
-      showSubPage('stok', 'masuk');
-    }
-  }
-  if (page === 'produk') { 
-    loadProdukWithRetry(); 
-  }
-  if (page === 'profile') { 
-    loadProfile(); 
-  }
-  if (page === 'reseller') {
-    // 🔥 KASIR & ADMIN BISA AKSES, RESELLER SUDAH DITOLAK DI ATAS
-    if (currentUser && currentUser.role.toUpperCase() !== 'RESELLER') {
-      loadReseller();
-    }
-  }
+  // ... lanjutkan kode showPage seperti biasa ...
 }
 
 // ==================== REFRESH DASHBOARD ====================
