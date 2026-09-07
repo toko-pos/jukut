@@ -1901,8 +1901,7 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
    🔥 EXPANDABLE DETAIL ROW
    ============================================================ */
 
-/* Link detail */
-.link-detail {
+.link-transaksi {
     color: #007bff;
     text-decoration: none;
     cursor: pointer;
@@ -1911,16 +1910,19 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     transition: all 0.2s;
 }
 
-.link-detail:hover {
+.link-transaksi:hover {
     color: #0056b3;
     text-decoration: underline;
 }
 
-.link-detail .icon-expand {
+.link-transaksi .icon-expand {
     display: inline-block;
     transition: transform 0.2s;
 }
 
+
+
+  
 /* Parent row saat di-hover */
 .parent-row:hover {
     background-color: #f0f7ff;
@@ -2055,6 +2057,77 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     font-weight: 600;
     display: inline-block;
 }
+
+/* ============================================================
+   🔥 TABEL TRANSAKSI - RAPI & RESPONSIF
+   ============================================================ */
+
+#transaksiTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+#transaksiTable th {
+    background: #f0f4ff;
+    padding: 10px 12px;
+    font-weight: 600;
+    color: #37474f;
+    border-bottom: 2px solid #dce3f0;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+#transaksiTable td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #edf0f7;
+    vertical-align: middle;
+}
+
+#transaksiTable tr:hover td {
+    background: #f8faff;
+}
+
+/* 🔥 Responsive: untuk layar kecil, beberapa kolom bisa di-sembunyikan */
+@media (max-width: 768px) {
+    #transaksiTable {
+        font-size: 0.75rem;
+    }
+    #transaksiTable th,
+    #transaksiTable td {
+        padding: 6px 8px;
+    }
+    /* Sembunyikan kolom Laba di HP jika terlalu sempit */
+    #transaksiTable .col-laba {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    #transaksiTable {
+        font-size: 0.65rem;
+    }
+    #transaksiTable th,
+    #transaksiTable td {
+        padding: 4px 6px;
+    }
+    .link-transaksi {
+        font-size: 0.65rem !important;
+    }
+    .btn-sm {
+        font-size: 0.5rem !important;
+        padding: 2px 4px !important;
+        height: 22px !important;
+    }
+    .badge-status {
+        font-size: 0.55rem !important;
+        padding: 1px 6px !important;
+    }
+}
+
+
     
                                                                                                                                         
   </style>
@@ -3751,7 +3824,7 @@ function getUniqueNotaCount(data) {
 }
 
 // ============================================================
-// 🔥 RENDER TABEL TRANSAKSI DENGAN EXPAND
+// 🔥 RENDER TABEL TRANSAKSI - DENGAN EXPAND & TOMBOL AKSI
 // ============================================================
 
 function renderTransaksi(data) {
@@ -3759,7 +3832,7 @@ function renderTransaksi(data) {
     if (!tbody) return;
     
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">📭 Tidak ada transaksi</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">📭 Tidak ada transaksi</td></tr>';
         return;
     }
     
@@ -3768,12 +3841,16 @@ function renderTransaksi(data) {
         var t = data[i];
         var id = t.id || t.ID || '';
         
+        // Cek apakah user boleh membatalkan transaksi
+        var showCancel = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'owner' || 
+                           t.kasir && t.kasir.toLowerCase() === (currentUser.nama || '').toLowerCase()));
+        
         html += '<tr data-id="' + id + '" class="parent-row">';
-        html += '<td>' + (i + 1) + '</td>';
-        html += '<td>' + (t.tanggal || '-') + ' ' + (t.waktu || '') + '</td>';
+        html += '<td style="white-space:nowrap; text-align:center;">' + (i + 1) + '</td>';
+        html += '<td style="white-space:nowrap;">' + (t.tanggal || '-') + ' ' + (t.waktu || '') + '</td>';
         
         // 🔥 ID TRANSAKSI JADI LINK EXPAND
-        html += '<td>';
+        html += '<td style="white-space:nowrap; min-width:150px;">';
         html += '<a href="javascript:void(0)" ';
         html += 'class="link-transaksi" ';
         html += 'onclick="toggleDetailTransaksi(\'' + id + '\')" ';
@@ -3782,10 +3859,19 @@ function renderTransaksi(data) {
         html += '</a>';
         html += '</td>';
         
-        html += '<td>' + (t.kasir || '-') + '</td>';
-        html += '<td style="text-align:right;">Rp ' + formatRupiah(t.total || 0) + '</td>';
-        html += '<td style="text-align:right;color:' + (t.laba >= 0 ? '#4CAF50' : '#dc3545') + ';">Rp ' + formatRupiah(t.laba || 0) + '</td>';
-        html += '<td><span class="badge-status">' + (t.status || 'Selesai') + '</span></td>';
+        html += '<td style="white-space:nowrap;">' + (t.kasir || '-') + '</td>';
+        html += '<td style="white-space:nowrap; text-align:right; font-weight:600;">Rp ' + formatRupiah(t.total || 0) + '</td>';
+        html += '<td style="white-space:nowrap; text-align:right; color:' + (t.laba >= 0 ? '#4CAF50' : '#dc3545') + '; font-weight:600;">Rp ' + formatRupiah(t.laba || 0) + '</td>';
+        html += '<td style="white-space:nowrap; text-align:center;"><span class="badge-status">' + (t.status || 'Selesai') + '</span></td>';
+        
+        // 🔥 KOLOM AKSI - TETAP ADA DENGAN TOMBOL
+        html += '<td style="white-space:nowrap; text-align:center; min-width:80px;">';
+        html += '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:2px;" title="Cetak Struk">🖨️</button>';
+        if (showCancel) {
+            html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Batalkan Transaksi">🗑️</button>';
+        }
+        html += '</td>';
+        
         html += '</tr>';
     }
     
@@ -3797,15 +3883,19 @@ function renderTransaksi(data) {
 // ============================================================
 
 function toggleDetailTransaksi(idTransaksi) {
+    console.log('🔄 toggleDetailTransaksi dipanggil untuk:', idTransaksi);
+    
     var detailRowId = 'detail-' + idTransaksi;
     var existingRow = document.getElementById(detailRowId);
     
     var parentRow = document.querySelector('[data-id="' + idTransaksi + '"]');
-    if (!parentRow) return;
+    if (!parentRow) {
+        console.warn('⚠️ Parent row tidak ditemukan:', idTransaksi);
+        return;
+    }
     
     var link = parentRow.querySelector('.link-transaksi');
     
-    // Jika sudah ada, HAPUS (collapse)
     if (existingRow) {
         existingRow.remove();
         parentRow.classList.remove('expanded');
@@ -3816,7 +3906,6 @@ function toggleDetailTransaksi(idTransaksi) {
         return;
     }
     
-    // EXPAND
     parentRow.classList.add('expanded');
     if (link) {
         link.classList.add('expanded');
@@ -3832,26 +3921,19 @@ function toggleDetailTransaksi(idTransaksi) {
     
     parentRow.parentNode.insertBefore(newRow, parentRow.nextSibling);
     
-    var data = {
-        action: 'getDetailTransaksi',
-        data: { idTransaksi: idTransaksi }
-    };
-    
-    fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    })
-    .then(function(res) { return res.json(); })
+    // 🔥 PAKAI callGAS() - SUDAH TERBUKTI BEKERJA
+    callGAS('getDetailTransaksi', { idTransaksi: idTransaksi })
     .then(function(result) {
-        if (result.success) {
+        console.log('📥 Result:', result);
+        if (result && result.success) {
             renderDetailRow(idTransaksi, result.data, colCount);
         } else {
-            showDetailError(idTransaksi, result.error || 'Gagal memuat detail', colCount);
+            showDetailError(idTransaksi, result ? result.error : 'Gagal memuat detail', colCount);
         }
     })
     .catch(function(error) {
-        showDetailError(idTransaksi, error.message, colCount);
+        console.error('❌ Error:', error);
+        showDetailError(idTransaksi, 'Error: ' + error.message, colCount);
     });
 }
 
@@ -7356,20 +7438,20 @@ function loadTransaksi() {
         // 🔥🔥🔥 PERUBAHAN: PANGGIL renderTransaksi() 🔥🔥🔥
         renderTransaksi(data);
         
-        // HITUNG TOTAL
-        var totalTransaksi = data.length;
-        var totalQty = 0;
-        var totalLaba = 0;
-        for (var i = 0; i < data.length; i++) {
-          totalQty += data[i].qty || 0;
-          totalLaba += data[i].laba || 0;
-        }
-        
-        var totalText = '📊 Total: Transaksi: ' + totalTransaksi + ' | Quantity: ' + totalQty;
-        if (showLaba) {
-          totalText += ' | Laba: ' + formatRupiah(totalLaba);
-        }
-        document.getElementById('totalTransaksiDisplay').textContent = totalText;
+       // Setelah renderTransaksi(data), hitung total
+var totalTransaksi = data.length;
+var totalQty = 0;
+var totalLaba = 0;
+for (var i = 0; i < data.length; i++) {
+    totalQty += data[i].qty || 0;
+    totalLaba += data[i].laba || 0;
+}
+
+var totalText = '📊 Total: Transaksi: ' + totalTransaksi + ' | Quantity: ' + totalQty;
+if (showLaba) {
+    totalText += ' | Laba: ' + formatRupiah(totalLaba);
+}
+document.getElementById('totalTransaksiDisplay').textContent = totalText;
         
       } catch (e) {
         console.error('❌ Error processing transaksi:', e);
