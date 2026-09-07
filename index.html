@@ -1899,6 +1899,7 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 
 
   /* 🔥 SEMBUNYIKAN ELEMEN STOK UNTUK RESELLER SAJA */
+/* 🔥 KHUSUS RESELLER - SEMBUNYIKAN ELEMEN STOK */
 body.role-reseller #sub-stok-masuk .stok-header-grid,
 body.role-reseller #sub-stok-masuk .stok-layout,
 body.role-reseller .sub-tab-stok {
@@ -1913,12 +1914,25 @@ body.role-reseller #page-stok > h2 {
   display: block !important;
 }
 
-/* Tampilkan riwayat stok saja untuk reseller */
 body.role-reseller #sub-stok-masuk .filter-riwayat-stok,
 body.role-reseller #sub-stok-masuk .table-wrapper {
   display: block !important;
 }
 
+/* 🔥 ADMIN & KASIR - TETAP NORMAL (TIDAK TERPAKSA) */
+body.role-admin #sub-stok-masuk .stok-header-grid,
+body.role-admin #sub-stok-masuk .stok-layout,
+body.role-admin .sub-tab-stok,
+body.role-kasir #sub-stok-masuk .stok-header-grid,
+body.role-kasir #sub-stok-masuk .stok-layout,
+body.role-kasir .sub-tab-stok {
+  display: grid !important;
+}
+
+body.role-admin #sub-stok-masuk h2,
+body.role-kasir #sub-stok-masuk h2 {
+  display: block !important;
+}
 /* 🔥 ADMIN & KASIR: SEMUA TETAP NORMAL (TIDAK TERPAKSA) */
 body.role-admin #sub-stok-masuk .stok-header-grid,
 body.role-admin #sub-stok-masuk .stok-layout,
@@ -4928,6 +4942,7 @@ function restoreStokFullView() {
 }
 
 // ==================== LOAD RIWAYAT STOK RESELLER (DENGAN FALLBACK) ====================
+// ==================== LOAD RIWAYAT STOK RESELLER (TANPA FUNGSI BARU DI GAS) ====================
 function loadRiwayatStokReseller() {
   console.log('🔄 Memuat riwayat stok untuk reseller...');
   
@@ -4942,41 +4957,28 @@ function loadRiwayatStokReseller() {
   // 🔥 AMBIL KODE RESELLER DARI CURRENT USER
   var kodeReseller = currentUser ? currentUser.kodeReseller || '' : '';
   var namaReseller = currentUser ? currentUser.nama || '' : '';
+  var username = currentUser ? currentUser.username || '' : '';
   
-  if (!kodeReseller && !namaReseller) {
+  console.log('📋 Kode Reseller:', kodeReseller);
+  console.log('📋 Nama Reseller:', namaReseller);
+  console.log('📋 Username:', username);
+  
+  if (!kodeReseller && !namaReseller && !username) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#ff9800;padding:30px;">⚠️ Data Reseller tidak ditemukan untuk akun Anda.</td></tr>';
     return;
   }
   
-  console.log('📋 Kode Reseller:', kodeReseller);
-  console.log('📋 Nama Reseller:', namaReseller);
-  
-  // 🔥 COBA PANGGIL API getRiwayatStokReseller
-  callGAS('getRiwayatStokReseller', { kodeReseller: kodeReseller })
+  // 🔥 GUNakan getRiwayatStokMasuk (FUNGSI YANG SUDAH ADA)
+  callGAS('getRiwayatStokMasuk', {})
   .then(function(result) {
-    console.log('📥 Result getRiwayatStokReseller:', result);
+    console.log('📥 Result getRiwayatStokMasuk:', result);
     
-    if (result && result.success) {
-      var data = result.data || [];
-      renderRiwayatStokResellerGrouped(data);
+    if (!result || !result.success) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Gagal memuat riwayat: ' + (result ? result.error : 'Unknown error') + '</td></tr>';
       return;
     }
     
-    // 🔥 FALLBACK: Jika API tidak dikenal, gunakan getRiwayatStokMasuk lalu filter
-    console.log('🔄 Fallback: Menggunakan getRiwayatStokMasuk dengan filter');
-    return callGAS('getRiwayatStokMasuk', {});
-  })
-  .then(function(fallbackResult) {
-    if (!fallbackResult) return;
-    
-    console.log('📥 Result getRiwayatStokMasuk (fallback):', fallbackResult);
-    
-    if (!fallbackResult || !fallbackResult.success) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Gagal memuat riwayat: ' + (fallbackResult ? fallbackResult.error : 'Unknown error') + '</td></tr>';
-      return;
-    }
-    
-    var allData = fallbackResult.data || [];
+    var allData = result.data || [];
     console.log('📦 Total data dari getRiwayatStokMasuk:', allData.length);
     
     // 🔥 FILTER BERDASARKAN KODE RESELLER ATAU NAMA USER
@@ -4987,7 +4989,9 @@ function loadRiwayatStokReseller() {
       }
       // Fallback: filter berdasarkan user/nama
       if (item.user) {
-        return item.user === namaReseller || item.user === currentUser.username;
+        return item.user === namaReseller || 
+               item.user === username || 
+               item.user === currentUser.nama;
       }
       return false;
     });
@@ -5001,19 +5005,8 @@ function loadRiwayatStokReseller() {
       return;
     }
     
+    // 🔥 RENDER DATA YANG SUDAH DIFILTER
     renderRiwayatStokResellerGrouped(filteredData);
-    
-    // 🔥 UPDATE FILTER INFO
-    var totalNota = getUniqueNotaCount(filteredData);
-    var totalItem = filteredData.length;
-    var totalNominal = 0;
-    for (var i = 0; i < filteredData.length; i++) {
-      totalNominal += filteredData[i].subtotal || 0;
-    }
-    var infoEl = document.getElementById('stokFilterInfo');
-    if (infoEl) {
-      infoEl.textContent = '📋 ' + totalNota + ' nota · ' + totalItem + ' item · ' + formatRupiah(totalNominal);
-    }
     
   })
   .catch(function(error) {
@@ -5126,6 +5119,7 @@ function renderRiwayatStokResellerGrouped(data) {
 
 
   // ==================== DETAIL STOK RESELLER ====================
+// ==================== DETAIL STOK RESELLER (TANPA FUNGSI BARU DI GAS) ====================
 function showDetailStokReseller(noNota) {
   console.log('🔍 showDetailStokReseller dipanggil dengan: "' + noNota + '"');
   
@@ -5133,38 +5127,25 @@ function showDetailStokReseller(noNota) {
   document.getElementById('modalBody').innerHTML = '<p style="text-align:center;padding:30px;">⏳ Memuat data untuk ' + noNota + '...</p>';
   document.getElementById('modal').classList.add('active');
   
-  var kodeReseller = currentUser ? currentUser.kodeReseller || '' : '';
-  
-  // 🔥 COBA PAKAI getDetailStokReseller
-  callGAS('getDetailStokReseller', { 
-    noNota: noNota,
-    kodeReseller: kodeReseller
-  })
+  // 🔥 GUNakan getDetailStokMasuk (FUNGSI YANG SUDAH ADA)
+  callGAS('getDetailStokMasuk', { noNota: noNota })
   .then(function(data) {
     console.log('🔍 Data dari server:', data);
     
-    if (data && data.success) {
-      tampilkanDetailStokReseller(data);
-      return;
-    }
-    
-    // 🔥 FALLBACK: Gunakan getDetailStokMasuk
-    console.log('🔄 Fallback: Menggunakan getDetailStokMasuk');
-    return callGAS('getDetailStokMasuk', { noNota: noNota });
-  })
-  .then(function(fallbackData) {
-    if (!fallbackData) return;
-    
-    console.log('🔍 Data fallback:', fallbackData);
-    
-    if (!fallbackData || !fallbackData.success) {
-      var pesan = fallbackData && fallbackData.error ? fallbackData.error : 'Data tidak ditemukan';
+    if (!data || !data.success) {
+      var pesan = data && data.error ? data.error : 'Data tidak ditemukan';
       document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ ' + pesan + '</p>';
       showToast(pesan, 'error');
       return;
     }
     
-    tampilkanDetailStokReseller(fallbackData);
+    if (!data.header) {
+      document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Header tidak ditemukan untuk: ' + noNota + '</p>';
+      return;
+    }
+    
+    tampilkanDetailStokReseller(data);
+    
   })
   .catch(function(error) {
     console.error('❌ Error dari server:', error);
@@ -5173,6 +5154,7 @@ function showDetailStokReseller(noNota) {
   });
 }
 
+// ==================== TAMPILKAN DETAIL STOK RESELLER ====================
 // ==================== TAMPILKAN DETAIL STOK RESELLER ====================
 function tampilkanDetailStokReseller(data) {
   if (!data || !data.header) {
@@ -5243,43 +5225,39 @@ function showStokResellerOnly() {
     subPages[i].classList.remove('active');
   }
   
-  // 🔥 SEMBUNYIKAN SUB-NAV STOK (Batch, Batal, Refresh)
+  // 🔥 SEMBUNYIKAN SUB-NAV STOK
   var subNav = document.querySelector('.sub-tab-stok');
   if (subNav) subNav.style.display = 'none';
   
-  // 🔥 SEMBUNYIKAN FORM STOK MASUK (header grid + layout)
+  // 🔥 SEMBUNYIKAN FORM STOK MASUK
   var stokMasukForm = document.querySelector('#sub-stok-masuk .stok-header-grid');
   if (stokMasukForm) stokMasukForm.style.display = 'none';
   
   var stokLayout = document.querySelector('#sub-stok-masuk .stok-layout');
   if (stokLayout) stokLayout.style.display = 'none';
   
-  // 🔥 TAMPILKAN RIWAYAT STOK DENGAN JUDUL KHUSUS
+  // 🔥 TAMPILKAN RIWAYAT STOK
+  var subStokMasuk = document.getElementById('sub-stok-masuk');
+  if (subStokMasuk) {
+    subStokMasuk.classList.add('active');
+    var h2 = subStokMasuk.querySelector('h2');
+    if (h2) h2.style.display = 'none';
+  }
+  
+  // 🔥 TAMBAHKAN INFO RESELLER
   var riwayatContainer = document.querySelector('#sub-stok-masuk .filter-riwayat-stok');
   if (riwayatContainer) {
-    // Tambahkan info bahwa ini adalah stok reseller
     var infoEl = document.createElement('div');
     infoEl.id = 'resellerStokInfo';
     infoEl.style.cssText = 'background:#e8f5e9;padding:12px 16px;border-radius:8px;margin-bottom:15px;border-left:4px solid #4CAF50;';
     infoEl.innerHTML = '👥 <strong>Stok Reseller</strong> - Menampilkan riwayat stok masuk untuk akun Anda.';
     
-    // Cari elemen sebelum filter
     var filterParent = riwayatContainer.parentNode;
     if (filterParent) {
-      // Hapus info lama jika ada
       var oldInfo = document.getElementById('resellerStokInfo');
       if (oldInfo) oldInfo.remove();
       filterParent.insertBefore(infoEl, riwayatContainer);
     }
-  }
-  
-  // 🔥 TAMPILKAN SUB-PAGE STOK MASUK
-  var subStokMasuk = document.getElementById('sub-stok-masuk');
-  if (subStokMasuk) {
-    subStokMasuk.classList.add('active');
-    // Sembunyikan judul h2 yang tidak perlu
-    var h2 = subStokMasuk.querySelector('h2');
-    if (h2) h2.style.display = 'none';
   }
   
   // 🔥 LOAD RIWAYAT STOK RESELLER
@@ -5358,6 +5336,7 @@ function loadRiwayatStokReseller() {
   });
 }
 
+// ==================== RENDER RIWAYAT STOK RESELLER GROUPED ====================
 // ==================== RENDER RIWAYAT STOK RESELLER GROUPED ====================
 function renderRiwayatStokResellerGrouped(data) {
   var tbody = document.getElementById('riwayatStokTable');
@@ -5446,6 +5425,18 @@ function renderRiwayatStokResellerGrouped(data) {
   }
   
   tbody.innerHTML = html;
+  
+  // 🔥 UPDATE FILTER INFO
+  var totalNota = Object.keys(notaMap).length;
+  var totalItem = data.length;
+  var totalNominal = 0;
+  for (var i = 0; i < data.length; i++) {
+    totalNominal += data[i].subtotal || 0;
+  }
+  var infoEl = document.getElementById('stokFilterInfo');
+  if (infoEl) {
+    infoEl.textContent = '📋 ' + totalNota + ' nota · ' + totalItem + ' item · ' + formatRupiah(totalNominal);
+  }
 }
 
 // ==================== DETAIL STOK RESELLER ====================
