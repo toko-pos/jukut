@@ -5867,7 +5867,8 @@ function loadAllData() {
   generateNoNotaStok();
 }
 
-// ==================== NAVIGATION ====================
+
+  // ==================== NAVIGATION ====================
 function showPage(page) {
   // 🔥🔥🔥 CEK AKSES UNTUK HALAMAN RESELLER
   if (page === 'reseller') {
@@ -5887,16 +5888,23 @@ function showPage(page) {
     }
   }
   
+  // ============================================================
+  // 🔥 SWITCH PAGE (TAMPILKAN HALAMAN)
+  // ============================================================
+  
   var pages = document.querySelectorAll('.page');
   var navs = document.querySelectorAll('.nav button');
+  
   for (var i = 0; i < pages.length; i++) {
     pages[i].classList.remove('active');
   }
   for (var i = 0; i < navs.length; i++) {
     navs[i].classList.remove('active');
   }
+  
   var targetPage = document.getElementById('page-' + page);
   if (targetPage) targetPage.classList.add('active');
+  
   var navButtons = document.querySelectorAll('.nav button');
   for (var i = 0; i < navButtons.length; i++) {
     if (navButtons[i].getAttribute('onclick') === "showPage('" + page + "')") {
@@ -5904,6 +5912,147 @@ function showPage(page) {
     }
   }
   
+  // ============================================================
+  // 🔥🔥🔥 LOAD DATA SESUAI HALAMAN & ROLE 🔥🔥🔥
+  // ============================================================
+  
+  var isResellerRole = isReseller();
+  var isAdminRole = isAdmin();
+  var isKasirRole = isKasir();
+  
+  console.log('📊 showPage:', page, 'isReseller:', isResellerRole);
+  
+  // ============================================================
+  // 1. DASHBOARD
+  // ============================================================
+  if (page === 'dashboard') {
+    if (isResellerRole) {
+      loadResellerDashboard();
+    } else {
+      loadDashboard();
+    }
+  }
+  
+  // ============================================================
+  // 2. POS
+  // ============================================================
+  if (page === 'pos') {
+    if (isResellerRole) {
+      console.log('🔄 Load POS Reseller');
+      loadResellerPos();
+    } else {
+      console.log('🔄 Load POS Normal');
+      loadPosProduk();
+      loadResellerOptions();
+    }
+  }
+  
+  // ============================================================
+  // 3. PRODUK - 🔥 PERBAIKAN UTAMA 🔥
+  // ============================================================
+  if (page === 'produk') {
+    if (isResellerRole) {
+      console.log('🔄 Load PRODUK Reseller');
+      
+      // 🔥 SEMBUNYIKAN FORM EDIT HARGA (dropdown produk master)
+      var editHargaContainer = document.querySelector('#page-produk .card > div[style*="background: #f9f9f9"]');
+      if (editHargaContainer) {
+        editHargaContainer.style.display = 'none';
+      }
+      
+      // 🔥 SEMBUNYIKAN SUBTAB PRODUK (Tambah Produk, Refresh)
+      var subTabProduk = document.querySelector('.sub-tab-produk');
+      if (subTabProduk) {
+        subTabProduk.style.display = 'none';
+      }
+      
+      // 🔥 TAMPILKAN TABEL PRODUK RESELLER
+      loadResellerProdukTable();
+      
+      // 🔥 UPDATE JUDUL
+      var judul = document.querySelector('#page-produk .card h2');
+      if (judul) {
+        judul.textContent = '📦 Manajemen Produk Reseller';
+      }
+      
+    } else {
+      console.log('🔄 Load PRODUK Normal');
+      
+      // 🔥 TAMPILKAN FORM EDIT HARGA
+      var editHargaContainer = document.querySelector('#page-produk .card > div[style*="background: #f9f9f9"]');
+      if (editHargaContainer) {
+        editHargaContainer.style.display = 'block';
+      }
+      
+      // 🔥 TAMPILKAN SUBTAB PRODUK
+      var subTabProduk = document.querySelector('.sub-tab-produk');
+      if (subTabProduk) {
+        subTabProduk.style.display = 'flex';
+      }
+      
+      // 🔥 LOAD PRODUK NORMAL
+      loadProdukWithRetry();
+      
+      // Inisialisasi dropdown edit harga
+      if (typeof initEditHargaDropdown === 'function') {
+        setTimeout(initEditHargaDropdown, 500);
+      }
+    }
+  }
+  
+  // ============================================================
+  // 4. TRANSAKSI
+  // ============================================================
+  if (page === 'transaksi') {
+    if (isResellerRole) {
+      console.log('🔄 Load TRANSAKSI Reseller');
+      loadResellerTransaksi();
+    } else {
+      console.log('🔄 Load TRANSAKSI Normal');
+      loadTransaksi();
+      loadLogPembatalan();
+    }
+  }
+  
+  // ============================================================
+  // 5. STOK
+  // ============================================================
+  if (page === 'stok') {
+    if (isResellerRole) {
+      console.log('🔄 Load STOK Reseller');
+      showStokResellerOnly();
+    } else {
+      console.log('🔄 Load STOK Normal');
+      showSubPage('stok', 'masuk');
+      restoreStokFullView();
+    }
+  }
+  
+  // ============================================================
+  // 6. USER (HANYA ADMIN)
+  // ============================================================
+  if (page === 'user') {
+    if (isAdminRole) {
+      loadUsers();
+    }
+  }
+  
+  // ============================================================
+  // 7. RESELLER (HANYA ADMIN)
+  // ============================================================
+  if (page === 'reseller') {
+    if (isAdminRole) {
+      loadReseller();
+    }
+  }
+  
+  // ============================================================
+  // 8. PROFILE (SEMUA ROLE)
+  // ============================================================
+  if (page === 'profile') {
+    loadProfile();
+  }
+}
   // ============================================================
   // 🔥🔥🔥 LOAD DATA SESUAI HALAMAN & ROLE 🔥🔥🔥
   // ============================================================
