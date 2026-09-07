@@ -6271,286 +6271,14 @@ function generateNoNotaStok() {
   });
 }
 
-// ============================================================
-// 🔥 TOGGLE DETAIL TRANSAKSI (EXPAND/COLLAPSE)
-// ============================================================
-function toggleDetailTransaksi(idTransaksi) {
-    var detailRowId = 'detail-' + idTransaksi;
-    var existingRow = document.getElementById(detailRowId);
-    
-    // 🔥 Jika sudah ada, hapus (collapse)
-    if (existingRow) {
-        existingRow.remove();
-        return;
-    }
-    
-    // 🔥 Jika belum ada, tambahkan (expand)
-    var parentRow = document.querySelector('[data-id="' + idTransaksi + '"]');
-    if (!parentRow) return;
-    
-    // Tampilkan loading
-    var newRow = document.createElement('tr');
-    newRow.id = detailRowId;
-    newRow.className = 'detail-row';
-    newRow.innerHTML = `
-        <td colspan="6" class="text-center">
-            <div class="loading-spinner">⏳ Memuat detail...</div>
-        </td>
-    `;
-    
-    // Insert setelah parent row
-    parentRow.parentNode.insertBefore(newRow, parentRow.nextSibling);
-    
-    // 🔥 Ambil detail dari API
-    var data = {
-        action: 'getDetailTransaksi',
-        data: {
-            idTransaksi: idTransaksi
-        }
-    };
-    
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(result) {
-        if (result.success) {
-            renderDetailRow(idTransaksi, result.data);
-        } else {
-            showDetailError(idTransaksi, result.error || 'Gagal memuat detail');
-        }
-    })
-    .catch(function(error) {
-        console.error('Error:', error);
-        showDetailError(idTransaksi, error.message);
-    });
-}
 
-// ============================================================
-// 🔥 RENDER DETAIL ROW
-// ============================================================
-function renderDetailRow(idTransaksi, detail) {
-    var detailRowId = 'detail-' + idTransaksi;
-    var row = document.getElementById(detailRowId);
-    if (!row) return;
-    
-    if (!detail || detail.length === 0) {
-        row.innerHTML = `
-            <td colspan="6" class="text-center text-muted">
-                📭 Tidak ada detail produk untuk transaksi ini
-            </td>
-        `;
-        return;
-    }
-    
-    // 🔥 Buat tabel detail di dalam row
-    var html = '<td colspan="6" style="padding: 0; background-color: #f8f9fa;">';
-    html += '<div class="detail-container">';
-    html += '<table class="table-detail">';
-    html += '<thead>';
-    html += '<tr>';
-    html += '<th>#</th>';
-    html += '<th>Kode</th>';
-    html += '<th>Nama Produk</th>';
-    html += '<th style="text-align:right;">Harga</th>';
-    html += '<th style="text-align:center;">Qty</th>';
-    html += '<th style="text-align:right;">Subtotal</th>';
-    html += '</tr>';
-    html += '</thead>';
-    html += '<tbody>';
-    
-    var grandTotal = 0;
-    for (var i = 0; i < detail.length; i++) {
-        var item = detail[i];
-        var harga = parseInt(item.Harga) || 0;
-        var qty = parseInt(item.Qty) || 0;
-        var subtotal = harga * qty;
-        grandTotal += subtotal;
-        
-        var kode = item['Kode Produk'] || '-';
-        var nama = item['Nama Produk'] || '-';
-        
-        html += '<tr>';
-        html += '<td>' + (i + 1) + '</td>';
-        html += '<td>' + kode + '</td>';
-        html += '<td>' + nama + '</td>';
-        html += '<td style="text-align:right;">Rp ' + formatRupiah(harga) + '</td>';
-        html += '<td style="text-align:center;">' + qty + '</td>';
-        html += '<td style="text-align:right;">Rp ' + formatRupiah(subtotal) + '</td>';
-        html += '</tr>';
-    }
-    
-    html += '</tbody>';
-    html += '<tfoot>';
-    html += '<tr>';
-    html += '<td colspan="5" style="text-align:right;"><strong>Grand Total</strong></td>';
-    html += '<td style="text-align:right;"><strong>Rp ' + formatRupiah(grandTotal) + '</strong></td>';
-    html += '</tr>';
-    html += '</tfoot>';
-    html += '</table>';
-    html += '</div>';
-    html += '</td>';
-    
-    row.innerHTML = html;
-}
 
-// ============================================================
-// 🔥 TAMPILKAN ERROR DI DETAIL ROW
-// ============================================================
-function showDetailError(idTransaksi, message) {
-    var detailRowId = 'detail-' + idTransaksi;
-    var row = document.getElementById(detailRowId);
-    if (!row) return;
-    
-    row.innerHTML = `
-        <td colspan="6" class="text-center" style="color: #dc3545;">
-            ❌ ${message}
-        </td>
-    `;
-}
 
-// ============================================================
-// 🔥 FORMAT RUPIAH
-// ============================================================
-function formatRupiah(angka) {
-    if (angka === undefined || angka === null) return '0';
-    var str = String(angka);
-    var parts = str.split('.');
-    var number = parts[0];
-    var formatted = '';
-    for (var i = number.length - 1, j = 0; i >= 0; i--, j++) {
-        if (j > 0 && j % 3 === 0) {
-            formatted = '.' + formatted;
-        }
-        formatted = number[i] + formatted;
-    }
-    if (parts.length > 1) {
-        formatted = formatted + ',' + parts[1];
-    }
-    return formatted;
-}
 
-//============================== RENDER TRANSAKI ======================
-  function renderTransaksi(data) {
-    var html = '';
-    for (var i = 0; i < data.length; i++) {
-        var t = data[i];
-        html += '<tr data-id="' + t.id + '" class="parent-row">';
-        html += '<td>';
-        // 🔥 ID TRANSAKSI JADI LINK EXPAND
-        html += '<a href="javascript:void(0)" ';
-        html += 'onclick="toggleDetailTransaksi(\'' + t.id + '\')" ';
-        html += 'class="link-detail" title="Klik untuk lihat detail">';
-        html += '▶ ' + t.id;  // 🔥 Tambahkan icon panah
-        html += '</a>';
-        html += '</td>';
-        html += '<td>' + t.tanggal + '</td>';
-        html += '<td>' + t.kasir + '</td>';
-        html += '<td>Rp ' + formatRupiah(t.total) + '</td>';
-        html += '<td>' + t.status + '</td>';
-        html += '</tr>';
-    }
-    document.getElementById('tableBody').innerHTML = html;
-}
-//================== HEADER TRANSAKSI EKSPAND =============
-  function renderDetailRowWithHeader(idTransaksi, detail) {
-    var detailRowId = 'detail-' + idTransaksi;
-    var row = document.getElementById(detailRowId);
-    if (!row) return;
-    
-    // 🔥 Ambil header transaksi
-    var data = {
-        action: 'getTransaksiById',
-        data: {
-            idTransaksi: idTransaksi
-        }
-    };
-    
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(result) {
-        var header = result.success ? result.data : null;
-        
-        if (!detail || detail.length === 0) {
-            row.innerHTML = `
-                <td colspan="6" class="text-center text-muted">
-                    📭 Tidak ada detail produk
-                </td>
-            `;
-            return;
-        }
-        
-        var html = '<td colspan="6" style="padding: 0; background-color: #f8f9fa;">';
-        html += '<div class="detail-container">';
-        
-        // 🔥 Header informasi transaksi
-        if (header) {
-            html += '<div class="detail-header-info">';
-            html += '<div class="detail-header-grid">';
-            html += '<div><strong>ID:</strong> ' + (header.ID || idTransaksi) + '</div>';
-            html += '<div><strong>Tanggal:</strong> ' + (header.Tanggal || '-') + '</div>';
-            html += '<div><strong>Kasir:</strong> ' + (header.Kasir || '-') + '</div>';
-            html += '<div><strong>Status:</strong> ' + (header.Status || 'Selesai') + '</div>';
-            html += '</div>';
-            html += '</div>';
-        }
-        
-        // 🔥 Tabel detail produk
-        html += '<table class="table-detail">';
-        html += '<thead><tr>';
-        html += '<th>#</th><th>Kode</th><th>Nama Produk</th>';
-        html += '<th style="text-align:right;">Harga</th>';
-        html += '<th style="text-align:center;">Qty</th>';
-        html += '<th style="text-align:right;">Subtotal</th>';
-        html += '</tr></thead><tbody>';
-        
-        var grandTotal = 0;
-        for (var i = 0; i < detail.length; i++) {
-            var item = detail[i];
-            var harga = parseInt(item.Harga) || 0;
-            var qty = parseInt(item.Qty) || 0;
-            var subtotal = harga * qty;
-            grandTotal += subtotal;
-            
-            html += '<tr>';
-            html += '<td>' + (i + 1) + '</td>';
-            html += '<td>' + (item['Kode Produk'] || '-') + '</td>';
-            html += '<td>' + (item['Nama Produk'] || '-') + '</td>';
-            html += '<td style="text-align:right;">Rp ' + formatRupiah(harga) + '</td>';
-            html += '<td style="text-align:center;">' + qty + '</td>';
-            html += '<td style="text-align:right;">Rp ' + formatRupiah(subtotal) + '</td>';
-            html += '</tr>';
-        }
-        
-        html += '</tbody><tfoot><tr>';
-        html += '<td colspan="5" style="text-align:right;"><strong>Grand Total</strong></td>';
-        html += '<td style="text-align:right;"><strong>Rp ' + formatRupiah(grandTotal) + '</strong></td>';
-        html += '</tr></tfoot></table>';
-        html += '</div></td>';
-        
-        row.innerHTML = html;
-    })
-    .catch(function(error) {
-        console.error('Error:', error);
-        showDetailError(idTransaksi, error.message);
-    });
-}
+
+
+
+
 
 // ==================== STOK MASUK - SIMPAN ====================
 function simpanStokMasuk() {
@@ -7415,7 +7143,7 @@ function refreshStokSubtab() {
   }, 1000);
 }
 
-// ==================== TRANSAKSI - LOAD ====================
+
 // ==================== TRANSAKSI - LOAD ====================
 function loadTransaksi() {
   try {
@@ -7457,49 +7185,17 @@ function loadTransaksi() {
           return;
         }
         
-        var html = '';
-        var totalTransaksi = 0;
+        // 🔥🔥🔥 PERUBAHAN: PANGGIL renderTransaksi() 🔥🔥🔥
+        renderTransaksi(data);
+        
+        // HITUNG TOTAL
+        var totalTransaksi = data.length;
         var totalQty = 0;
         var totalLaba = 0;
-        
         for (var i = 0; i < data.length; i++) {
-          var t = data[i];
-          var tanggal = formatTanggalDisplay(t.tanggal) + ' ' + (t.waktu || '');
-          var showCancel = (currentUser.role === 'admin' || currentUser.role === 'owner' || 
-                           t.kasir.toLowerCase() === (currentUser.nama || '').toLowerCase());
-          
-          // ============================================================
-          // 🔥🔥🔥 KODE BADGE RESELLER (TARUH DI SINI) 🔥🔥🔥
-          // ============================================================
-          var isReseller = t.isReseller || String(t.kasir).toLowerCase().indexOf('reseller') !== -1;
-          var badgeReseller = isReseller ? '<span class="badge-reseller" style="background:#9C27B0;color:white;padding:2px 8px;border-radius:10px;font-size:0.6rem;margin-left:5px;">👥 Reseller</span>' : '';
-          
-          // 🔥 BUILD HTML BARIS TABEL
-          html += '<tr>' +
-            '<td>' + (i + 1) + '</td>' +
-            '<td>' + tanggal + '</td>' +
-            '<td><strong>' + t.id + '</strong></td>' +
-            '<td>' + t.kasir + badgeReseller + '</td>' +
-            '<td>' + formatRupiah(t.total) + '</td>';
-          
-          if (showLaba) {
-            html += '<td style="color:' + (t.laba >= 0 ? '#4CAF50' : '#f44336') + ';">' + formatRupiah(t.laba) + '</td>';
-            totalLaba += t.laba;
-          }
-          
-          html += '<td><span style="background:#4CAF50;color:white;padding:2px 10px;border-radius:10px;font-size:0.8rem;">' + t.status + '</span></td>' +
-            '<td style="white-space:nowrap;">' +
-            '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + t.id + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Cetak Struk">🖨️</button>';
-          if (showCancel) {
-            html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + t.id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Batalkan Transaksi">🗑️</button>';
-          }
-          html += '</td></tr>';
-          
-          totalTransaksi++;
-          totalQty += t.qty || 0;
+          totalQty += data[i].qty || 0;
+          totalLaba += data[i].laba || 0;
         }
-        
-        tbody.innerHTML = html;
         
         var totalText = '📊 Total: Transaksi: ' + totalTransaksi + ' | Quantity: ' + totalQty;
         if (showLaba) {
