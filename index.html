@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzxNUhiVc-jb0AL8CH8L3rOP_lSU9Pv4pw6ukbVkpzLE_KSAZ6775-fyaiwEYrHkWE4uA/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxUcgC8NPw2tOcmhmF117z30oJAVwKeQHCKi6AWxFgyCQ9rLp4SJYzOKIfNs4Hu5-rRYg/exec';
     // ============================================
   </script>
 
@@ -2243,31 +2243,34 @@ body.role-kasir #sub-stok-masuk h2 {
     <!-- ===== POS ===== -->
 <div id="page-pos" class="page">
   <!-- ===== HEADER POS (TERPISAH) ===== -->
-  <div style="background:white; padding:15px 20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); margin-bottom:15px;">
-    <div style="display:grid; grid-template-columns: 1fr 1.2fr 1fr; gap:12px; align-items:end;">
-      <!-- TANGGAL -->
-      <div>
-        <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px;">📅 Tanggal Transaksi</label>
-        <input type="date" id="tanggalTransaksi" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; height:38px;">
-      </div>
-      
-      <!-- RESELLER -->
-      <div>
-        <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px;">👥 Reseller</label>
-        <select id="pilihReseller" onchange="onResellerChange()" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; height:38px; background:white;">
-          <option value="">-- Tanpa Reseller --</option>
-        </select>
-      </div>
-      
-      <!-- NAMA PEMBELI -->
-      <div>
-        <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px;">👤 Nama Pembeli</label>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <input type="text" id="namaPembeli" placeholder="Masukkan nama pembeli" style="flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; height:38px;">
-          <span id="namaPembeliStatus" style="font-size:0.7rem; color:#999; white-space:nowrap;">Opsional</span>
-        </div>
+  <!-- Di dalam header POS -->
+<div style="background:white; padding:15px 20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); margin-bottom:15px;">
+  <div style="display:grid; grid-template-columns: 1fr 1.2fr 1fr; gap:12px; align-items:end;">
+    
+    <!-- TANGGAL -->
+    <div>
+      <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px;">📅 Tanggal Transaksi</label>
+      <input type="date" id="tanggalTransaksi" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; height:38px;">
+    </div>
+    
+    <!-- 🔥 RESELLER DROPDOWN - DISEMBUNYIKAN UNTUK RESELLER -->
+    <div id="resellerDropdownWrapper">
+      <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px;">👥 Reseller</label>
+      <select id="pilihReseller" onchange="onResellerChange()" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; height:38px; background:white;">
+        <option value="">-- Tanpa Reseller --</option>
+      </select>
+    </div>
+    
+    <!-- NAMA PEMBELI -->
+    <div>
+      <label style="font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px;">👤 Nama Pembeli</label>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <input type="text" id="namaPembeli" placeholder="Masukkan nama pembeli" style="flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; height:38px;">
+        <span id="namaPembeliStatus" style="font-size:0.7rem; color:#999; white-space:nowrap;">Opsional</span>
       </div>
     </div>
+  </div>
+</div>
     
     <!-- INFO RESELLER -->
     <div id="resellerInfo" style="display:none; background:#f0f8ff; padding:6px 12px; border-radius:6px; margin-top:10px; border-left:4px solid #2196F3; font-size:0.85rem;">
@@ -2906,7 +2909,976 @@ try {
   console.error('❌ localStorage error:', e);
 }
 
+// ==================== FUNGSI DETEKSI ROLE ====================
 
+function isReseller() {
+  if (!currentUser) return false;
+  var role = currentUser.role ? currentUser.role.toUpperCase() : '';
+  return role === 'RESELLER';
+}
+
+function isAdmin() {
+  if (!currentUser) return false;
+  var role = currentUser.role ? currentUser.role.toUpperCase() : '';
+  return role === 'ADMIN' || role === 'OWNER';
+}
+
+function isKasir() {
+  if (!currentUser) return false;
+  var role = currentUser.role ? currentUser.role.toUpperCase() : '';
+  return role === 'KASIR' || role === 'CASHIER';
+}
+
+// ==================== LOAD RESELLER DATA ====================
+
+function loadResellerData() {
+  if (!isReseller()) return;
+  
+  var kodeReseller = currentUser.kodeReseller || '';
+  if (!kodeReseller) {
+    showToast('⚠️ Kode Reseller tidak ditemukan!', 'error');
+    return;
+  }
+  
+  // Load semua data reseller
+  loadResellerDashboard();
+  loadResellerPos();
+  loadResellerProdukTable();
+  loadResellerTransaksi();
+  loadResellerRiwayatStok();
+}
+
+// ==================== RESELLER DASHBOARD ====================
+
+function loadResellerDashboard() {
+  var kodeReseller = currentUser.kodeReseller || '';
+  if (!kodeReseller) {
+    showToast('⚠️ Kode Reseller tidak ditemukan!', 'error');
+    return;
+  }
+  
+  callGAS('getResellerDashboard', { kodeReseller: kodeReseller })
+  .then(function(result) {
+    if (!result || !result.success) {
+      showToast('❌ Gagal memuat dashboard: ' + (result ? result.error : 'Unknown'), 'error');
+      return;
+    }
+    
+    var data = result.data || {};
+    
+    // Update stat cards
+    document.getElementById('keuntunganHari').textContent = formatRupiah(data.penjualanHari || 0);
+    document.getElementById('penjualanHari').textContent = formatRupiah(data.penjualanHari || 0);
+    document.getElementById('quantityHari').textContent = data.transHari || 0;
+    document.getElementById('totalTransaksi').textContent = data.transHari || 0;
+    
+    document.getElementById('stokRendah').textContent = data.totalStok || 0;
+    document.getElementById('totalQuantityBulan').textContent = data.totalTransaksi || 0;
+    document.getElementById('keuntunganBulan').textContent = formatRupiah(data.totalKeuntungan || 0);
+    document.getElementById('totalTransaksiBulan').textContent = data.totalTransaksi || 0;
+    
+    document.getElementById('nilaiStok').textContent = formatRupiah(data.totalNilaiStok || 0);
+    document.getElementById('potensiPenjualan').textContent = formatRupiah(data.totalPenjualan || 0);
+    document.getElementById('nilaiStokSub').textContent = data.totalStok + ' pcs';
+    document.getElementById('potensiPenjualanSub').textContent = data.totalStok + ' pcs';
+    
+    var infoEl = document.getElementById('dashboardInfo');
+    if (infoEl) {
+      infoEl.textContent = '👥 Reseller: ' + (currentUser.nama || '') + ' | Total Produk: ' + (data.totalProduk || 0);
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadResellerDashboard:', error);
+  });
+}
+
+// ==================== RESELLER POS ====================
+
+var resellerProdukList = [];
+var resellerCart = [];
+
+function loadResellerPos() {
+  var container = document.getElementById('posProducts');
+  if (!container) return;
+  
+  var kodeReseller = currentUser.kodeReseller || '';
+  if (!kodeReseller) {
+    container.innerHTML = '<p style="color:red;">⚠️ Kode Reseller tidak ditemukan!</p>';
+    return;
+  }
+  
+  container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">⏳ Memuat produk...</p>';
+  
+  callGAS('getResellerProduk', { kodeReseller: kodeReseller })
+  .then(function(result) {
+    if (!result || !result.success) {
+      container.innerHTML = '<p style="color:red;">❌ Gagal memuat produk: ' + (result ? result.error : 'Unknown') + '</p>';
+      return;
+    }
+    
+    resellerProdukList = result.data || [];
+    renderResellerPosGrid();
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadResellerPos:', error);
+    container.innerHTML = '<p style="color:red;">❌ Error: ' + error.message + '</p>';
+  });
+}
+
+function renderResellerPosGrid() {
+  var container = document.getElementById('posProducts');
+  if (!container) return;
+  
+  if (resellerProdukList.length === 0) {
+    container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk untuk reseller ini</p>';
+    return;
+  }
+  
+  var html = '';
+  var processedKode = {};
+  
+  for (var i = 0; i < resellerProdukList.length; i++) {
+    var p = resellerProdukList[i];
+    if (processedKode[p.kode]) continue;
+    processedKode[p.kode] = true;
+    
+    var stok = p.stok || 0;
+    var isOutOfStock = stok <= 0;
+    var disabledClass = isOutOfStock ? 'disabled' : '';
+    var stockClass = isOutOfStock ? 'out-of-stock' : '';
+    var onclickAttr = isOutOfStock ? '' : 'onclick="addToResellerCart(\'' + p.kode + '\')"';
+    var imgHtml = getProductImage(p.gambar, p.nama);
+    var hargaJual = p.hargaJual || p.hargaNormal || 0;
+    
+    html += '<div class="product-item ' + disabledClass + '" ' + onclickAttr + ' data-kode="' + p.kode + '" data-harga="' + hargaJual + '">';
+    html += imgHtml;
+    html += (isOutOfStock ? '<div class="badge-out-of-stock">⛔ HABIS</div>' : '');
+    html += '<div class="name">' + (p.nama || '-') + '</div>';
+    html += '<div class="price">' + formatRupiah(hargaJual) + '</div>';
+    html += '<div class="stock ' + stockClass + '">' + (isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.satuan || 'pcs')) + '</div>';
+    html += '</div>';
+  }
+  
+  container.innerHTML = html;
+  updateResellerCartDisplay();
+}
+
+function addToResellerCart(kode) {
+  var produk = null;
+  for (var i = 0; i < resellerProdukList.length; i++) {
+    if (resellerProdukList[i].kode === kode) {
+      produk = resellerProdukList[i];
+      break;
+    }
+  }
+  
+  if (!produk) {
+    showToast('⚠️ Produk tidak ditemukan!', 'error');
+    return;
+  }
+  
+  if (produk.stok <= 0) {
+    showToast('⚠️ Stok produk habis!', 'error');
+    return;
+  }
+  
+  var existing = null;
+  for (var i = 0; i < resellerCart.length; i++) {
+    if (resellerCart[i].kode === kode) {
+      existing = resellerCart[i];
+      break;
+    }
+  }
+  
+  var hargaJual = produk.hargaJual || produk.hargaNormal || 0;
+  
+  if (existing) {
+    if (existing.qty + 1 > produk.stok) {
+      showToast('⚠️ Stok tidak mencukupi!', 'error');
+      return;
+    }
+    existing.qty++;
+    existing.subtotal = existing.harga * existing.qty;
+  } else {
+    resellerCart.push({
+      kode: produk.kode,
+      nama: produk.nama,
+      harga: hargaJual,
+      qty: 1,
+      subtotal: hargaJual,
+      gambar: produk.gambar || '',
+      satuan: produk.satuan || 'pcs'
+    });
+  }
+  
+  updateResellerCartDisplay();
+  showToast(produk.nama + ' ditambahkan ke keranjang');
+}
+
+function updateResellerCartDisplay() {
+  var container = document.getElementById('cartItems');
+  var total = 0;
+  for (var i = 0; i < resellerCart.length; i++) {
+    total += resellerCart[i].subtotal;
+  }
+  
+  if (resellerCart.length === 0) {
+    container.innerHTML = '<p style="color:#999;">Belum ada produk</p>';
+    document.getElementById('cartTotal').textContent = formatRupiah(0);
+    document.getElementById('btnCheckout').disabled = true;
+    return;
+  }
+  
+  var html = '';
+  for (var i = 0; i < resellerCart.length; i++) {
+    var item = resellerCart[i];
+    var totalHarga = item.harga * item.qty;
+    var imgHtml = '';
+    if (item.gambar && item.gambar.trim() !== '' && item.gambar.trim().startsWith('http')) {
+      var imgUrl = item.gambar.trim();
+      var match = imgUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (match) {
+        imgUrl = 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w400';
+      }
+      imgHtml = '<img src="' + imgUrl + '" alt="' + item.nama + '" onerror="this.outerHTML=\'<div class=&quot;no-image-small&quot;>📷</div>\'">';
+    } else {
+      imgHtml = '<div class="no-image-small">📷</div>';
+    }
+    
+    html += '<div class="cart-item" data-kode="' + item.kode + '">';
+    html += '<div class="item-info">';
+    html += imgHtml;
+    html += '<div class="item-detail">';
+    html += '<div class="item-name">' + item.nama + '</div>';
+    html += '<div class="item-price">' + formatRupiah(item.harga) + '</div>';
+    html += '</div></div>';
+    html += '<div class="qty-control">';
+    html += '<button onclick="updateResellerQty(' + i + ', -1)">−</button>';
+    html += '<span class="qty-number">' + item.qty + '</span>';
+    html += '<button onclick="updateResellerQty(' + i + ', 1)">+</button>';
+    html += '<button class="btn-remove" onclick="removeFromResellerCart(' + i + ')">✕</button>';
+    html += '</div>';
+    html += '<div class="item-subtotal">' + formatRupiah(totalHarga) + '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+  document.getElementById('cartTotal').textContent = formatRupiah(total);
+  document.getElementById('btnCheckout').disabled = resellerCart.length === 0;
+}
+
+function updateResellerQty(index, change) {
+  if (index < 0 || index >= resellerCart.length) return;
+  var item = resellerCart[index];
+  
+  var produk = null;
+  for (var i = 0; i < resellerProdukList.length; i++) {
+    if (resellerProdukList[i].kode === item.kode) {
+      produk = resellerProdukList[i];
+      break;
+    }
+  }
+  
+  var newQty = item.qty + change;
+  
+  if (newQty < 1) {
+    resellerCart.splice(index, 1);
+  } else if (produk && newQty > produk.stok) {
+    showToast('⚠️ Stok tidak mencukupi!', 'error');
+    return;
+  } else {
+    item.qty = newQty;
+    item.subtotal = item.harga * item.qty;
+  }
+  
+  updateResellerCartDisplay();
+}
+
+function removeFromResellerCart(index) {
+  if (index >= 0 && index < resellerCart.length) {
+    resellerCart.splice(index, 1);
+    updateResellerCartDisplay();
+    showToast('Item dihapus dari keranjang', 'info');
+  }
+}
+
+function checkoutReseller() {
+  if (resellerCart.length === 0) {
+    showToast('⚠️ Keranjang kosong!', 'warning');
+    return;
+  }
+  
+  var total = 0;
+  for (var i = 0; i < resellerCart.length; i++) {
+    total += resellerCart[i].subtotal;
+  }
+  
+  var html = '<div style="margin-bottom:15px;">';
+  html += '<div style="background:#f5f5f5;padding:15px;border-radius:8px;margin-bottom:15px;">';
+  html += '<p style="font-size:0.9rem;margin-bottom:5px;"><strong>Total Belanja:</strong> <span style="color:var(--primary);font-size:1.3rem;">' + formatRupiah(total) + '</span></p>';
+  html += '<p style="font-size:0.8rem;color:#666;margin:0;">' + resellerCart.length + ' item</p>';
+  html += '</div>';
+  
+  html += '<div style="background:#f3e5f5;border:2px solid #9C27B0;border-radius:10px;padding:15px;margin-bottom:15px;">';
+  html += '<label style="font-weight:700;color:#9C27B0;display:block;margin-bottom:8px;">👥 Metode Pembayaran</label>';
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+  html += '  <label style="display:flex;align-items:center;gap:6px;padding:10px 16px;border:2px solid #4CAF50;border-radius:8px;cursor:pointer;flex:1;min-width:100px;justify-content:center;background:white;">';
+  html += '    <input type="radio" name="metodeBayarReseller" value="LUNAS" checked> 💳 LUNAS';
+  html += '  </label>';
+  html += '  <label style="display:flex;align-items:center;gap:6px;padding:10px 16px;border:2px solid #FF9800;border-radius:8px;cursor:pointer;flex:1;min-width:100px;justify-content:center;background:white;">';
+  html += '    <input type="radio" name="metodeBayarReseller" value="HUTANG"> 📝 HUTANG';
+  html += '  </label>';
+  html += '</div></div>';
+  
+  html += '<div class="form-group">';
+  html += '<label>💰 Nominal Pembayaran</label>';
+  html += '<input type="number" id="fPembayaranReseller" value="' + total + '" min="0" placeholder="Masukkan nominal..." style="width:100%;padding:12px;border:2px solid var(--border);border-radius:8px;font-size:1.1rem;font-weight:bold;">';
+  html += '</div>';
+  
+  html += '<div class="form-group">';
+  html += '<label>🔄 Kembalian / Sisa</label>';
+  html += '<input type="text" id="fKembalianReseller" readonly value="Kembalian: Rp 0" style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:1.1rem;background:#f9f9f9;font-weight:bold;color:var(--primary);">';
+  html += '</div>';
+  
+  html += '<div style="display:flex;gap:10px;margin-top:15px;">';
+  html += '  <button class="btn btn-success" onclick="prosesCheckoutReseller(' + total + ')" style="flex:2;padding:14px;font-size:1.1rem;font-weight:700;border-radius:10px;background:linear-gradient(135deg,#4CAF50,#388E3C);color:white;border:none;cursor:pointer;">';
+  html += '    ✅ Proses';
+  html += '  </button>';
+  html += '  <button class="btn btn-danger" onclick="closeModal()" style="flex:1;padding:14px;font-size:1.1rem;border-radius:10px;background:#f44336;color:white;border:none;cursor:pointer;">';
+  html += '    ✖ Batal';
+  html += '  </button>';
+  html += '</div></div>';
+  
+  document.getElementById('modalTitle').textContent = '💳 Pembayaran Reseller';
+  document.getElementById('modalContent').classList.add('large');
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modal').classList.add('active');
+  
+  setTimeout(function() {
+    var input = document.getElementById('fPembayaranReseller');
+    if (input) {
+      input.addEventListener('input', function() {
+        var totalVal = total;
+        var nominal = parseInt(this.value) || 0;
+        var selisih = nominal - totalVal;
+        var el = document.getElementById('fKembalianReseller');
+        if (el) {
+          if (selisih >= 0) {
+            el.value = 'Kembalian: ' + formatRupiah(selisih);
+            el.style.color = '#4CAF50';
+          } else {
+            el.value = 'Sisa Hutang: ' + formatRupiah(Math.abs(selisih));
+            el.style.color = '#E65100';
+          }
+        }
+      });
+      input.focus();
+      input.select();
+    }
+  }, 300);
+}
+
+function prosesCheckoutReseller(total) {
+  var input = document.getElementById('fPembayaranReseller');
+  var nominal = parseInt(input ? input.value : 0) || 0;
+  
+  var metodeRadios = document.querySelectorAll('input[name="metodeBayarReseller"]');
+  var metode = 'LUNAS';
+  for (var i = 0; i < metodeRadios.length; i++) {
+    if (metodeRadios[i].checked) {
+      metode = metodeRadios[i].value;
+      break;
+    }
+  }
+  
+  if (metode === 'LUNAS' && nominal < total) {
+    metode = 'CICILAN';
+  }
+  
+  var metodeText = metode === 'LUNAS' ? '💳 LUNAS' : '📝 ' + metode;
+  var confirmMsg = '⚠️ Konfirmasi Transaksi\n\n' +
+                   'Total: ' + formatRupiah(total) + '\n' +
+                   'Metode: ' + metodeText + '\n' +
+                   'Bayar: ' + formatRupiah(nominal) + '\n';
+  
+  if (nominal < total) {
+    confirmMsg += 'Sisa: ' + formatRupiah(total - nominal) + '\n\n';
+    confirmMsg += '⚠️ Sisa akan dicatat sebagai hutang.';
+  } else {
+    confirmMsg += '\n✅ Pembayaran lunas.';
+  }
+  
+  if (!confirm(confirmMsg)) return;
+  
+  var btn = document.querySelector('.modal-content .btn-success');
+  if (btn) {
+    btn.textContent = '⏳ Memproses...';
+    btn.disabled = true;
+  }
+  
+  var items = [];
+  for (var i = 0; i < resellerCart.length; i++) {
+    var item = resellerCart[i];
+    items.push({
+      kodeProduk: item.kode,
+      namaProduk: item.nama,
+      qty: item.qty,
+      hargaJual: item.harga
+    });
+  }
+  
+  var data = {
+    kodeReseller: currentUser.kodeReseller || '',
+    items: items,
+    tanggal: getTanggalTransaksi() || getTodayString(),
+    waktu: new Date().toISOString().split('T')[1].substring(0, 8),
+    namaPembeli: document.getElementById('namaPembeli') ? document.getElementById('namaPembeli').value.trim() || '-' : '-',
+    totalBayar: nominal,
+    metodeBayar: metode,
+    user: currentUser.nama || 'Reseller'
+  };
+  
+  callGAS('simpanTransaksiReseller', data)
+  .then(function(result) {
+    if (btn) {
+      btn.textContent = '✅ Proses';
+      btn.disabled = false;
+    }
+    
+    if (result && result.success) {
+      showToast('✅ Transaksi berhasil! ID: ' + result.id, 'success');
+      closeModal();
+      
+      resellerCart = [];
+      updateResellerCartDisplay();
+      
+      loadResellerPos();
+      loadResellerDashboard();
+      loadResellerTransaksi();
+      
+      showResellerStruk(result);
+      
+    } else {
+      showToast('❌ Gagal: ' + (result ? result.error : 'Unknown error'), 'error');
+    }
+  })
+  .catch(function(error) {
+    if (btn) {
+      btn.textContent = '✅ Proses';
+      btn.disabled = false;
+    }
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+function showResellerStruk(data) {
+  var infoToko = getInfoTokoSync();
+  
+  var html = '<div class="struk-container" id="strukReseller">';
+  html += '<div class="header-struk">';
+  html += '<h2>🧾 NOTA RESELLER</h2>';
+  html += '<div class="info">' + (infoToko.namaToko || 'POS System') + '</div>';
+  if (infoToko.alamat) {
+    html += '<div class="info">' + infoToko.alamat + '</div>';
+  }
+  html += '<div style="border-top:1px dashed #999;margin:5px 0;"></div>';
+  html += '<div class="info"><b>ID:</b> ' + data.id + '</div>';
+  html += '<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(new Date()) + '</div>';
+  html += '<div class="info"><b>Status:</b> <span style="color:' + (data.status === 'LUNAS' ? '#4CAF50' : '#FF9800') + ';font-weight:bold;">' + data.status + '</span></div>';
+  if (data.status !== 'LUNAS') {
+    html += '<div class="info"><b>Sisa Hutang:</b> <span style="color:#e65100;font-weight:bold;">' + formatRupiah(data.sisa) + '</span></div>';
+  }
+  html += '</div>';
+  
+  html += '<div class="items-struk">';
+  html += '<div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>';
+  for (var i = 0; i < data.detail.length; i++) {
+    var item = data.detail[i];
+    var name = item.namaProduk || 'Produk';
+    if (name.length > 20) name = name.substring(0, 18) + '..';
+    html += '<div class="item-row">';
+    html += '<span class="item-name">' + name + '</span>';
+    html += '<span class="item-qty">' + item.qty + '</span>';
+    html += '<span class="item-harga">' + formatRupiahPlain(item.hargaJual) + '</span>';
+    html += '<span class="item-subtotal">' + formatRupiahPlain(item.subtotal) + '</span>';
+    html += '</div>';
+  }
+  html += '</div>';
+  
+  html += '<div class="total-struk">';
+  html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(data.total) + '</span></div>';
+  if (data.status === 'LUNAS') {
+    html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#4CAF50;font-weight:bold;padding:3px 0;"><span>Status</span><span>✅ LUNAS</span></div>';
+  } else {
+    html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#FF9800;padding:3px 0;"><span>Sisa Hutang</span><span>' + formatRupiahPlain(data.sisa) + '</span></div>';
+  }
+  html += '</div>';
+  
+  html += '<div class="footer-struk">';
+  html += '<div class="divider"></div>';
+  html += '<div class="thanks">TERIMA KASIH</div>';
+  if (infoToko.noHp) {
+    html += '<div style="font-size:9px;color:#999;">📞 ' + infoToko.noHp + '</div>';
+  }
+  html += '<div class="small">' + formatTanggalDisplay(new Date()) + '</div>';
+  html += '</div>';
+  html += '</div>';
+  
+  html += '<div class="struk-actions">';
+  html += '<button class="btn btn-success" onclick="printStrukReseller()">🖨️ Cetak</button>';
+  html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
+  html += '</div>';
+  
+  document.getElementById('modalTitle').textContent = '🧾 Nota Reseller - ' + data.id;
+  document.getElementById('modalContent').classList.add('large');
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modal').classList.add('active');
+}
+
+function printStrukReseller() {
+  var content = document.getElementById('strukReseller');
+  if (!content) { showToast('Struk tidak ditemukan!', 'error'); return; }
+  var printWindow = window.open('', '_blank', 'width=280,height=auto');
+  printWindow.document.write('<html><head><title>Nota Reseller</title><style>');
+  printWindow.document.write('body { font-family: "Courier New", monospace; font-size: 11px; margin: 0; padding: 8px; }');
+  printWindow.document.write('.struk-container { max-width: 58mm; margin: 0 auto; }');
+  printWindow.document.write('.header-struk { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.header-struk h2 { font-size: 14px; margin: 0 0 4px 0; }');
+  printWindow.document.write('.header-struk .info { font-size: 9px; color: #444; line-height: 1.3; }');
+  printWindow.document.write('.items-struk { border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.struk-header-item { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px dotted #999; padding-bottom: 3px; margin-bottom: 3px; font-size: 9px; }');
+  printWindow.document.write('.item-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px; }');
+  printWindow.document.write('.item-name { flex: 3; text-align: left; }');
+  printWindow.document.write('.item-qty { flex: 1; text-align: center; }');
+  printWindow.document.write('.item-harga { flex: 1.5; text-align: right; }');
+  printWindow.document.write('.item-subtotal { flex: 1.5; text-align: right; }');
+  printWindow.document.write('.total-struk { border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; padding: 3px 0; }');
+  printWindow.document.write('.footer-struk { text-align: center; font-size: 9px; color: #666; line-height: 1.5; padding-top: 4px; }');
+  printWindow.document.write('.footer-struk .divider { border-top: 1px dashed #ccc; margin: 6px 0; }');
+  printWindow.document.write('.footer-struk .thanks { font-size: 11px; font-weight: bold; color: #333; }');
+  printWindow.document.write('</style></head><body>');
+  printWindow.document.write(content.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  setTimeout(function() { printWindow.print(); }, 300);
+}
+
+// ==================== RESELLER PRODUK (TAB PRODUK) ====================
+
+function loadResellerProdukTable() {
+  var tbody = document.getElementById('produkTable');
+  if (!tbody) return;
+  
+  var kodeReseller = currentUser.kodeReseller || '';
+  if (!kodeReseller) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">⚠️ Kode Reseller tidak ditemukan!</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat produk...</td></tr>';
+  
+  callGAS('getResellerProduk', { kodeReseller: kodeReseller })
+  .then(function(result) {
+    if (!result || !result.success) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Gagal memuat: ' + (result ? result.error : 'Unknown') + '</td></tr>';
+      return;
+    }
+    
+    var data = result.data || [];
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada produk untuk reseller ini</td></tr>';
+      return;
+    }
+    
+    var html = '';
+    for (var i = 0; i < data.length; i++) {
+      var p = data[i];
+      var stok = p.stok || 0;
+      var hargaBeli = p.hargaBeli || 0;
+      var hargaJual = p.hargaJual || p.hargaNormal || 0;
+      
+      html += '<tr>';
+      html += '<td><strong>' + escapeHtml(p.kode) + '</strong></td>';
+      html += '<td>' + escapeHtml(p.nama) + '</td>';
+      html += '<td style="font-weight:bold;color:' + (stok <= 0 ? '#f44336' : '#4CAF50') + ';">' + stok + ' ' + escapeHtml(p.satuan || 'pcs') + '</td>';
+      html += '<td style="color:#666;font-weight:600;">' + formatRupiah(hargaBeli) + ' <span style="font-size:0.6rem;color:#999;">(HPP)</span></td>';
+      html += '<td>';
+      html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+      html += '  <input type="number" id="hargaJual_' + escapeHtml(p.kode) + '" value="' + hargaJual + '" min="0" step="100" ';
+      html += '         style="width:120px;padding:6px 8px;border:2px solid #9C27B0;border-radius:6px;font-size:0.9rem;font-weight:bold;text-align:right;">';
+      html += '  <button class="btn btn-purple btn-sm" onclick="updateResellerHarga(\'' + escapeHtml(p.kode) + '\')" ';
+      html += '          style="padding:6px 12px;font-size:0.7rem;border-radius:6px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);color:white;border:none;cursor:pointer;font-weight:600;">';
+      html += '    💾 Update';
+      html += '  </button>';
+      html += '</div>';
+      html += '</td>';
+      html += '</tr>';
+    }
+    
+    tbody.innerHTML = html;
+    
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadResellerProdukTable:', error);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Error: ' + error.message + '</td></tr>';
+  });
+}
+
+function updateResellerHarga(kodeProduk) {
+  var input = document.getElementById('hargaJual_' + kodeProduk);
+  if (!input) {
+    showToast('❌ Input harga tidak ditemukan!', 'error');
+    return;
+  }
+  
+  var hargaBaru = parseInt(input.value) || 0;
+  if (hargaBaru <= 0) {
+    showToast('⚠️ Harga jual harus lebih dari 0!', 'error');
+    input.focus();
+    return;
+  }
+  
+  var kodeReseller = currentUser.kodeReseller || '';
+  if (!kodeReseller) {
+    showToast('⚠️ Kode Reseller tidak ditemukan!', 'error');
+    return;
+  }
+  
+  if (!confirm('Yakin ingin mengubah harga jual produk ini menjadi ' + formatRupiah(hargaBaru) + '?')) {
+    return;
+  }
+  
+  var btn = input.parentElement.querySelector('.btn-purple');
+  if (btn) {
+    btn.textContent = '⏳';
+    btn.disabled = true;
+  }
+  
+  callGAS('updateResellerHargaJual', {
+    kodeReseller: kodeReseller,
+    kodeProduk: kodeProduk,
+    hargaBaru: hargaBaru
+  })
+  .then(function(result) {
+    if (btn) {
+      btn.textContent = '💾 Update';
+      btn.disabled = false;
+    }
+    
+    if (result && result.success) {
+      showToast('✅ ' + result.message, 'success');
+      loadResellerProdukTable();
+      loadResellerPos();
+    } else {
+      showToast('❌ Gagal: ' + (result ? result.error : 'Unknown error'), 'error');
+    }
+  })
+  .catch(function(error) {
+    if (btn) {
+      btn.textContent = '💾 Update';
+      btn.disabled = false;
+    }
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+// ==================== RESELLER TRANSAKSI ====================
+
+function loadResellerTransaksi() {
+  var tbody = document.getElementById('transaksiTable');
+  if (!tbody) return;
+  
+  var kodeReseller = currentUser.kodeReseller || '';
+  if (!kodeReseller) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">⚠️ Kode Reseller tidak ditemukan!</td></tr>';
+    return;
+  }
+  
+  var tanggalMulai = document.getElementById('filterTransaksiMulai').value || '';
+  var tanggalSampai = document.getElementById('filterTransaksiSampai').value || '';
+  
+  if (!tanggalMulai || !tanggalSampai) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⚠️ Pilih rentang tanggal</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat transaksi...</td></tr>';
+  
+  callGAS('getResellerTransaksiFiltered', {
+    kodeReseller: kodeReseller,
+    tanggalMulai: tanggalMulai,
+    tanggalSampai: tanggalSampai
+  })
+  .then(function(result) {
+    if (!result || !result.success) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Gagal memuat: ' + (result ? result.error : 'Unknown') + '</td></tr>';
+      return;
+    }
+    
+    var data = result.data || [];
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada transaksi</td></tr>';
+      document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: 0 | Total: Rp 0 | Keuntungan: Rp 0';
+      return;
+    }
+    
+    var html = '';
+    var totalTransaksi = 0;
+    var totalNominal = 0;
+    var totalKeuntungan = 0;
+    
+    for (var i = 0; i < data.length; i++) {
+      var t = data[i];
+      var statusColor = t.status === 'LUNAS' ? '#4CAF50' : (t.status === 'CICILAN' ? '#FF9800' : '#f44336');
+      
+      html += '<tr>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td>' + formatTanggalDisplay(t.tanggal) + ' ' + (t.waktu || '') + '</td>';
+      html += '<td><strong>' + escapeHtml(t.id) + '</strong></td>';
+      html += '<td>' + escapeHtml(t.namaPembeli) + '</td>';
+      html += '<td>' + formatRupiah(t.total) + '</td>';
+      html += '<td style="color:' + statusColor + ';font-weight:bold;">' + t.status + '</td>';
+      html += '<td style="white-space:nowrap;">';
+      html += '  <button class="btn btn-info btn-sm" onclick="cetakStrukReseller(\'' + escapeHtml(t.id) + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Cetak Struk">🖨️</button>';
+      html += '</td>';
+      html += '</tr>';
+      
+      totalTransaksi++;
+      totalNominal += t.total || 0;
+      totalKeuntungan += t.keuntungan || 0;
+    }
+    
+    tbody.innerHTML = html;
+    document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: ' + totalTransaksi + ' | Total: ' + formatRupiah(totalNominal) + ' | Keuntungan: ' + formatRupiah(totalKeuntungan);
+    
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadResellerTransaksi:', error);
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + error.message + '</td></tr>';
+  });
+}
+
+function cetakStrukReseller(idTransaksi) {
+  var kodeReseller = currentUser.kodeReseller || '';
+  if (!kodeReseller) {
+    showToast('⚠️ Kode Reseller tidak ditemukan!', 'error');
+    return;
+  }
+  
+  showToast('⏳ Memuat data transaksi...', 'info');
+  
+  callGAS('getResellerTransaksiById', {
+    idTransaksi: idTransaksi,
+    kodeReseller: kodeReseller
+  })
+  .then(function(result) {
+    if (!result || !result.success) {
+      showToast('❌ Gagal memuat: ' + (result ? result.error : 'Unknown'), 'error');
+      return;
+    }
+    
+    var data = result.data;
+    var header = data.header;
+    var detail = data.detail || [];
+    
+    var infoToko = getInfoTokoSync();
+    
+    var html = '<div class="struk-container" id="strukResellerDetail">';
+    html += '<div class="header-struk">';
+    html += '<h2>🧾 NOTA RESELLER</h2>';
+    html += '<div class="info">' + (infoToko.namaToko || 'POS System') + '</div>';
+    if (infoToko.alamat) {
+      html += '<div class="info">' + infoToko.alamat + '</div>';
+    }
+    html += '<div style="border-top:1px dashed #999;margin:5px 0;"></div>';
+    html += '<div class="info"><b>ID:</b> ' + header.idTransaksi + '</div>';
+    html += '<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(header.tanggal) + ' ' + (header.waktu || '') + '</div>';
+    html += '<div class="info"><b>Pembeli:</b> ' + header.namaPembeli + '</div>';
+    html += '<div class="info"><b>Status:</b> <span style="color:' + (header.status === 'LUNAS' ? '#4CAF50' : '#FF9800') + ';font-weight:bold;">' + header.status + '</span></div>';
+    if (header.status !== 'LUNAS') {
+      html += '<div class="info"><b>Sisa Hutang:</b> <span style="color:#e65100;font-weight:bold;">' + formatRupiah(header.sisa) + '</span></div>';
+    }
+    html += '</div>';
+    
+    html += '<div class="items-struk">';
+    html += '<div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>';
+    for (var i = 0; i < detail.length; i++) {
+      var item = detail[i];
+      var name = item.namaProduk || 'Produk';
+      if (name.length > 20) name = name.substring(0, 18) + '..';
+      html += '<div class="item-row">';
+      html += '<span class="item-name">' + name + '</span>';
+      html += '<span class="item-qty">' + item.qty + '</span>';
+      html += '<span class="item-harga">' + formatRupiahPlain(item.hargaJual) + '</span>';
+      html += '<span class="item-subtotal">' + formatRupiahPlain(item.subtotal) + '</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+    
+    html += '<div class="total-struk">';
+    html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(header.total) + '</span></div>';
+    if (header.status === 'LUNAS') {
+      html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#4CAF50;font-weight:bold;padding:3px 0;"><span>Status</span><span>✅ LUNAS</span></div>';
+    } else {
+      html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#FF9800;padding:3px 0;"><span>Sisa Hutang</span><span>' + formatRupiahPlain(header.sisa) + '</span></div>';
+    }
+    html += '</div>';
+    
+    html += '<div class="footer-struk">';
+    html += '<div class="divider"></div>';
+    html += '<div class="thanks">TERIMA KASIH</div>';
+    if (infoToko.noHp) {
+      html += '<div style="font-size:9px;color:#999;">📞 ' + infoToko.noHp + '</div>';
+    }
+    html += '<div class="small">' + formatTanggalDisplay(header.tanggal) + ' ' + (header.waktu || '') + '</div>';
+    html += '</div>';
+    html += '</div>';
+    
+    html += '<div class="struk-actions">';
+    html += '<button class="btn btn-success" onclick="printStrukResellerDetail()">🖨️ Cetak</button>';
+    html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
+    html += '</div>';
+    
+    document.getElementById('modalTitle').textContent = '🧾 Nota Reseller - ' + header.idTransaksi;
+    document.getElementById('modalContent').classList.add('large');
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('modal').classList.add('active');
+    
+  })
+  .catch(function(error) {
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+function printStrukResellerDetail() {
+  var content = document.getElementById('strukResellerDetail');
+  if (!content) { showToast('Struk tidak ditemukan!', 'error'); return; }
+  var printWindow = window.open('', '_blank', 'width=280,height=auto');
+  printWindow.document.write('<html><head><title>Nota Reseller</title><style>');
+  printWindow.document.write('body { font-family: "Courier New", monospace; font-size: 11px; margin: 0; padding: 8px; }');
+  printWindow.document.write('.struk-container { max-width: 58mm; margin: 0 auto; }');
+  printWindow.document.write('.header-struk { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.header-struk h2 { font-size: 14px; margin: 0 0 4px 0; }');
+  printWindow.document.write('.header-struk .info { font-size: 9px; color: #444; line-height: 1.3; }');
+  printWindow.document.write('.items-struk { border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.struk-header-item { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px dotted #999; padding-bottom: 3px; margin-bottom: 3px; font-size: 9px; }');
+  printWindow.document.write('.item-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px; }');
+  printWindow.document.write('.item-name { flex: 3; text-align: left; }');
+  printWindow.document.write('.item-qty { flex: 1; text-align: center; }');
+  printWindow.document.write('.item-harga { flex: 1.5; text-align: right; }');
+  printWindow.document.write('.item-subtotal { flex: 1.5; text-align: right; }');
+  printWindow.document.write('.total-struk { border-bottom: 2px dashed #333; padding-bottom: 8px; margin-bottom: 8px; }');
+  printWindow.document.write('.total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; padding: 3px 0; }');
+  printWindow.document.write('.footer-struk { text-align: center; font-size: 9px; color: #666; line-height: 1.5; padding-top: 4px; }');
+  printWindow.document.write('.footer-struk .divider { border-top: 1px dashed #ccc; margin: 6px 0; }');
+  printWindow.document.write('.footer-struk .thanks { font-size: 11px; font-weight: bold; color: #333; }');
+  printWindow.document.write('</style></head><body>');
+  printWindow.document.write(content.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  setTimeout(function() { printWindow.print(); }, 300);
+}
+
+// ==================== RESELLER RIWAYAT STOK ====================
+
+function loadResellerRiwayatStok() {
+  var tbody = document.getElementById('riwayatStokTable');
+  if (!tbody) return;
+  
+  var kodeReseller = currentUser.kodeReseller || '';
+  if (!kodeReseller) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">⚠️ Kode Reseller tidak ditemukan!</td></tr>';
+    return;
+  }
+  
+  var stokHeader = document.querySelector('.stok-header-grid');
+  if (stokHeader) stokHeader.style.display = 'none';
+  
+  var stokLayout = document.querySelector('.stok-layout');
+  if (stokLayout) stokLayout.style.display = 'none';
+  
+  var subTabStok = document.querySelector('.sub-tab-stok');
+  if (subTabStok) subTabStok.style.display = 'none';
+  
+  var h2 = document.querySelector('#sub-stok-masuk h2');
+  if (h2) {
+    h2.textContent = '📥 Riwayat Stok Masuk Reseller';
+    h2.style.display = 'block';
+  }
+  
+  var filterContainer = document.querySelector('.filter-riwayat-stok');
+  if (filterContainer) {
+    var infoEl = document.getElementById('resellerStokInfo');
+    if (!infoEl) {
+      infoEl = document.createElement('div');
+      infoEl.id = 'resellerStokInfo';
+      infoEl.style.cssText = 'background:#e8f5e9;padding:12px 16px;border-radius:8px;margin-bottom:15px;border-left:4px solid #4CAF50;';
+      infoEl.innerHTML = '👥 <strong>Stok Reseller</strong> - Menampilkan riwayat stok masuk untuk akun Anda.';
+      filterContainer.parentNode.insertBefore(infoEl, filterContainer);
+    }
+  }
+  
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">⏳ Memuat riwayat stok...</td></tr>';
+  
+  callGAS('getRiwayatStokReseller', { kodeReseller: kodeReseller })
+  .then(function(result) {
+    if (!result || !result.success) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Gagal memuat: ' + (result ? result.error : 'Unknown') + '</td></tr>';
+      return;
+    }
+    
+    var data = result.data || [];
+    if (data.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center;padding:40px 20px;">
+            <div style="font-size:3rem;margin-bottom:10px;">📭</div>
+            <div style="font-size:1.1rem;font-weight:600;color:#4CAF50;">Belum Ada Stok Masuk</div>
+            <div style="font-size:0.9rem;color:#999;margin-top:5px;">
+              Stok reseller Anda masih kosong. Stok akan muncul setelah admin mengirim stok ke Anda.
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    var html = '';
+    var no = 1;
+    
+    for (var i = 0; i < data.length; i++) {
+      var item = data[i];
+      html += '<tr>';
+      html += '<td>' + no + '</td>';
+      html += '<td>' + formatTanggalDisplay(item.tanggalMasuk) + '</td>';
+      html += '<td><span class="batch-tag">' + escapeHtml(item.batchId) + '</span></td>';
+      html += '<td>' + escapeHtml(item.namaProduk || '-') + '</td>';
+      html += '<td style="text-align:right;">' + formatRupiah(item.hargaBeli || 0) + '</td>';
+      html += '<td style="text-align:center;font-weight:bold;">' + (item.stokAwal || 0) + ' ' + escapeHtml(item.satuan || 'pcs') + '</td>';
+      html += '<td style="text-align:center;color:' + ((item.stok || 0) > 0 ? '#4CAF50' : '#f44336') + ';">' + (item.stok || 0) + ' ' + escapeHtml(item.satuan || 'pcs') + '</td>';
+      html += '<td style="text-align:center;"><span class="badge-active">ACTIVE</span></td>';
+      html += '</tr>';
+      no++;
+    }
+    
+    tbody.innerHTML = html;
+    
+    var infoFilter = document.getElementById('stokFilterInfo');
+    if (infoFilter) {
+      var totalItem = data.length;
+      var totalStok = 0;
+      for (var i = 0; i < data.length; i++) {
+        totalStok += data[i].stokAwal || 0;
+      }
+      infoFilter.textContent = '📋 ' + totalItem + ' batch · ' + totalStok + ' pcs total';
+    }
+    
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadResellerRiwayatStok:', error);
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + error.message + '</td></tr>';
+  });
+}
   
 // ============================================================
 // UTILITY FUNCTIONS
