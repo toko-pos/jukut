@@ -9200,31 +9200,29 @@ if (typeof loadProduk === 'function') {
   
 
 
-
-
-
 // ============================================================
-// REGISTER SERVICE WORKER - TANPA RELOAD LOOP
+// REGISTER SERVICE WORKER - PERBAIKI SCOPE
 // ============================================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     console.log('📦 Checking Service Worker...');
     
-    // 🔥 Cek apakah SW sudah terdaftar
+    // 🔥 HAPUS SEMUA SW LAMA
     navigator.serviceWorker.getRegistrations()
       .then(function(registrations) {
-        if (registrations.length > 0) {
-          console.log('⚠️ Found existing SW, updating...');
-          // 🔥 HAPUS scope, biarkan default (otomatis mengikuti lokasi file)
-          return navigator.serviceWorker.register('sw.js?v=' + Date.now());
-        } else {
-          console.log('📦 Registering new SW...');
-          // 🔥 HAPUS scope, biarkan default (otomatis mengikuti lokasi file)
-          return navigator.serviceWorker.register('sw.js');
-        }
+        var unregisterPromises = registrations.map(function(reg) {
+          return reg.unregister();
+        });
+        return Promise.all(unregisterPromises);
+      })
+      .then(function() {
+        console.log('✅ Old SW unregistered');
+        // 🔥 PERBAIKI: JANGAN PAKAI scope, biarkan default
+        return navigator.serviceWorker.register('sw.js');
       })
       .then(function(registration) {
         console.log('✅ Service Worker registered with scope:', registration.scope);
+        registration.update();
       })
       .catch(function(error) {
         console.log('❌ Service Worker registration failed:', error);
