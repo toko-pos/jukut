@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxbFhsizwvuZCIo3tQ30QTmsZQvBJyXD4syN3hx50t5OnygRNFF1I5pv7_OcThviYO1Ug/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwuTluC-vfH7jUN0go_psFH1q8LHyTG0Q5eY1L1wTY-WfG6xWZ0pqR3OmPtVOF_LI-AHQ/exec';
     // ============================================
   </script>
 
@@ -1896,6 +1896,44 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+
+  /* 🔥 SEMBUNYIKAN ELEMEN STOK UNTUK RESELLER SAJA */
+body.role-reseller #sub-stok-masuk .stok-header-grid,
+body.role-reseller #sub-stok-masuk .stok-layout,
+body.role-reseller .sub-tab-stok {
+  display: none !important;
+}
+
+body.role-reseller #sub-stok-masuk h2 {
+  display: none !important;
+}
+
+body.role-reseller #page-stok > h2 {
+  display: block !important;
+}
+
+/* Tampilkan riwayat stok saja untuk reseller */
+body.role-reseller #sub-stok-masuk .filter-riwayat-stok,
+body.role-reseller #sub-stok-masuk .table-wrapper {
+  display: block !important;
+}
+
+/* 🔥 ADMIN & KASIR: SEMUA TETAP NORMAL (TIDAK TERPAKSA) */
+body.role-admin #sub-stok-masuk .stok-header-grid,
+body.role-admin #sub-stok-masuk .stok-layout,
+body.role-admin .sub-tab-stok,
+body.role-kasir #sub-stok-masuk .stok-header-grid,
+body.role-kasir #sub-stok-masuk .stok-layout,
+body.role-kasir .sub-tab-stok {
+  display: grid !important; /* KEMBALI KE TAMPILAN NORMAL */
+}
+
+body.role-admin #sub-stok-masuk h2,
+body.role-kasir #sub-stok-masuk h2 {
+  display: block !important;
+}
+  
                                                                                                                                         
   </style>
 </head>
@@ -4775,12 +4813,9 @@ function showPage(page) {
   // 🔥🔥🔥 CEK AKSES UNTUK HALAMAN RESELLER
   if (page === 'reseller') {
     var role = currentUser ? currentUser.role.toUpperCase() : '';
-    console.log('🔍 Cek akses Reseller. Role:', role);
-    
     if (role === 'RESELLER') {
       showToast('⛔ Akses ditolak! Halaman ini tidak tersedia untuk Reseller.', 'error');
       page = 'dashboard';
-      console.log('🚫 Reseller diblokir dari tab Reseller!');
     }
   }
   
@@ -4793,27 +4828,20 @@ function showPage(page) {
     }
   }
   
-  // 🔥🔥🔥 LANJUTKAN KODE SHOW PAGE YANG LENGKAP
   var pages = document.querySelectorAll('.page');
   var navs = document.querySelectorAll('.nav button');
-  
   for (var i = 0; i < pages.length; i++) {
     pages[i].classList.remove('active');
   }
   for (var i = 0; i < navs.length; i++) {
     navs[i].classList.remove('active');
   }
-  
   var targetPage = document.getElementById('page-' + page);
   if (targetPage) targetPage.classList.add('active');
-  
-  // 🔥 AKTIFKAN TOMBOL NAVIGASI YANG SESUAI
   var navButtons = document.querySelectorAll('.nav button');
   for (var i = 0; i < navButtons.length; i++) {
-    var btn = navButtons[i];
-    var onclickAttr = btn.getAttribute('onclick');
-    if (onclickAttr && onclickAttr.indexOf("showPage('" + page + "')") !== -1) {
-      btn.classList.add('active');
+    if (navButtons[i].getAttribute('onclick') === "showPage('" + page + "')") {
+      navButtons[i].classList.add('active');
     }
   }
   
@@ -4829,13 +4857,21 @@ function showPage(page) {
     loadLogPembatalan(); 
   }
   if (page === 'user') loadUsers();
+  
+  // 🔥🔥🔥 STOK: PERBEDAAN HANYA UNTUK RESELLER
   if (page === 'stok') {
-    if (currentUser && currentUser.role && currentUser.role.toUpperCase() === 'RESELLER') {
-      loadStokResellerTab();
+    var role = currentUser ? currentUser.role.toUpperCase() : '';
+    if (role === 'RESELLER') {
+      // 🔥 RESELLER: Tampilkan hanya riwayat stok reseller
+      showStokResellerOnly();
     } else {
+      // 🔥 ADMIN & KASIR: Tampilkan FULL stok (TIDAK BERUBAH)
       showSubPage('stok', 'masuk');
+      // Pastikan semua elemen stok muncul
+      restoreStokFullView();
     }
   }
+  
   if (page === 'produk') { 
     loadProdukWithRetry(); 
   }
@@ -4843,13 +4879,362 @@ function showPage(page) {
     loadProfile(); 
   }
   if (page === 'reseller') {
-    // 🔥 KASIR & ADMIN BISA AKSES, RESELLER SUDAH DITOLAK DI ATAS
     if (currentUser && currentUser.role.toUpperCase() !== 'RESELLER') {
       loadReseller();
     }
   }
 }
 
+
+// ==================== RESTORE STOK FULL VIEW UNTUK ADMIN & KASIR ====================
+function restoreStokFullView() {
+  console.log('🔄 Mengembalikan tampilan Stok full untuk Admin/Kasir...');
+  
+  // 🔥 TAMPILKAN SUB-NAV STOK
+  var subNav = document.querySelector('.sub-tab-stok');
+  if (subNav) subNav.style.display = 'flex';
+  
+  // 🔥 TAMPILKAN FORM STOK MASUK
+  var stokMasukForm = document.querySelector('#sub-stok-masuk .stok-header-grid');
+  if (stokMasukForm) stokMasukForm.style.display = 'grid';
+  
+  var stokLayout = document.querySelector('#sub-stok-masuk .stok-layout');
+  if (stokLayout) stokLayout.style.display = 'grid';
+  
+  // 🔥 TAMPILKAN JUDUL h2
+  var h2 = document.querySelector('#sub-stok-masuk h2');
+  if (h2) h2.style.display = 'block';
+  
+  // 🔥 HAPUS INFO RESELLER
+  var infoReseller = document.getElementById('resellerStokInfo');
+  if (infoReseller) infoReseller.remove();
+  
+  // 🔥 TAMPILKAN SUB-PAGE STOK MASUK
+  var subStokMasuk = document.getElementById('sub-stok-masuk');
+  if (subStokMasuk) {
+    subStokMasuk.classList.add('active');
+  }
+  
+  // 🔥 LOAD DATA STOK FULL
+  generateNoNotaStok();
+  loadStokProduk();
+  loadRiwayatStok();
+  currentStokCart = [];
+  updateStokCartDisplay();
+  
+  // 🔥 UPDATE FILTER INFO
+  var infoEl = document.getElementById('stokFilterInfo');
+  if (infoEl) {
+    infoEl.textContent = 'Menampilkan semua nota (0 nota · 0 item)';
+  }
+}
+
+
+// ==================== STOK KHUSUS RESELLER ====================
+function showStokResellerOnly() {
+  console.log('🔄 Menampilkan Stok untuk RESELLER...');
+  
+  var pageStok = document.getElementById('page-stok');
+  if (!pageStok) return;
+  
+  // 🔥 SEMBUNYIKAN SEMUA SUB-PAGE
+  var subPages = pageStok.querySelectorAll('.sub-page');
+  for (var i = 0; i < subPages.length; i++) {
+    subPages[i].classList.remove('active');
+  }
+  
+  // 🔥 SEMBUNYIKAN SUB-NAV STOK (Batch, Batal, Refresh)
+  var subNav = document.querySelector('.sub-tab-stok');
+  if (subNav) subNav.style.display = 'none';
+  
+  // 🔥 SEMBUNYIKAN FORM STOK MASUK (header grid + layout)
+  var stokMasukForm = document.querySelector('#sub-stok-masuk .stok-header-grid');
+  if (stokMasukForm) stokMasukForm.style.display = 'none';
+  
+  var stokLayout = document.querySelector('#sub-stok-masuk .stok-layout');
+  if (stokLayout) stokLayout.style.display = 'none';
+  
+  // 🔥 TAMPILKAN RIWAYAT STOK DENGAN JUDUL KHUSUS
+  var riwayatContainer = document.querySelector('#sub-stok-masuk .filter-riwayat-stok');
+  if (riwayatContainer) {
+    // Tambahkan info bahwa ini adalah stok reseller
+    var infoEl = document.createElement('div');
+    infoEl.id = 'resellerStokInfo';
+    infoEl.style.cssText = 'background:#e8f5e9;padding:12px 16px;border-radius:8px;margin-bottom:15px;border-left:4px solid #4CAF50;';
+    infoEl.innerHTML = '👥 <strong>Stok Reseller</strong> - Menampilkan riwayat stok masuk untuk akun Anda.';
+    
+    // Cari elemen sebelum filter
+    var filterParent = riwayatContainer.parentNode;
+    if (filterParent) {
+      // Hapus info lama jika ada
+      var oldInfo = document.getElementById('resellerStokInfo');
+      if (oldInfo) oldInfo.remove();
+      filterParent.insertBefore(infoEl, riwayatContainer);
+    }
+  }
+  
+  // 🔥 TAMPILKAN SUB-PAGE STOK MASUK
+  var subStokMasuk = document.getElementById('sub-stok-masuk');
+  if (subStokMasuk) {
+    subStokMasuk.classList.add('active');
+    // Sembunyikan judul h2 yang tidak perlu
+    var h2 = subStokMasuk.querySelector('h2');
+    if (h2) h2.style.display = 'none';
+  }
+  
+  // 🔥 LOAD RIWAYAT STOK RESELLER
+  loadRiwayatStokReseller();
+  
+  // 🔥 UPDATE FILTER INFO
+  var infoEl2 = document.getElementById('stokFilterInfo');
+  if (infoEl2) {
+    infoEl2.textContent = '📋 Menampilkan riwayat stok reseller Anda';
+  }
+}
+
+// ==================== LOAD RIWAYAT STOK RESELLER ====================
+function loadRiwayatStokReseller() {
+  console.log('🔄 Memuat riwayat stok untuk reseller...');
+  
+  var tbody = document.getElementById('riwayatStokTable');
+  if (!tbody) {
+    console.warn('⚠️ Elemen riwayatStokTable tidak ditemukan');
+    return;
+  }
+  
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">⏳ Memuat riwayat stok reseller...</td></tr>';
+  
+  // 🔥 AMBIL KODE RESELLER DARI CURRENT USER
+  var kodeReseller = currentUser ? currentUser.kodeReseller || '' : '';
+  
+  if (!kodeReseller) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#ff9800;padding:30px;">⚠️ Kode Reseller tidak ditemukan untuk akun Anda.</td></tr>';
+    return;
+  }
+  
+  console.log('📋 Kode Reseller:', kodeReseller);
+  
+  // 🔥 PANGGIL API UNTUK MENDAPATKAN RIWAYAT STOK RESELLER
+  callGAS('getRiwayatStokReseller', { kodeReseller: kodeReseller })
+  .then(function(result) {
+    console.log('📥 Result getRiwayatStokReseller:', result);
+    
+    if (!result || !result.success) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Gagal memuat riwayat: ' + (result ? result.error : 'Unknown error') + '</td></tr>';
+      return;
+    }
+    
+    var data = result.data || [];
+    console.log('📦 Jumlah riwayat stok reseller:', data.length);
+    
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">📭 Belum ada riwayat stok masuk untuk akun reseller Anda.</td></tr>';
+      
+      // Update filter info
+      var infoEl = document.getElementById('stokFilterInfo');
+      if (infoEl) infoEl.textContent = 'Menampilkan 0 nota · 0 item';
+      return;
+    }
+    
+    // 🔥 RENDER RIWAYAT STOK GROUPED
+    renderRiwayatStokResellerGrouped(data);
+    
+    // 🔥 UPDATE FILTER INFO
+    var totalNota = getUniqueNotaCount(data);
+    var totalItem = data.length;
+    var totalNominal = 0;
+    for (var i = 0; i < data.length; i++) {
+      totalNominal += data[i].subtotal || 0;
+    }
+    var infoEl = document.getElementById('stokFilterInfo');
+    if (infoEl) {
+      infoEl.textContent = '📋 ' + totalNota + ' nota · ' + totalItem + ' item · ' + formatRupiah(totalNominal);
+    }
+    
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadRiwayatStokReseller:', error);
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Error: ' + error.message + '</td></tr>';
+  });
+}
+
+// ==================== RENDER RIWAYAT STOK RESELLER GROUPED ====================
+function renderRiwayatStokResellerGrouped(data) {
+  var tbody = document.getElementById('riwayatStokTable');
+  if (!tbody) return;
+  
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">📭 Tidak ada riwayat stok</td></tr>';
+    return;
+  }
+  
+  var notaMap = {};
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    var key = r.noNota || 'unknown-' + i;
+    if (!notaMap[key]) {
+      notaMap[key] = {
+        noNota: r.noNota || '-',
+        tanggal: r.tanggal || '',
+        pemasok: r.pemasok || '-',
+        items: [],
+        total: 0,
+        isLegacy: r.isLegacy || false
+      };
+    }
+    notaMap[key].items.push(r);
+    notaMap[key].total += r.subtotal || 0;
+  }
+  
+  var keys = Object.keys(notaMap);
+  keys.sort(function(a, b) {
+    return notaMap[b].tanggal.localeCompare(notaMap[a].tanggal);
+  });
+  
+  var html = '';
+  var no = 1;
+  
+  for (var i = 0; i < keys.length; i++) {
+    var nota = notaMap[keys[i]];
+    var itemCount = nota.items.length;
+    var total = nota.total;
+    var status = 'Active';
+    var statusClass = 'badge-active';
+    
+    html += '<tr class="nota-master" onclick="toggleNotaDetail(this)" data-nota="' + escapeHtml(keys[i]) + '">';
+    html += '<td>' + no + '</td>';
+    html += '<td>' + formatTanggalDisplay(nota.tanggal) + '</td>';
+    html += '<td><span class="expand-icon">▼</span> <strong>' + escapeHtml(nota.noNota) + '</strong></td>';
+    html += '<td>' + escapeHtml(nota.pemasok) + '</td>';
+    html += '<td style="text-align:right;font-weight:bold;">' + formatRupiah(total) + '</td>';
+    html += '<td style="text-align:center;">' + itemCount + ' produk</td>';
+    html += '<td style="text-align:center;"><span class="' + statusClass + '">' + status + '</span></td>';
+    html += '<td style="text-align:center;">';
+    if (nota.noNota && nota.noNota !== '-') {
+      var cleanNoNota = String(nota.noNota).trim().replace(/\s/g, '');
+      html += '<button class="btn btn-info btn-sm" onclick="event.stopPropagation();showDetailStokReseller(\'' + cleanNoNota + '\')" title="Detail Nota" style="padding:4px 8px;font-size:0.65rem;">📄</button>';
+    } else {
+      html += '-';
+    }
+    html += '</td>';
+    html += '</tr>';
+    
+    html += '<tr class="nota-detail" style="display:none;">';
+    html += '<td colspan="8">';
+    html += '<div class="detail-inner">';
+    html += '<table>';
+    html += '<thead><tr><th>No</th><th>Produk</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Harga</th><th style="text-align:right;">Subtotal</th></tr></thead>';
+    html += '<tbody>';
+    for (var j = 0; j < nota.items.length; j++) {
+      var item = nota.items[j];
+      html += '<tr>' +
+        '<td>' + (j + 1) + '</td>' +
+        '<td>' + escapeHtml(item.namaProduk || '-') + '</td>' +
+        '<td style="text-align:center;">' + (item.qty || 0) + ' ' + (item.satuan || 'pcs') + '</td>' +
+        '<td style="text-align:right;">' + formatRupiah(item.harga || 0) + '</td>' +
+        '<td style="text-align:right;font-weight:bold;">' + formatRupiah(item.subtotal || 0) + '</td>' +
+        '</tr>';
+    }
+    html += '<tr><td colspan="4" style="text-align:right;font-weight:bold;border-top:2px solid #dce3f0;">TOTAL</td>';
+    html += '<td style="text-align:right;font-weight:bold;border-top:2px solid #dce3f0;">' + formatRupiah(total) + '</td></tr>';
+    html += '</tbody></table>';
+    html += '</div>';
+    html += '</td>';
+    html += '</tr>';
+    
+    no++;
+  }
+  
+  tbody.innerHTML = html;
+}
+
+// ==================== DETAIL STOK RESELLER ====================
+function showDetailStokReseller(noNota) {
+  console.log('🔍 showDetailStokReseller dipanggil dengan: "' + noNota + '"');
+  
+  document.getElementById('modalTitle').textContent = '📄 Memuat...';
+  document.getElementById('modalBody').innerHTML = '<p style="text-align:center;padding:30px;">⏳ Memuat data untuk ' + noNota + '...</p>';
+  document.getElementById('modal').classList.add('active');
+  
+  var kodeReseller = currentUser ? currentUser.kodeReseller || '' : '';
+  
+  callGAS('getDetailStokReseller', { 
+    noNota: noNota,
+    kodeReseller: kodeReseller
+  })
+  .then(function(data) {
+    console.log('🔍 Data dari server:', data);
+    
+    if (!data || !data.success) {
+      var pesan = data && data.error ? data.error : 'Data tidak ditemukan';
+      document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ ' + pesan + '</p>';
+      showToast(pesan, 'error');
+      return;
+    }
+    
+    if (!data.header) {
+      document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Header tidak ditemukan untuk: ' + noNota + '</p>';
+      return;
+    }
+    
+    var h = data.header;
+    var detail = data.detail || [];
+    
+    var total = 0;
+    for (var i = 0; i < detail.length; i++) {
+      total += detail[i].subtotal || 0;
+    }
+    
+    var html = '<div style="margin-bottom:15px;">';
+    html += '<div style="background:#f9f9f9;padding:15px;border-radius:8px;border:1px solid #e0e0e0;">';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+    html += '<div><strong>No.Nota:</strong> ' + h.noNota + '</div>';
+    html += '<div><strong>Pemasok:</strong> ' + (h.pemasok || '-') + '</div>';
+    html += '<div><strong>Tanggal:</strong> ' + formatTanggalDisplay(h.tanggal) + '</div>';
+    html += '<div><strong>Status:</strong> <span style="color:#4CAF50;font-weight:bold;">✅ ' + h.status + '</span></div>';
+    html += '<div><strong>User:</strong> ' + (h.user || '-') + '</div>';
+    html += '<div><strong>Jumlah Item:</strong> ' + detail.length + ' produk</div>';
+    html += '</div></div>';
+    
+    html += '<div style="margin-top:15px;max-height:400px;overflow-y:auto;">';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
+    html += '<thead><tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">No</th><th style="padding:8px;text-align:left;">Produk</th><th style="padding:8px;text-align:center;">Qty</th><th style="padding:8px;text-align:right;">Harga</th><th style="padding:8px;text-align:right;">Subtotal</th></tr></thead>';
+    html += '<tbody>';
+    
+    for (var i = 0; i < detail.length; i++) {
+      var item = detail[i];
+      html += '<tr>' +
+        '<td style="padding:6px 8px;">' + (i+1) + '</td>' +
+        '<td style="padding:6px 8px;">' + (item.namaProduk || '-') + '</td>' +
+        '<td style="padding:6px 8px;text-align:center;">' + (item.qty || 0) + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' + formatRupiah(item.harga || 0) + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' + formatRupiah(item.subtotal || 0) + '</td>' +
+        '</tr>';
+    }
+    
+    html += '<tr style="font-weight:bold;border-top:2px solid #333;">' +
+      '<td colspan="4" style="padding:8px;text-align:right;">TOTAL</td>' +
+      '<td style="padding:8px;text-align:right;">' + formatRupiah(total) + '</td>' +
+      '</tr>';
+    html += '</tbody></table></div>';
+    
+    html += '<div style="margin-top:15px;display:flex;gap:10px;">';
+    html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:10px;">Tutup</button>';
+    html += '</div>';
+    
+    document.getElementById('modalTitle').textContent = '📄 Detail Stok Masuk Reseller';
+    document.getElementById('modalContent').classList.add('large');
+    document.getElementById('modalBody').innerHTML = html;
+    
+  })
+  .catch(function(error) {
+    console.error('❌ Error dari server:', error);
+    document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Error: ' + error.message + '</p>';
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+  
 // ==================== REFRESH DASHBOARD ====================
 function refreshDashboard() {
   if (isRefreshing) {
