@@ -2045,6 +2045,16 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 .detail-header-grid strong {
     color: #495057;
 }
+/* Badge status di tabel transaksi */
+.badge-status {
+    background: #4CAF50;
+    color: white;
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
     
                                                                                                                                         
   </style>
@@ -3740,6 +3750,164 @@ function getUniqueNotaCount(data) {
   return count;
 }
 
+// ============================================================
+// 🔥 RENDER TABEL TRANSAKSI DENGAN EXPAND
+// ============================================================
+
+function renderTransaksi(data) {
+    var tbody = document.getElementById('transaksiTable');
+    if (!tbody) return;
+    
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">📭 Tidak ada transaksi</td></tr>';
+        return;
+    }
+    
+    var html = '';
+    for (var i = 0; i < data.length; i++) {
+        var t = data[i];
+        var id = t.id || t.ID || '';
+        
+        html += '<tr data-id="' + id + '" class="parent-row">';
+        html += '<td>' + (i + 1) + '</td>';
+        html += '<td>' + (t.tanggal || '-') + ' ' + (t.waktu || '') + '</td>';
+        
+        // 🔥 ID TRANSAKSI JADI LINK EXPAND
+        html += '<td>';
+        html += '<a href="javascript:void(0)" ';
+        html += 'class="link-transaksi" ';
+        html += 'onclick="toggleDetailTransaksi(\'' + id + '\')" ';
+        html += 'title="Klik untuk lihat detail">';
+        html += '<span class="icon-expand">▶</span> ' + id;
+        html += '</a>';
+        html += '</td>';
+        
+        html += '<td>' + (t.kasir || '-') + '</td>';
+        html += '<td style="text-align:right;">Rp ' + formatRupiah(t.total || 0) + '</td>';
+        html += '<td style="text-align:right;color:' + (t.laba >= 0 ? '#4CAF50' : '#dc3545') + ';">Rp ' + formatRupiah(t.laba || 0) + '</td>';
+        html += '<td><span class="badge-status">' + (t.status || 'Selesai') + '</span></td>';
+        html += '</tr>';
+    }
+    
+    tbody.innerHTML = html;
+}
+
+// ============================================================
+// 🔥 EXPANDABLE TRANSAKSI - FUNGSI PENDUKUNG
+// ============================================================
+
+function toggleDetailTransaksi(idTransaksi) {
+    var detailRowId = 'detail-' + idTransaksi;
+    var existingRow = document.getElementById(detailRowId);
+    
+    var parentRow = document.querySelector('[data-id="' + idTransaksi + '"]');
+    if (!parentRow) return;
+    
+    var link = parentRow.querySelector('.link-transaksi');
+    
+    // Jika sudah ada, HAPUS (collapse)
+    if (existingRow) {
+        existingRow.remove();
+        parentRow.classList.remove('expanded');
+        if (link) {
+            link.classList.remove('expanded');
+            link.innerHTML = '<span class="icon-expand">▶</span> ' + idTransaksi;
+        }
+        return;
+    }
+    
+    // EXPAND
+    parentRow.classList.add('expanded');
+    if (link) {
+        link.classList.add('expanded');
+        link.innerHTML = '<span class="icon-expand">▼</span> ' + idTransaksi;
+    }
+    
+    var newRow = document.createElement('tr');
+    newRow.id = detailRowId;
+    newRow.className = 'detail-row';
+    
+    var colCount = parentRow.querySelectorAll('td').length;
+    newRow.innerHTML = '<td colspan="' + colCount + '" class="text-center"><div class="loading-spinner">⏳ Memuat detail...</div></td>';
+    
+    parentRow.parentNode.insertBefore(newRow, parentRow.nextSibling);
+    
+    var data = {
+        action: 'getDetailTransaksi',
+        data: { idTransaksi: idTransaksi }
+    };
+    
+    fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+        if (result.success) {
+            renderDetailRow(idTransaksi, result.data, colCount);
+        } else {
+            showDetailError(idTransaksi, result.error || 'Gagal memuat detail', colCount);
+        }
+    })
+    .catch(function(error) {
+        showDetailError(idTransaksi, error.message, colCount);
+    });
+}
+
+function renderDetailRow(idTransaksi, detail, colCount) {
+    var row = document.getElementById('detail-' + idTransaksi);
+    if (!row) return;
+    
+    if (!detail || detail.length === 0) {
+        row.innerHTML = '<td colspan="' + colCount + '" class="text-center text-muted" style="padding:20px;">📭 Tidak ada detail produk</td>';
+        return;
+    }
+    
+    var html = '<td colspan="' + colCount + '" style="padding:0;">';
+    html += '<div class="detail-container">';
+    html += '<table class="table-detail">';
+    html += '<thead><tr><th>#</th><th>Kode</th><th>Nama Produk</th><th style="text-align:right;">Harga</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Subtotal</th></tr></thead>';
+    html += '<tbody>';
+    
+    var grandTotal = 0;
+    for (var i = 0; i < detail.length; i++) {
+        var item = detail[i];
+        var harga = parseInt(item.Harga) || 0;
+        var qty = parseInt(item.Qty) || 0;
+        var subtotal = harga * qty;
+        grandTotal += subtotal;
+        
+        html += '<tr>';
+        html += '<td>' + (i + 1) + '</td>';
+        html += '<td>' + (item['Kode Produk'] || '-') + '</td>';
+        html += '<td>' + (item['Nama Produk'] || '-') + '</td>';
+        html += '<td style="text-align:right;">Rp ' + formatRupiah(harga) + '</td>';
+        html += '<td style="text-align:center;">' + qty + '</td>';
+        html += '<td style="text-align:right;">Rp ' + formatRupiah(subtotal) + '</td>';
+        html += '</tr>';
+    }
+    
+    html += '</tbody><tfoot>';
+    html += '<tr><td colspan="5" style="text-align:right;"><strong>Grand Total</strong></td>';
+    html += '<td style="text-align:right;"><strong>Rp ' + formatRupiah(grandTotal) + '</strong></td></tr>';
+    html += '</tfoot></table>';
+    html += '</div></td>';
+    
+    row.innerHTML = html;
+}
+
+function showDetailError(idTransaksi, message, colCount) {
+    var row = document.getElementById('detail-' + idTransaksi);
+    if (!row) return;
+    row.innerHTML = '<td colspan="' + colCount + '" class="text-center" style="padding:20px;color:#dc3545;">❌ ' + message + '</td>';
+}
+
+
+  
+
+  
+  
 // ==================== RENDER RIWAYAT STOK GROUPED ====================
 function renderRiwayatStokGrouped(data) {
   var tbody = document.getElementById('riwayatStokTable');
