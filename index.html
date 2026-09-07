@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwuTluC-vfH7jUN0go_psFH1q8LHyTG0Q5eY1L1wTY-WfG6xWZ0pqR3OmPtVOF_LI-AHQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzxNUhiVc-jb0AL8CH8L3rOP_lSU9Pv4pw6ukbVkpzLE_KSAZ6775-fyaiwEYrHkWE4uA/exec';
     // ============================================
   </script>
 
@@ -3018,7 +3018,7 @@ function showLogin() {
 // ============================================================
 // 🔥 FUNGSI PANGGIL GAS VIA FETCH
 // ============================================================
-function callGAS(action, data) {
+  function callGAS(action, data) {
   return new Promise(function(resolve, reject) {
     console.log('📤 callGAS:', action, data);
     
@@ -3048,7 +3048,6 @@ function callGAS(action, data) {
     });
   });
 }
-
 
 // ============================================================
 // DETEKSI APAKAH SUDAH TERINSTALL SEBAGAI PWA
@@ -4885,7 +4884,6 @@ function showPage(page) {
   }
 }
 
-
 // ==================== RESTORE STOK FULL VIEW UNTUK ADMIN & KASIR ====================
 function restoreStokFullView() {
   console.log('🔄 Mengembalikan tampilan Stok full untuk Admin/Kasir...');
@@ -4929,7 +4927,309 @@ function restoreStokFullView() {
   }
 }
 
+// ==================== LOAD RIWAYAT STOK RESELLER (DENGAN FALLBACK) ====================
+function loadRiwayatStokReseller() {
+  console.log('🔄 Memuat riwayat stok untuk reseller...');
+  
+  var tbody = document.getElementById('riwayatStokTable');
+  if (!tbody) {
+    console.warn('⚠️ Elemen riwayatStokTable tidak ditemukan');
+    return;
+  }
+  
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">⏳ Memuat riwayat stok reseller...</td></tr>';
+  
+  // 🔥 AMBIL KODE RESELLER DARI CURRENT USER
+  var kodeReseller = currentUser ? currentUser.kodeReseller || '' : '';
+  var namaReseller = currentUser ? currentUser.nama || '' : '';
+  
+  if (!kodeReseller && !namaReseller) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#ff9800;padding:30px;">⚠️ Data Reseller tidak ditemukan untuk akun Anda.</td></tr>';
+    return;
+  }
+  
+  console.log('📋 Kode Reseller:', kodeReseller);
+  console.log('📋 Nama Reseller:', namaReseller);
+  
+  // 🔥 COBA PANGGIL API getRiwayatStokReseller
+  callGAS('getRiwayatStokReseller', { kodeReseller: kodeReseller })
+  .then(function(result) {
+    console.log('📥 Result getRiwayatStokReseller:', result);
+    
+    if (result && result.success) {
+      var data = result.data || [];
+      renderRiwayatStokResellerGrouped(data);
+      return;
+    }
+    
+    // 🔥 FALLBACK: Jika API tidak dikenal, gunakan getRiwayatStokMasuk lalu filter
+    console.log('🔄 Fallback: Menggunakan getRiwayatStokMasuk dengan filter');
+    return callGAS('getRiwayatStokMasuk', {});
+  })
+  .then(function(fallbackResult) {
+    if (!fallbackResult) return;
+    
+    console.log('📥 Result getRiwayatStokMasuk (fallback):', fallbackResult);
+    
+    if (!fallbackResult || !fallbackResult.success) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Gagal memuat riwayat: ' + (fallbackResult ? fallbackResult.error : 'Unknown error') + '</td></tr>';
+      return;
+    }
+    
+    var allData = fallbackResult.data || [];
+    console.log('📦 Total data dari getRiwayatStokMasuk:', allData.length);
+    
+    // 🔥 FILTER BERDASARKAN KODE RESELLER ATAU NAMA USER
+    var filteredData = allData.filter(function(item) {
+      // Cek apakah ada field kodeReseller
+      if (item.kodeReseller) {
+        return item.kodeReseller === kodeReseller;
+      }
+      // Fallback: filter berdasarkan user/nama
+      if (item.user) {
+        return item.user === namaReseller || item.user === currentUser.username;
+      }
+      return false;
+    });
+    
+    console.log('📦 Data setelah filter:', filteredData.length);
+    
+    if (filteredData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">📭 Belum ada riwayat stok masuk untuk akun reseller Anda.</td></tr>';
+      var infoEl = document.getElementById('stokFilterInfo');
+      if (infoEl) infoEl.textContent = 'Menampilkan 0 nota · 0 item';
+      return;
+    }
+    
+    renderRiwayatStokResellerGrouped(filteredData);
+    
+    // 🔥 UPDATE FILTER INFO
+    var totalNota = getUniqueNotaCount(filteredData);
+    var totalItem = filteredData.length;
+    var totalNominal = 0;
+    for (var i = 0; i < filteredData.length; i++) {
+      totalNominal += filteredData[i].subtotal || 0;
+    }
+    var infoEl = document.getElementById('stokFilterInfo');
+    if (infoEl) {
+      infoEl.textContent = '📋 ' + totalNota + ' nota · ' + totalItem + ' item · ' + formatRupiah(totalNominal);
+    }
+    
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadRiwayatStokReseller:', error);
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">❌ Error: ' + error.message + '</td></tr>';
+  });
+}
 
+  // ==================== RENDER RIWAYAT STOK RESELLER GROUPED ====================
+function renderRiwayatStokResellerGrouped(data) {
+  var tbody = document.getElementById('riwayatStokTable');
+  if (!tbody) return;
+  
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">📭 Tidak ada riwayat stok</td></tr>';
+    return;
+  }
+  
+  var notaMap = {};
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    var key = r.noNota || 'unknown-' + i;
+    if (!notaMap[key]) {
+      notaMap[key] = {
+        noNota: r.noNota || '-',
+        tanggal: r.tanggal || '',
+        pemasok: r.pemasok || '-',
+        items: [],
+        total: 0,
+        isLegacy: r.isLegacy || false
+      };
+    }
+    notaMap[key].items.push(r);
+    notaMap[key].total += r.subtotal || 0;
+  }
+  
+  var keys = Object.keys(notaMap);
+  keys.sort(function(a, b) {
+    return notaMap[b].tanggal.localeCompare(notaMap[a].tanggal);
+  });
+  
+  var html = '';
+  var no = 1;
+  
+  for (var i = 0; i < keys.length; i++) {
+    var nota = notaMap[keys[i]];
+    var itemCount = nota.items.length;
+    var total = nota.total;
+    var status = 'Active';
+    var statusClass = 'badge-active';
+    
+    html += '<tr class="nota-master" onclick="toggleNotaDetail(this)" data-nota="' + escapeHtml(keys[i]) + '">';
+    html += '<td>' + no + '</td>';
+    html += '<td>' + formatTanggalDisplay(nota.tanggal) + '</td>';
+    html += '<td><span class="expand-icon">▼</span> <strong>' + escapeHtml(nota.noNota) + '</strong></td>';
+    html += '<td>' + escapeHtml(nota.pemasok) + '</td>';
+    html += '<td style="text-align:right;font-weight:bold;">' + formatRupiah(total) + '</td>';
+    html += '<td style="text-align:center;">' + itemCount + ' produk</td>';
+    html += '<td style="text-align:center;"><span class="' + statusClass + '">' + status + '</span></td>';
+    html += '<td style="text-align:center;">';
+    if (nota.noNota && nota.noNota !== '-') {
+      var cleanNoNota = String(nota.noNota).trim().replace(/\s/g, '');
+      html += '<button class="btn btn-info btn-sm" onclick="event.stopPropagation();showDetailStokReseller(\'' + cleanNoNota + '\')" title="Detail Nota" style="padding:4px 8px;font-size:0.65rem;">📄</button>';
+    } else {
+      html += '-';
+    }
+    html += '</td>';
+    html += '</tr>';
+    
+    html += '<tr class="nota-detail" style="display:none;">';
+    html += '<td colspan="8">';
+    html += '<div class="detail-inner">';
+    html += '<table>';
+    html += '<thead><tr><th>No</th><th>Produk</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Harga</th><th style="text-align:right;">Subtotal</th></tr></thead>';
+    html += '<tbody>';
+    for (var j = 0; j < nota.items.length; j++) {
+      var item = nota.items[j];
+      html += '<tr>' +
+        '<td>' + (j + 1) + '</td>' +
+        '<td>' + escapeHtml(item.namaProduk || '-') + '</td>' +
+        '<td style="text-align:center;">' + (item.qty || 0) + ' ' + (item.satuan || 'pcs') + '</td>' +
+        '<td style="text-align:right;">' + formatRupiah(item.harga || 0) + '</td>' +
+        '<td style="text-align:right;font-weight:bold;">' + formatRupiah(item.subtotal || 0) + '</td>' +
+        '</tr>';
+    }
+    html += '<tr><td colspan="4" style="text-align:right;font-weight:bold;border-top:2px solid #dce3f0;">TOTAL</td>';
+    html += '<td style="text-align:right;font-weight:bold;border-top:2px solid #dce3f0;">' + formatRupiah(total) + '</td></tr>';
+    html += '</tbody></table>';
+    html += '</div>';
+    html += '</td>';
+    html += '</tr>';
+    
+    no++;
+  }
+  
+  tbody.innerHTML = html;
+  
+  // 🔥 UPDATE FILTER INFO
+  var totalNota = Object.keys(notaMap).length;
+  var totalItem = data.length;
+  var totalNominal = 0;
+  for (var i = 0; i < data.length; i++) {
+    totalNominal += data[i].subtotal || 0;
+  }
+  var infoEl = document.getElementById('stokFilterInfo');
+  if (infoEl) {
+    infoEl.textContent = '📋 ' + totalNota + ' nota · ' + totalItem + ' item · ' + formatRupiah(totalNominal);
+  }
+}
+
+
+  // ==================== DETAIL STOK RESELLER ====================
+function showDetailStokReseller(noNota) {
+  console.log('🔍 showDetailStokReseller dipanggil dengan: "' + noNota + '"');
+  
+  document.getElementById('modalTitle').textContent = '📄 Memuat...';
+  document.getElementById('modalBody').innerHTML = '<p style="text-align:center;padding:30px;">⏳ Memuat data untuk ' + noNota + '...</p>';
+  document.getElementById('modal').classList.add('active');
+  
+  var kodeReseller = currentUser ? currentUser.kodeReseller || '' : '';
+  
+  // 🔥 COBA PAKAI getDetailStokReseller
+  callGAS('getDetailStokReseller', { 
+    noNota: noNota,
+    kodeReseller: kodeReseller
+  })
+  .then(function(data) {
+    console.log('🔍 Data dari server:', data);
+    
+    if (data && data.success) {
+      tampilkanDetailStokReseller(data);
+      return;
+    }
+    
+    // 🔥 FALLBACK: Gunakan getDetailStokMasuk
+    console.log('🔄 Fallback: Menggunakan getDetailStokMasuk');
+    return callGAS('getDetailStokMasuk', { noNota: noNota });
+  })
+  .then(function(fallbackData) {
+    if (!fallbackData) return;
+    
+    console.log('🔍 Data fallback:', fallbackData);
+    
+    if (!fallbackData || !fallbackData.success) {
+      var pesan = fallbackData && fallbackData.error ? fallbackData.error : 'Data tidak ditemukan';
+      document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ ' + pesan + '</p>';
+      showToast(pesan, 'error');
+      return;
+    }
+    
+    tampilkanDetailStokReseller(fallbackData);
+  })
+  .catch(function(error) {
+    console.error('❌ Error dari server:', error);
+    document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Error: ' + error.message + '</p>';
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+// ==================== TAMPILKAN DETAIL STOK RESELLER ====================
+function tampilkanDetailStokReseller(data) {
+  if (!data || !data.header) {
+    document.getElementById('modalBody').innerHTML = '<p style="color:red;">❌ Data tidak ditemukan</p>';
+    return;
+  }
+  
+  var h = data.header;
+  var detail = data.detail || [];
+  
+  var total = 0;
+  for (var i = 0; i < detail.length; i++) {
+    total += detail[i].subtotal || 0;
+  }
+  
+  var html = '<div style="margin-bottom:15px;">';
+  html += '<div style="background:#f9f9f9;padding:15px;border-radius:8px;border:1px solid #e0e0e0;">';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  html += '<div><strong>No.Nota:</strong> ' + h.noNota + '</div>';
+  html += '<div><strong>Pemasok:</strong> ' + (h.pemasok || '-') + '</div>';
+  html += '<div><strong>Tanggal:</strong> ' + formatTanggalDisplay(h.tanggal) + '</div>';
+  html += '<div><strong>Status:</strong> <span style="color:#4CAF50;font-weight:bold;">✅ ' + (h.status || 'ACTIVE') + '</span></div>';
+  html += '<div><strong>User:</strong> ' + (h.user || '-') + '</div>';
+  html += '<div><strong>Jumlah Item:</strong> ' + detail.length + ' produk</div>';
+  html += '</div></div>';
+  
+  html += '<div style="margin-top:15px;max-height:400px;overflow-y:auto;">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
+  html += '<thead><tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">No</th><th style="padding:8px;text-align:left;">Produk</th><th style="padding:8px;text-align:center;">Qty</th><th style="padding:8px;text-align:right;">Harga</th><th style="padding:8px;text-align:right;">Subtotal</th></tr></thead>';
+  html += '<tbody>';
+  
+  for (var i = 0; i < detail.length; i++) {
+    var item = detail[i];
+    html += '<tr>' +
+      '<td style="padding:6px 8px;">' + (i+1) + '</td>' +
+      '<td style="padding:6px 8px;">' + (item.namaProduk || '-') + '</td>' +
+      '<td style="padding:6px 8px;text-align:center;">' + (item.qty || 0) + '</td>' +
+      '<td style="padding:6px 8px;text-align:right;">' + formatRupiah(item.harga || 0) + '</td>' +
+      '<td style="padding:6px 8px;text-align:right;">' + formatRupiah(item.subtotal || 0) + '</td>' +
+      '</tr>';
+  }
+  
+  html += '<tr style="font-weight:bold;border-top:2px solid #333;">' +
+    '<td colspan="4" style="padding:8px;text-align:right;">TOTAL</td>' +
+    '<td style="padding:8px;text-align:right;">' + formatRupiah(total) + '</td>' +
+    '</tr>';
+  html += '</tbody></table></div>';
+  
+  html += '<div style="margin-top:15px;display:flex;gap:10px;">';
+  html += '<button class="btn btn-primary" onclick="closeModal()" style="flex:1;padding:10px;">Tutup</button>';
+  html += '</div>';
+  
+  document.getElementById('modalTitle').textContent = '📄 Detail Stok Masuk Reseller';
+  document.getElementById('modalContent').classList.add('large');
+  document.getElementById('modalBody').innerHTML = html;
+}
+  
 // ==================== STOK KHUSUS RESELLER ====================
 function showStokResellerOnly() {
   console.log('🔄 Menampilkan Stok untuk RESELLER...');
