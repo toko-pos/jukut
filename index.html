@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzo-n0ZNA0VH1k5QV5t5LWF7t0BN3W9euPcAF0Fmd8S0ENxcQMmx-K8CJcipBUrUZbxQA/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzpbi4njycflyWkd1EYlT7Kg2FPxYHh1cHRrAW33jC8psTeZGKlJjlFVoVqQrptXNdy/exec';
     // ============================================
   </script>
 
@@ -2993,6 +2993,16 @@ function loadResellerDashboard() {
 }
 
 function addToResellerCart(kode) {
+  console.log('🛒 addToResellerCart dipanggil untuk:', kode);
+  
+  // 🔥 CEK TANGGAL
+  var tanggal = getTanggalTransaksi();
+  if (!tanggal) {
+    showToast('⚠️ Silakan pilih tanggal transaksi terlebih dahulu!', 'warning');
+    document.getElementById('tanggalTransaksi').focus();
+    return;
+  }
+  
   // 🔥 CARI PRODUK DARI RESELLER PRODUK LIST
   var produk = null;
   for (var i = 0; i < resellerProdukList.length; i++) {
@@ -3007,33 +3017,38 @@ function addToResellerCart(kode) {
     return;
   }
   
-  // 🔥 CEK STOK RESELLER (BUKAN STOK MASTER)
+  console.log('📦 Produk ditemukan:', produk.nama);
+  console.log('📊 Stok reseller:', produk.stok);
+  
+  // 🔥🔥🔥 CEK STOK RESELLER 🔥🔥🔥
   if (produk.stok <= 0) {
-    showToast('⚠️ Stok produk habis!', 'error');
+    showToast('⚠️ Stok produk habis! (Stok: 0 ' + (produk.satuan || 'pcs') + ')', 'error');
     return;
   }
   
-  // Cek apakah sudah ada di cart
-  var existing = null;
+  // 🔥 CEK APAKAH SUDAH ADA DI CART
+  var existingIndex = -1;
   for (var i = 0; i < resellerCart.length; i++) {
     if (resellerCart[i].kode === kode) {
-      existing = resellerCart[i];
+      existingIndex = i;
       break;
     }
   }
   
-  // 🔥 HARGA JUAL DARI RESELLER PRODUK
   var hargaJual = produk.hargaJual || produk.hargaNormal || 0;
   
-  if (existing) {
-    // 🔥 CEK STOK RESELLER (BUKAN STOK MASTER)
+  if (existingIndex !== -1) {
+    // 🔥 CEK STOK SEBELUM NAMBAH QTY
+    var existing = resellerCart[existingIndex];
     if (existing.qty + 1 > produk.stok) {
-      showToast('⚠️ Stok tidak mencukupi!', 'error');
+      showToast('⚠️ Stok tidak mencukupi! Tersisa: ' + produk.stok + ' ' + (produk.satuan || 'pcs'), 'error');
       return;
     }
     existing.qty++;
     existing.subtotal = existing.harga * existing.qty;
+    console.log('✅ Qty ditambah menjadi:', existing.qty);
   } else {
+    // 🔥 TAMBAH PRODUK BARU KE CART
     resellerCart.push({
       kode: produk.kode,
       nama: produk.nama,
@@ -3042,71 +3057,80 @@ function addToResellerCart(kode) {
       subtotal: hargaJual,
       gambar: produk.gambar || '',
       satuan: produk.satuan || 'pcs',
-      stok: produk.stok  // 🔥 SIMPAN STOK RESELLER
+      stokMax: produk.stok  // 🔥 SIMPAN STOK MAKSIMAL
     });
+    console.log('✅ Produk baru ditambahkan ke cart');
   }
   
   updateResellerCartDisplay();
-  showToast(produk.nama + ' ditambahkan ke keranjang');
+  showToast(produk.nama + ' ditambahkan ke keranjang (Stok: ' + produk.stok + ' ' + (produk.satuan || 'pcs') + ')', 'success');
 }
 
-function addToResellerCart(kode) {
-  // 🔥 CARI PRODUK DARI RESELLER PRODUK LIST
-  var produk = null;
+
+function renderResellerPosGrid() {
+  var container = document.getElementById('posProducts');
+  if (!container) return;
+  
+  if (resellerProdukList.length === 0) {
+    container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk untuk reseller ini</p>';
+    return;
+  }
+  
+  var hasDate = getTanggalTransaksi() !== '';
+  var html = '';
+  var processedKode = {};
+  
   for (var i = 0; i < resellerProdukList.length; i++) {
-    if (resellerProdukList[i].kode === kode) {
-      produk = resellerProdukList[i];
-      break;
+    var p = resellerProdukList[i];
+    if (processedKode[p.kode]) continue;
+    processedKode[p.kode] = true;
+    
+    // 🔥🔥🔥 STOK DARI RESELLER PRODUK 🔥🔥🔥
+    var stok = p.stok || 0;
+    var isOutOfStock = stok <= 0;
+    
+    // 🔥🔥🔥 DISABLE JIKA STOK 0 ATAU BELUM PILIH TANGGAL 🔥🔥🔥
+    var disabledClass = (isOutOfStock || !hasDate) ? 'disabled' : '';
+    var stockClass = isOutOfStock ? 'out-of-stock' : '';
+    
+    // 🔥🔥🔥 ONCLICK HANYA JIKA STOK > 0 DAN SUDAH PILIH TANGGAL 🔥🔥🔥
+    var onclickAttr = '';
+    if (!isOutOfStock && hasDate) {
+      onclickAttr = 'onclick="addToResellerCart(\'' + p.kode + '\')"';
     }
-  }
-  
-  if (!produk) {
-    showToast('⚠️ Produk tidak ditemukan!', 'error');
-    return;
-  }
-  
-  // 🔥 CEK STOK RESELLER (BUKAN STOK MASTER)
-  if (produk.stok <= 0) {
-    showToast('⚠️ Stok produk habis!', 'error');
-    return;
-  }
-  
-  // Cek apakah sudah ada di cart
-  var existing = null;
-  for (var i = 0; i < resellerCart.length; i++) {
-    if (resellerCart[i].kode === kode) {
-      existing = resellerCart[i];
-      break;
+    
+    var imgHtml = getProductImage(p.gambar, p.nama);
+    var hargaJual = p.hargaJual || p.hargaNormal || 0;
+    
+    // 🔥 BADGE
+    var dateBadge = '';
+    if (!hasDate) {
+      dateBadge = '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>';
     }
-  }
-  
-  // 🔥 HARGA JUAL DARI RESELLER PRODUK
-  var hargaJual = produk.hargaJual || produk.hargaNormal || 0;
-  
-  if (existing) {
-    // 🔥 CEK STOK RESELLER (BUKAN STOK MASTER)
-    if (existing.qty + 1 > produk.stok) {
-      showToast('⚠️ Stok tidak mencukupi!', 'error');
-      return;
+    
+    var outOfStockBadge = '';
+    if (isOutOfStock && hasDate) {
+      outOfStockBadge = '<div class="badge-out-of-stock">⛔ HABIS</div>';
     }
-    existing.qty++;
-    existing.subtotal = existing.harga * existing.qty;
-  } else {
-    resellerCart.push({
-      kode: produk.kode,
-      nama: produk.nama,
-      harga: hargaJual,
-      qty: 1,
-      subtotal: hargaJual,
-      gambar: produk.gambar || '',
-      satuan: produk.satuan || 'pcs',
-      stok: produk.stok  // 🔥 SIMPAN STOK RESELLER
-    });
+    
+    // 🔥 TAMPILKAN STOK
+    var stokDisplay = isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.satuan || 'pcs');
+    
+    html += '<div class="product-item ' + disabledClass + '" ' + onclickAttr + ' data-kode="' + p.kode + '" data-harga="' + hargaJual + '" data-stok="' + stok + '">';
+    html += imgHtml;
+    html += dateBadge;
+    html += outOfStockBadge;
+    html += '<div class="name">' + (p.nama || '-') + '</div>';
+    html += '<div class="price">' + formatRupiah(hargaJual) + '</div>';
+    html += '<div class="stock ' + stockClass + '">' + stokDisplay + '</div>';
+    html += '</div>';
   }
   
+  container.innerHTML = html;
   updateResellerCartDisplay();
-  showToast(produk.nama + ' ditambahkan ke keranjang');
 }
+  
+
 
 function updateResellerCartDisplay() {
   var container = document.getElementById('cartItems');
@@ -3176,9 +3200,10 @@ function updateResellerQty(index, change) {
   
   if (newQty < 1) {
     resellerCart.splice(index, 1);
+    showToast(item.nama + ' dihapus dari keranjang', 'info');
   } else if (produk && newQty > produk.stok) {
-    // 🔥 CEK STOK RESELLER
-    showToast('⚠️ Stok tidak mencukupi! Tersedia: ' + produk.stok, 'error');
+    // 🔥🔥🔥 CEK STOK RESELLER 🔥🔥🔥
+    showToast('⚠️ Stok tidak mencukupi! Tersedia: ' + produk.stok + ' ' + (produk.satuan || 'pcs'), 'error');
     return;
   } else {
     item.qty = newQty;
@@ -3275,6 +3300,31 @@ function checkoutReseller() {
 function prosesCheckoutReseller(total) {
   var input = document.getElementById('fPembayaranReseller');
   var nominal = parseInt(input ? input.value : 0) || 0;
+  
+  // 🔥🔥🔥 CEK STOK SEBELUM CHECKOUT 🔥🔥🔥
+  for (var i = 0; i < resellerCart.length; i++) {
+    var item = resellerCart[i];
+    
+    // Cari produk di resellerProdukList
+    var produk = null;
+    for (var j = 0; j < resellerProdukList.length; j++) {
+      if (resellerProdukList[j].kode === item.kode) {
+        produk = resellerProdukList[j];
+        break;
+      }
+    }
+    
+    if (!produk) {
+      showToast('⚠️ Produk ' + item.nama + ' tidak ditemukan!', 'error');
+      return;
+    }
+    
+    // 🔥🔥🔥 CEK STOK RESELLER 🔥🔥🔥
+    if (produk.stok < item.qty) {
+      showToast('⚠️ Stok ' + produk.nama + ' tidak mencukupi! (Tersedia: ' + produk.stok + ', Diminta: ' + item.qty + ')', 'error');
+      return;
+    }
+  }
   
   var metodeRadios = document.querySelectorAll('input[name="metodeBayarReseller"]');
   var metode = 'LUNAS';
