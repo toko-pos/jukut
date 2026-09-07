@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbz9AmbcLRBuZQu3xhwYI_I2fwxMwDw_gTNP2jRWX5UiDI-oieVpijkWMzbN3IzrJAMTVg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzjt0cs4i2AA_V90iTdzXTxZJk_H6dX4R48HanqMEKCKAxPk12yAV8LP1NMkqBBJcNw-Q/exec';
     // ============================================
   </script>
 
@@ -4812,6 +4812,84 @@ function loadKasirList() {
   });
 }
 
+
+// ============================================================
+// 🔥 SAVE INFO TOKO
+// ============================================================
+function saveInfoToko(username, namaToko, alamat, noHp) {
+    var data = {
+        action: 'saveInfoToko',
+        data: {
+            username: username,
+            namaToko: namaToko,
+            alamat: alamat,
+            noHp: noHp
+        }
+    };
+    
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(result) {
+        if (result.success) {
+            alert('✅ ' + result.message);
+        } else {
+            alert('❌ Gagal: ' + result.error);
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        alert('❌ Error: ' + error.message);
+    });
+}
+
+// ============================================================
+// 🔥 GET INFO TOKO
+// ============================================================
+function getInfoToko(username) {
+    var data = {
+        action: 'getInfoToko',
+        data: {
+            username: username
+        }
+    };
+    
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(result) {
+        if (result.success) {
+            console.log('✅ Data Toko:', result.data);
+            // Isi form dengan data
+            document.getElementById('namaToko').value = result.data.namaToko || '';
+            document.getElementById('alamat').value = result.data.alamat || '';
+            document.getElementById('noHp').value = result.data.noHp || '';
+        } else {
+            console.error('❌ Error:', result.error);
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+    });
+}
+
+  
 // ==================== UPDATE HEADER INFO ====================
 function updateHeaderInfo() {
    // 🔥 Refresh cache info toko
