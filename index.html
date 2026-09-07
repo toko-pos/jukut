@@ -2929,6 +2929,47 @@ function isKasir() {
   return role === 'KASIR' || role === 'CASHIER';
 }
 
+
+// ============================================================
+// 🔥 PERBAIKAN: PANGGIL loadResellerData() DI showAppByRole()
+// ============================================================
+
+// CARI FUNGSI showAppByRole() dan TAMBAHKAN baris ini
+// Di dalam bagian else if (isReseller) {
+
+// TAMBAHKAN:
+console.log('🔄 Memuat data reseller...');
+loadResellerData();
+
+// ============================================================
+// 🔥 PERBAIKAN: PANGGIL loadResellerData() DI showAppAfterLogin()
+// ============================================================
+
+// CARI FUNGSI showAppAfterLogin() dan TAMBAHKAN baris ini
+// Di dalam setTimeout yang kedua (setelah 300ms):
+
+if (currentUser && currentUser.role && currentUser.role.toUpperCase() === 'RESELLER') {
+  console.log('🔄 Backup: Memuat data reseller...');
+  loadResellerData();
+}
+
+// ============================================================
+// 🔥 PERBAIKAN: BLOKIR AKSES showPage('reseller')
+// ============================================================
+
+// CARI FUNGSI showPage() dan TAMBAHKAN di AWAL fungsi:
+
+if (page === 'reseller') {
+  var role = currentUser ? currentUser.role.toUpperCase() : '';
+  if (role === 'RESELLER') {
+    showToast('⛔ Akses ditolak! Halaman ini tidak tersedia untuk Reseller.', 'error');
+    page = 'dashboard';
+    showPage('dashboard');
+    return;
+  }
+}
+  
+
 // ==================== LOAD RESELLER DATA ====================
 
 function loadResellerData() {
@@ -4983,15 +5024,12 @@ function showAppByRole() {
     console.log('✅ Body class: role-reseller');
   }
   
-  // 🔥🔥🔥 TUNGGU SAMPAI DOM SIAP (NAVIGASI SUDAH RENDER)
   setTimeout(function() {
     console.log('🔄 Menjalankan showAppByRole() setelah DOM siap...');
     
-    // 🔥 AMBIL SEMUA TOMBOL NAVIGASI
     var allNavButtons = document.querySelectorAll('.nav button');
     console.log('📋 Total tombol navigasi:', allNavButtons.length);
     
-    // 🔥 FUNGSI UNTUK MENEMUKAN TOMBOL BERDASARKAN ONCLICK
     function findNavButton(pageName) {
       for (var i = 0; i < allNavButtons.length; i++) {
         var btn = allNavButtons[i];
@@ -5003,7 +5041,6 @@ function showAppByRole() {
       return null;
     }
     
-    // 🔥 SEMBUNYIKAN ATAU TAMPILKAN TOMBOL
     function setNavVisibility(pageName, visible) {
       var btn = findNavButton(pageName);
       if (btn) {
@@ -5034,8 +5071,6 @@ function showAppByRole() {
           btn.style.minWidth = '0';
           console.log('❌ Sembunyikan tab:', pageName);
         }
-      } else {
-        console.warn('⚠️ Tombol tidak ditemukan untuk page:', pageName);
       }
     }
     
@@ -5046,9 +5081,12 @@ function showAppByRole() {
     var kasirGroup = document.getElementById('filterKasirGroup');
     if (kasirGroup) kasirGroup.style.display = 'none';
     
-    // 🔥 TAMPILKAN SESUAI ROLE
+    // ============================================================
+    // 🔥🔥🔥 TAMPILKAN SESUAI ROLE - TIDAK MENGUBAH ADMIN & KASIR 🔥🔥🔥
+    // ============================================================
+    
     if (isAdmin) {
-      // ADMIN: Tampilkan semua
+      // ✅ ADMIN: Tampilkan semua (TIDAK BERUBAH)
       setNavVisibility('reseller', true);
       setNavVisibility('user', true);
       
@@ -5056,7 +5094,7 @@ function showAppByRole() {
       loadKasirList();
       
     } else if (isKasir) {
-      // KASIR: Tampilkan Reseller, sembunyikan User
+      // ✅ KASIR: Tampilkan Reseller, sembunyikan User (TIDAK BERUBAH)
       setNavVisibility('reseller', true);
       setNavVisibility('user', false);
       
@@ -5115,10 +5153,9 @@ function showAppByRole() {
       setNavVisibility('user', false);
     }
     
-    // 🔥 SETUP FILTERS
     setupFilters();
     
-  }, 100); // 🔥 DELAY 100ms UNTUK PASTIKAN DOM SIAP
+  }, 100);
 }
 
 // ==================== SESSION MANAGEMENT ====================
@@ -5876,16 +5913,24 @@ function loadAllData() {
 
   // ==================== NAVIGATION ====================
 function showPage(page) {
-  // 🔥🔥🔥 CEK AKSES UNTUK HALAMAN RESELLER
+  // ============================================================
+  // 🔥🔥🔥 BLOKIR AKSES RESELLER (TIDAK MENGGANGGU ADMIN & KASIR) 🔥🔥🔥
+  // ============================================================
+  
+  // 🔥 CEK AKSES UNTUK HALAMAN RESELLER
   if (page === 'reseller') {
     var role = currentUser ? currentUser.role.toUpperCase() : '';
     if (role === 'RESELLER') {
       showToast('⛔ Akses ditolak! Halaman ini tidak tersedia untuk Reseller.', 'error');
+      // 🔥 PAKSA KE DASHBOARD DAN RETURN
       page = 'dashboard';
+      // 🔥 LANGSUNG LOAD DASHBOARD
+      showPage('dashboard');
+      return;
     }
   }
   
-  // 🔥 CEK AKSES UNTUK HALAMAN USER
+  // 🔥 CEK AKSES UNTUK HALAMAN USER (TIDAK BERUBAH)
   if (page === 'user') {
     var role = currentUser ? currentUser.role.toUpperCase() : '';
     if (role !== 'ADMIN' && role !== 'OWNER') {
@@ -5895,22 +5940,19 @@ function showPage(page) {
   }
   
   // ============================================================
-  // 🔥 SWITCH PAGE (TAMPILKAN HALAMAN)
+  // 🔥 SWITCH PAGE (SISANYA TIDAK BERUBAH)
   // ============================================================
   
   var pages = document.querySelectorAll('.page');
   var navs = document.querySelectorAll('.nav button');
-  
   for (var i = 0; i < pages.length; i++) {
     pages[i].classList.remove('active');
   }
   for (var i = 0; i < navs.length; i++) {
     navs[i].classList.remove('active');
   }
-  
   var targetPage = document.getElementById('page-' + page);
   if (targetPage) targetPage.classList.add('active');
-  
   var navButtons = document.querySelectorAll('.nav button');
   for (var i = 0; i < navButtons.length; i++) {
     if (navButtons[i].getAttribute('onclick') === "showPage('" + page + "')") {
