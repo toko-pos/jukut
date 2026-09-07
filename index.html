@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyJvlwWLzLP-eSmuqAZXtDCkYheOwi1Dd9Tf2J9Xlke66NYquiIswQXpcFU1BKlXyk_9g/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwIfuGIISiTcjerRudbueM_Etitfy7BtBXzkZ-w5WEnfK5jIiuIV61Zw0xs8vu8UMts_w/exec';
     // ============================================
   </script>
 
@@ -4079,6 +4079,107 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
 
+// ==================== REGISTER ====================
+document.getElementById('formRegister').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  var username = document.getElementById('regUsername').value.trim();
+  var password = document.getElementById('regPassword').value.trim();
+  var confirmPassword = document.getElementById('regConfirmPassword').value.trim();
+  var nama = document.getElementById('regNama').value.trim();
+  
+  // 🔥 AMBIL ROLE YANG DIPILIH
+  var roleRadios = document.querySelectorAll('input[name="regRole"]');
+  var role = 'KASIR';
+  for (var i = 0; i < roleRadios.length; i++) {
+    if (roleRadios[i].checked) {
+      role = roleRadios[i].value;
+      break;
+    }
+  }
+  
+  // 🔥 AMBIL KODE RESELLER (jika role = RESELLER)
+  var kodeReseller = '';
+  if (role === 'RESELLER') {
+    kodeReseller = document.getElementById('regKodeReseller').value.trim();
+    if (!kodeReseller) {
+      showToast('⚠️ Kode Reseller wajib diisi untuk role RESELLER!', 'error');
+      document.getElementById('regKodeReseller').focus();
+      return;
+    }
+  }
+  
+  // VALIDASI
+  if (!username || username.length < 3) {
+    showToast('⚠️ Username minimal 3 karakter!', 'error');
+    document.getElementById('regUsername').focus();
+    return;
+  }
+  
+  if (!password || password.length < 6) {
+    showToast('⚠️ Password minimal 6 karakter!', 'error');
+    document.getElementById('regPassword').focus();
+    return;
+  }
+  
+  if (password !== confirmPassword) {
+    showToast('⚠️ Konfirmasi password tidak cocok!', 'error');
+    document.getElementById('regConfirmPassword').focus();
+    return;
+  }
+  
+  if (!nama) {
+    showToast('⚠️ Nama lengkap wajib diisi!', 'error');
+    document.getElementById('regNama').focus();
+    return;
+  }
+  
+  // NONAKTIFKAN TOMBOL
+  var btn = document.getElementById('btnRegister');
+  btn.textContent = '⏳ Mendaftar...';
+  btn.disabled = true;
+  
+  // KIRIM KE GAS
+  callGAS('register', {
+    username: username,
+    password: password,
+    nama: nama,
+    role: role,
+    kodeReseller: kodeReseller
+  })
+  .then(function(result) {
+    btn.textContent = 'Daftar';
+    btn.disabled = false;
+    
+    if (result && result.success) {
+      showToast('✅ ' + result.message, 'success');
+      
+      // KOSONGKAN FORM
+      document.getElementById('regUsername').value = '';
+      document.getElementById('regPassword').value = '';
+      document.getElementById('regConfirmPassword').value = '';
+      document.getElementById('regNama').value = '';
+      document.getElementById('regKodeReseller').value = '';
+      
+      // KE HALAMAN LOGIN
+      showLogin();
+      showToast('✅ Silakan login dengan akun baru Anda!', 'success');
+      
+    } else {
+      showToast('❌ ' + (result ? result.error : 'Gagal mendaftar!'), 'error');
+    }
+  })
+  .catch(function(error) {
+    btn.textContent = 'Daftar';
+    btn.disabled = false;
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+});
+
+
+
+
+  
   // ==================== TOGGLE KODE RESELLER FIELD ====================
 // 🔥 Toggle field kode reseller berdasarkan pilihan role
 var roleRadios = document.querySelectorAll('input[name="regRole"]');
