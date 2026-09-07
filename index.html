@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwIfuGIISiTcjerRudbueM_Etitfy7BtBXzkZ-w5WEnfK5jIiuIV61Zw0xs8vu8UMts_w/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbz9NDtff42MGEgxXCF0q-43FyW5TZM_-GwHLZtGqTU6xVfKMwIN13E5JPAl_g0d3atMwA/exec';
     // ============================================
   </script>
 
@@ -4080,6 +4080,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // ==================== REGISTER ====================
+// Di dalam event listener submit register
 document.getElementById('formRegister').addEventListener('submit', function(e) {
   e.preventDefault();
   
@@ -4098,7 +4099,7 @@ document.getElementById('formRegister').addEventListener('submit', function(e) {
     }
   }
   
-  // 🔥 AMBIL KODE RESELLER (jika role = RESELLER)
+  // 🔥 AMBIL KODE RESELLER
   var kodeReseller = '';
   if (role === 'RESELLER') {
     kodeReseller = document.getElementById('regKodeReseller').value.trim();
@@ -4139,8 +4140,8 @@ document.getElementById('formRegister').addEventListener('submit', function(e) {
   btn.textContent = '⏳ Mendaftar...';
   btn.disabled = true;
   
-  // KIRIM KE GAS
-  callGAS('register', {
+  // 🔥 KIRIM KE GAS DENGAN ACTION YANG BENAR
+  callGAS('registerUser', {  // <-- PERBAIKI: PAKAI 'registerUser'
     username: username,
     password: password,
     nama: nama,
