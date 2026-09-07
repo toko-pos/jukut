@@ -3790,64 +3790,105 @@ function showAppByRole() {
     return;
   }
   
-  // 🔥 CASE INSENSITIVE
+  // 🔥 CASE INSENSITIVE - AMBIL ROLE
   var role = currentUser.role ? currentUser.role.toUpperCase() : 'KASIR';
   console.log('🎯 Menampilkan app untuk role:', role);
   
-  // 🔥 SEMBUNYIKAN SEMUA NAVIGASI
+  // 🔥 CEK APAKAH RESELLER (APAPUN USERNAMENYA)
+  var isReseller = (role === 'RESELLER');
+  var isAdmin = (role === 'ADMIN' || role === 'OWNER');
+  var isKasir = (role === 'KASIR' || role === 'CASHIER');
+  
+  // 🔥 SEMBUNYIKAN SEMUA NAVIGASI KHUSUS
   var navKasir = document.getElementById('navKasir');
   var navReseller = document.getElementById('navReseller');
   var navAdmin = document.getElementById('navAdmin');
+  var navStok = document.getElementById('navStok');
+  var navResellerTab = document.getElementById('navResellerTab');
+  var navUser = document.getElementById('navUser');
   
   if (navKasir) navKasir.style.display = 'none';
   if (navReseller) navReseller.style.display = 'none';
   if (navAdmin) navAdmin.style.display = 'none';
+  if (navStok) navStok.style.display = 'none';
+  if (navResellerTab) navResellerTab.style.display = 'none';
+  if (navUser) navUser.style.display = 'none';
   
   // 🔥 TAMPILKAN SESUAI ROLE
-  if (role === 'ADMIN' || role === 'OWNER') {
+  if (isAdmin) {
+    // ADMIN: Tampilkan semua termasuk tab Reseller
     if (navAdmin) {
       navAdmin.style.display = 'flex';
       console.log('✅ Navigasi Admin ditampilkan');
     }
-    // 🔥 TAMPILKAN FILTER KASIR
+    if (navResellerTab) {
+      navResellerTab.style.display = 'inline-block';
+      console.log('✅ Tab Reseller ditampilkan untuk Admin');
+    }
+    if (navUser) {
+      navUser.style.display = 'inline-block';
+      console.log('✅ Menu User ditampilkan');
+    }
+    
     var kasirGroup = document.getElementById('filterKasirGroup');
     if (kasirGroup) {
       kasirGroup.style.display = 'flex';
       console.log('✅ Filter Kasir ditampilkan');
     }
-    // 🔥 TAMPILKAN MENU USER
-    var navUser = document.getElementById('navUser');
-    if (navUser) {
-      navUser.style.display = 'inline-block';
-      console.log('✅ Menu User ditampilkan');
-    }
-    // Load daftar kasir
+    
     loadKasirList();
     
-  } else if (role === 'RESELLER') {
-    if (navReseller) {
-      navReseller.style.display = 'flex';
-      console.log('✅ Navigasi Reseller ditampilkan');
-    }
-    // Sembunyikan filter kasir
-    var kasirGroup = document.getElementById('filterKasirGroup');
-    if (kasirGroup) kasirGroup.style.display = 'none';
-    
-  } else {
-    // KASIR / DEFAULT
+  } else if (isKasir) {
+    // 🔥 KASIR: TAMPILKAN TAB RESELLER (SEPERTI SEMULA)
     if (navKasir) {
       navKasir.style.display = 'flex';
       console.log('✅ Navigasi Kasir ditampilkan');
     }
-    // Sembunyikan filter kasir
+    if (navResellerTab) {
+      navResellerTab.style.display = 'inline-block'; // 🔥 TAMPILKAN UNTUK KASIR
+      console.log('✅ Tab Reseller ditampilkan untuk Kasir');
+    }
+    
     var kasirGroup = document.getElementById('filterKasirGroup');
     if (kasirGroup) kasirGroup.style.display = 'none';
-    // Sembunyikan menu User
-    var navUser = document.getElementById('navUser');
+    if (navUser) navUser.style.display = 'none';
+    
+  } else if (isReseller) {
+    // 🔥 RESELLER: SEMBUNYIKAN TAB RESELLER
+    if (navReseller) {
+      navReseller.style.display = 'flex';
+      console.log('✅ Navigasi Reseller ditampilkan');
+    }
+    if (navStok) {
+      navStok.style.display = 'inline-block';
+      console.log('✅ Stok Saya ditampilkan');
+    }
+    if (navResellerTab) {
+      navResellerTab.style.display = 'none'; // 🔥 SEMBUNYIKAN UNTUK RESELLER
+      console.log('❌ Tab Reseller disembunyikan untuk Reseller');
+    }
+    
+    var kasirGroup = document.getElementById('filterKasirGroup');
+    if (kasirGroup) kasirGroup.style.display = 'none';
+    if (navUser) navUser.style.display = 'none';
+    
+  } else {
+    // DEFAULT / UNKNOWN
+    if (navKasir) {
+      navKasir.style.display = 'flex';
+      console.log('✅ Navigasi Kasir ditampilkan');
+    }
+    if (navResellerTab) {
+      navResellerTab.style.display = 'inline-block';
+      console.log('✅ Tab Reseller ditampilkan');
+    }
+    
+    var kasirGroup = document.getElementById('filterKasirGroup');
+    if (kasirGroup) kasirGroup.style.display = 'none';
     if (navUser) navUser.style.display = 'none';
   }
   
-  // 🔥 SETUP FILTERS (panggil lagi untuk memastikan)
+  // 🔥 SETUP FILTERS
   setupFilters();
 }
 
@@ -4560,6 +4601,18 @@ function loadAllData() {
 
 // ==================== NAVIGATION ====================
 function showPage(page) {
+  // 🔥🔥🔥 CEK AKSES UNTUK HALAMAN RESELLER
+  if (page === 'reseller') {
+    var role = currentUser ? currentUser.role.toUpperCase() : '';
+    // 🔥 HANYA RESELLER YANG DITOLAK, KASIR & ADMIN TETAP BISA
+    if (role === 'RESELLER') {
+      showToast('⛔ Akses ditolak! Halaman ini tidak tersedia untuk Reseller.', 'error');
+      // Redirect ke dashboard
+      page = 'dashboard';
+    }
+    // KASIR & ADMIN LANJUTKAN
+  }
+  
   var pages = document.querySelectorAll('.page');
   var navs = document.querySelectorAll('.nav button');
   for (var i = 0; i < pages.length; i++) {
@@ -4576,23 +4629,38 @@ function showPage(page) {
       navButtons[i].classList.add('active');
     }
   }
-  if (page === 'dashboard') loadDashboard();
-
-    if (page === 'pos') { loadPosProduk(); updateCartDisplay(); loadResellerOptions(); // 🔥 Tambahkan ini
-  }
-
   
+  // LOAD DATA SESUAI HALAMAN
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'pos') { 
+    loadPosProduk(); 
+    updateCartDisplay(); 
+    loadResellerOptions();
+  }
   if (page === 'transaksi') { 
     loadTransaksi(); 
     loadLogPembatalan(); 
   }
   if (page === 'user') loadUsers();
-  if (page === 'stok') { showSubPage('stok', 'masuk'); }
-  if (page === 'produk') { loadProdukWithRetry(); }
-  if (page === 'profile') { loadProfile(); }
-  
-    // 🔥 AKTIFKAN KEMBALI BARIS INI
-  if (page === 'reseller') loadReseller();
+  if (page === 'stok') {
+    if (currentUser && currentUser.role && currentUser.role.toUpperCase() === 'RESELLER') {
+      loadStokResellerTab();
+    } else {
+      showSubPage('stok', 'masuk');
+    }
+  }
+  if (page === 'produk') { 
+    loadProdukWithRetry(); 
+  }
+  if (page === 'profile') { 
+    loadProfile(); 
+  }
+  if (page === 'reseller') {
+    // 🔥 KASIR & ADMIN BISA AKSES, RESELLER SUDAH DITOLAK DI ATAS
+    if (currentUser && currentUser.role.toUpperCase() !== 'RESELLER') {
+      loadReseller();
+    }
+  }
 }
 
 // ==================== REFRESH DASHBOARD ====================
