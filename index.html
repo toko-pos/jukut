@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbytGF8EYXmg_h1wmSgJ1HQSXehrlzeJXpt3r7Fna92o6Sx0p55SSAcglr2sQg3zwfNxNQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbz44zrLStLvB5W_24Zume5qQy-fCuHI5rP2WhzZYbJrO5SgSRUJEtvU72OUNaaolAEn7A/exec';
     // ============================================
   </script>
 
@@ -4456,13 +4456,21 @@ function updateHeaderInfo() {
   refreshInfoTokoCache();
   console.log('🔄 updateHeaderInfo() dipanggil');
   
-  callGAS('getInfoToko', {})
+  // 🔥 PERBAIKAN: Kirim username
+  callGAS('getInfoToko', { 
+    username: currentUser ? currentUser.username : '' 
+  })
   .then(function(result) {
     console.log('📥 Result updateHeaderInfo:', result);
     
     if (result && result.success) {
-      // 🔥 AMBIL DARI result.data.data
-      var data = result.data.data || result.data;
+      // 🔥 AMBIL DARI result.data
+      var data = result.data;
+      
+      // Jika data masih punya property 'data', ambil dari situ
+      if (data && data.data) {
+        data = data.data;
+      }
       
       if (data && data.namaToko) {
         var header = document.getElementById('headerTitle');
@@ -4488,6 +4496,26 @@ function updateHeaderInfo() {
   })
   .catch(function(error) {
     console.error('❌ Error updateHeaderInfo:', error);
+  });
+}
+
+function debugInfoToko() {
+  console.log('🔍 Mengecek data Info Toko...');
+  // 🔥 PERBAIKAN: Kirim username
+  callGAS('getInfoToko', { 
+    username: currentUser ? currentUser.username : '' 
+  })
+  .then(function(result) {
+    console.log('📊 Hasil getInfoToko:', JSON.stringify(result));
+    if (result && result.success) {
+      showToast('✅ Data Info Toko: ' + JSON.stringify(result.data), 'info');
+    } else {
+      showToast('❌ Data Info Toko kosong atau error: ' + (result ? result.error : 'Unknown'), 'error');
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error debugInfoToko:', error);
+    showToast('❌ Error: ' + error.message, 'error');
   });
 }
 
@@ -7225,12 +7253,15 @@ function loadProfile() {
     // 🔥 AMBIL DATA TOKO
     console.log('🔄 Memanggil getInfoToko...');
     
-    callGAS('getInfoToko', {})
+    // 🔥🔥🔥 PERBAIKAN: Kirim username
+    callGAS('getInfoToko', { 
+      username: currentUser.username 
+    })
     .then(function(result) {
       console.log('📥 Result LENGKAP:', JSON.stringify(result));
       
       if (result && result.success) {
-        // 🔥🔥🔥 PERBAIKAN: Ambil dari result.data.data
+        // 🔥🔥🔥 PERBAIKAN: Ambil dari result.data
         var data = result.data;
         
         // Jika data masih punya property 'data', ambil dari situ
@@ -8003,12 +8034,18 @@ function getInfoTokoSync() {
   return result;
 }
 
-// 🔥 FUNGSI UNTUK REFRESH CACHE INFO TOKO
+// ==================== REFRESH INFO TOKO CACHE ====================
 function refreshInfoTokoCache() {
-  callGAS('getInfoToko', {})
+  // 🔥 PERBAIKAN: Kirim username
+  callGAS('getInfoToko', { 
+    username: currentUser ? currentUser.username : '' 
+  })
   .then(function(result) {
     if (result && result.success) {
-      var data = result.data.data || result.data;
+      var data = result.data;
+      if (data && data.data) {
+        data = data.data;
+      }
       var infoToko = {
         namaToko: data.namaToko || '',
         alamat: data.alamat || '',
