@@ -1881,6 +1881,21 @@
   box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.15);
 }
 
+    /* 🔥 SEMBUNYIKAN TAB RESELLER UNTUK ROLE RESELLER */
+body.role-reseller #navResellerTab,
+body.role-reseller .nav button[onclick*="showPage('reseller')"] {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex: 0 0 0 !important;
+  min-width: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
                                                                                                                                         
   </style>
 </head>
@@ -3799,29 +3814,78 @@ function showAppByRole() {
   var isAdmin = (role === 'ADMIN' || role === 'OWNER');
   var isKasir = (role === 'KASIR' || role === 'CASHIER');
   
-  // 🔥🔥🔥 SEMBUNYIKAN SEMUA DENGAN ID
-  var allNavButtons = document.querySelectorAll('.nav button');
+  console.log('📊 isReseller:', isReseller);
+  console.log('📊 isAdmin:', isAdmin);
+  console.log('📊 isKasir:', isKasir);
   
-  // 🔥 FUNGSI UNTUK SEMBUNYIKAN/TAMPILKAN BERDASARKAN ID
-  function hideElement(id) {
-    var el = document.getElementById(id);
-    if (el) {
-      el.style.display = 'none';
-      console.log('❌ Sembunyikan:', id);
-    }
+  // 🔥 TAMBAHKAN CLASS KE BODY UNTUK CSS BACKUP
+  document.body.classList.remove('role-admin', 'role-kasir', 'role-reseller');
+  if (isAdmin) {
+    document.body.classList.add('role-admin');
+    console.log('✅ Body class: role-admin');
+  } else if (isKasir) {
+    document.body.classList.add('role-kasir');
+    console.log('✅ Body class: role-kasir');
+  } else if (isReseller) {
+    document.body.classList.add('role-reseller');
+    console.log('✅ Body class: role-reseller');
   }
   
-  function showElement(id) {
-    var el = document.getElementById(id);
-    if (el) {
-      el.style.display = 'flex';
-      console.log('✅ Tampilkan:', id);
+  // 🔥 AMBIL SEMUA TOMBOL NAVIGASI
+  var allNavButtons = document.querySelectorAll('.nav button');
+  console.log('📋 Total tombol navigasi:', allNavButtons.length);
+  
+  // 🔥 FUNGSI UNTUK MENEMUKAN TOMBOL BERDASARKAN ONCLICK
+  function findNavButton(pageName) {
+    for (var i = 0; i < allNavButtons.length; i++) {
+      var btn = allNavButtons[i];
+      var onclickAttr = btn.getAttribute('onclick');
+      if (onclickAttr && onclickAttr.indexOf("showPage('" + pageName + "')") !== -1) {
+        return btn;
+      }
+    }
+    return null;
+  }
+  
+  // 🔥 SEMBUNYIKAN ATAU TAMPILKAN TOMBOL
+  function setNavVisibility(pageName, visible) {
+    var btn = findNavButton(pageName);
+    if (btn) {
+      if (visible) {
+        btn.style.display = '';
+        btn.style.visibility = '';
+        btn.style.opacity = '';
+        btn.style.pointerEvents = '';
+        btn.style.width = '';
+        btn.style.height = '';
+        btn.style.overflow = '';
+        btn.style.padding = '';
+        btn.style.margin = '';
+        btn.style.flex = '';
+        btn.style.minWidth = '';
+        console.log('✅ Tampilkan tab:', pageName);
+      } else {
+        btn.style.display = 'none';
+        btn.style.visibility = 'hidden';
+        btn.style.opacity = '0';
+        btn.style.pointerEvents = 'none';
+        btn.style.width = '0';
+        btn.style.height = '0';
+        btn.style.overflow = 'hidden';
+        btn.style.padding = '0';
+        btn.style.margin = '0';
+        btn.style.flex = '0 0 0';
+        btn.style.minWidth = '0';
+        console.log('❌ Sembunyikan tab:', pageName);
+      }
+    } else {
+      console.warn('⚠️ Tombol tidak ditemukan untuk page:', pageName);
     }
   }
   
   // 🔥 SEMBUNYIKAN SEMUA AWALNYA
-  hideElement('navResellerTab');
-  hideElement('navUser');
+  setNavVisibility('reseller', false);
+  setNavVisibility('user', false);
   
   var kasirGroup = document.getElementById('filterKasirGroup');
   if (kasirGroup) kasirGroup.style.display = 'none';
@@ -3829,30 +3893,106 @@ function showAppByRole() {
   // 🔥 TAMPILKAN SESUAI ROLE
   if (isAdmin) {
     // ADMIN: Tampilkan semua
-    showElement('navResellerTab');
-    showElement('navUser');
+    setNavVisibility('reseller', true);
+    setNavVisibility('user', true);
     
     if (kasirGroup) kasirGroup.style.display = 'flex';
     loadKasirList();
     
   } else if (isKasir) {
-    // 🔥 KASIR: Tampilkan Reseller, sembunyikan User
-    showElement('navResellerTab');
-    hideElement('navUser');
+    // KASIR: Tampilkan Reseller, sembunyikan User
+    setNavVisibility('reseller', true);
+    setNavVisibility('user', false);
     
   } else if (isReseller) {
-    // 🔥 RESELLER: SEMBUNYIKAN Reseller DAN User
-    hideElement('navResellerTab');
-    hideElement('navUser');
+    // 🔥🔥🔥 RESELLER: SEMBUNYIKAN RESELLER DAN USER
+    setNavVisibility('reseller', false);
+    setNavVisibility('user', false);
+    
+    // 🔥 TAMBAHKAN: SEMBUNYIKAN JUGA DENGAN ID LANGSUNG
+    var navResellerTab = document.getElementById('navResellerTab');
+    if (navResellerTab) {
+      navResellerTab.style.display = 'none';
+      navResellerTab.style.visibility = 'hidden';
+      navResellerTab.style.opacity = '0';
+      navResellerTab.style.pointerEvents = 'none';
+      navResellerTab.style.width = '0';
+      navResellerTab.style.height = '0';
+      navResellerTab.style.overflow = 'hidden';
+      navResellerTab.style.padding = '0';
+      navResellerTab.style.margin = '0';
+      navResellerTab.style.flex = '0 0 0';
+      navResellerTab.style.minWidth = '0';
+      console.log('🔥 Tab Reseller disembunyikan via ID!');
+    }
+    
+    // 🔥 TAMBAHKAN: SEMBUNYIKAN JUGA VIA ATTRIBUTE SELECTOR (BACKUP)
+    var allButtons = document.querySelectorAll('.nav button');
+    for (var i = 0; i < allButtons.length; i++) {
+      var btn = allButtons[i];
+      var onclickAttr = btn.getAttribute('onclick');
+      if (onclickAttr && onclickAttr.indexOf("showPage('reseller')") !== -1) {
+        btn.style.display = 'none';
+        btn.style.visibility = 'hidden';
+        btn.style.opacity = '0';
+        btn.style.pointerEvents = 'none';
+        btn.style.width = '0';
+        btn.style.height = '0';
+        btn.style.overflow = 'hidden';
+        btn.style.padding = '0';
+        btn.style.margin = '0';
+        btn.style.flex = '0 0 0';
+        btn.style.minWidth = '0';
+        console.log('🔥 Tombol Reseller disembunyikan via attribute loop!');
+      }
+    }
     
   } else {
     // DEFAULT
-    showElement('navResellerTab');
-    hideElement('navUser');
+    setNavVisibility('reseller', true);
+    setNavVisibility('user', false);
   }
   
   // 🔥 SETUP FILTERS
   setupFilters();
+  
+  // 🔥🔥🔥 TAMBAHKAN: PANGGIL LAGI SETELAH 300ms UNTUK MEMASTIKAN
+  setTimeout(function() {
+    // Jika masih ada tombol reseller yang muncul, sembunyikan lagi
+    if (isReseller) {
+      var navResellerTab = document.getElementById('navResellerTab');
+      if (navResellerTab && navResellerTab.style.display !== 'none') {
+        navResellerTab.style.display = 'none';
+        navResellerTab.style.visibility = 'hidden';
+        navResellerTab.style.opacity = '0';
+        navResellerTab.style.pointerEvents = 'none';
+        navResellerTab.style.width = '0';
+        navResellerTab.style.height = '0';
+        navResellerTab.style.overflow = 'hidden';
+        navResellerTab.style.padding = '0';
+        navResellerTab.style.margin = '0';
+        console.log('🔥🔥 Tab Reseller disembunyikan lagi (setTimeout)!');
+      }
+      
+      // Backup: cari semua tombol dengan onclick showPage('reseller')
+      var allBtns = document.querySelectorAll('.nav button');
+      for (var i = 0; i < allBtns.length; i++) {
+        var attr = allBtns[i].getAttribute('onclick');
+        if (attr && attr.indexOf("showPage('reseller')") !== -1) {
+          allBtns[i].style.display = 'none';
+          allBtns[i].style.visibility = 'hidden';
+          allBtns[i].style.opacity = '0';
+          allBtns[i].style.pointerEvents = 'none';
+          allBtns[i].style.width = '0';
+          allBtns[i].style.height = '0';
+          allBtns[i].style.overflow = 'hidden';
+          allBtns[i].style.padding = '0';
+          allBtns[i].style.margin = '0';
+          console.log('🔥🔥 Tombol Reseller disembunyikan lagi (setTimeout loop)!');
+        }
+      }
+    }
+  }, 300);
 }
 
 // ==================== SESSION MANAGEMENT ====================
@@ -4608,9 +4748,12 @@ function showPage(page) {
   // 🔥🔥🔥 CEK AKSES UNTUK HALAMAN RESELLER
   if (page === 'reseller') {
     var role = currentUser ? currentUser.role.toUpperCase() : '';
+    console.log('🔍 Cek akses Reseller. Role:', role);
+    
     if (role === 'RESELLER') {
       showToast('⛔ Akses ditolak! Halaman ini tidak tersedia untuk Reseller.', 'error');
       page = 'dashboard';
+      console.log('🚫 Reseller diblokir dari tab Reseller!');
     }
   }
   
@@ -4623,7 +4766,61 @@ function showPage(page) {
     }
   }
   
-  // ... lanjutkan kode showPage seperti biasa ...
+  // 🔥🔥🔥 LANJUTKAN KODE SHOW PAGE YANG LENGKAP
+  var pages = document.querySelectorAll('.page');
+  var navs = document.querySelectorAll('.nav button');
+  
+  for (var i = 0; i < pages.length; i++) {
+    pages[i].classList.remove('active');
+  }
+  for (var i = 0; i < navs.length; i++) {
+    navs[i].classList.remove('active');
+  }
+  
+  var targetPage = document.getElementById('page-' + page);
+  if (targetPage) targetPage.classList.add('active');
+  
+  // 🔥 AKTIFKAN TOMBOL NAVIGASI YANG SESUAI
+  var navButtons = document.querySelectorAll('.nav button');
+  for (var i = 0; i < navButtons.length; i++) {
+    var btn = navButtons[i];
+    var onclickAttr = btn.getAttribute('onclick');
+    if (onclickAttr && onclickAttr.indexOf("showPage('" + page + "')") !== -1) {
+      btn.classList.add('active');
+    }
+  }
+  
+  // LOAD DATA SESUAI HALAMAN
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'pos') { 
+    loadPosProduk(); 
+    updateCartDisplay(); 
+    loadResellerOptions();
+  }
+  if (page === 'transaksi') { 
+    loadTransaksi(); 
+    loadLogPembatalan(); 
+  }
+  if (page === 'user') loadUsers();
+  if (page === 'stok') {
+    if (currentUser && currentUser.role && currentUser.role.toUpperCase() === 'RESELLER') {
+      loadStokResellerTab();
+    } else {
+      showSubPage('stok', 'masuk');
+    }
+  }
+  if (page === 'produk') { 
+    loadProdukWithRetry(); 
+  }
+  if (page === 'profile') { 
+    loadProfile(); 
+  }
+  if (page === 'reseller') {
+    // 🔥 KASIR & ADMIN BISA AKSES, RESELLER SUDAH DITOLAK DI ATAS
+    if (currentUser && currentUser.role.toUpperCase() !== 'RESELLER') {
+      loadReseller();
+    }
+  }
 }
 
 // ==================== REFRESH DASHBOARD ====================
