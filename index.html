@@ -2994,41 +2994,7 @@ function callGAS(action, data) {
   });
 }
 
-// ============================================================
-// REGISTER SERVICE WORKER - TANPA RELOAD LOOP
-// ============================================================
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    console.log('📦 Checking Service Worker...');
-    
-    // 🔥 GUNAKAN VERSI TETAP, BUKAN TIMESTAMP
-    var swVersion = '1.0.0'; // Ganti manual saat ada update
-    
-    navigator.serviceWorker.getRegistrations()
-      .then(function(registrations) {
-        // Hapus semua SW yang sudah ada untuk clean install
-        var unregisterPromises = registrations.map(function(reg) {
-          return reg.unregister();
-        });
-        return Promise.all(unregisterPromises);
-      })
-      .then(function() {
-        console.log('✅ Old SW unregistered');
-        // Register SW baru dengan version
-        return navigator.serviceWorker.register('sw.js', {
-          scope: '/'
-        });
-      })
-      .then(function(registration) {
-        console.log('✅ Service Worker registered with scope:', registration.scope);
-        // 🔥 CEK UPDATE
-        registration.update();
-      })
-      .catch(function(error) {
-        console.log('❌ Service Worker registration failed:', error);
-      });
-  });
-}
+
 // ============================================================
 // DETEKSI APAKAH SUDAH TERINSTALL SEBAGAI PWA
 // ============================================================
