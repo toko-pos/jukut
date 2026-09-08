@@ -2625,28 +2625,32 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
           <div style="font-size:0.8rem;color:#6d86aa;margin-bottom:12px;">
             💡 Setiap Nota <strong>BELANJA PRODUK</strong> dapat dibayar berkali-kali sampai lunas
           </div>
-          <div class="debt-summary-grid" id="debtSummary">
-            <div class="debt-summary-card debt-card-total">
-              <div class="label">💰 Total Belanja</div>
-              <div class="value" id="hutangTotalNota">Rp 0</div>
-              <div class="sub" id="hutangTotalNotaSub">0 nota</div>
-            </div>
-            <div class="debt-summary-card debt-card-paid">
-              <div class="label">✅ Sudah Dibayar</div>
-              <div class="value" id="hutangTotalDibayar">Rp 0</div>
-              <div class="sub">Terkumpul dari pembayaran</div>
-            </div>
-            <div class="debt-summary-card debt-card-remaining">
-              <div class="label">⚠️ Sisa Hutang</div>
-              <div class="value" id="hutangTotalSisa">Rp 0</div>
-              <div class="sub" id="hutangTotalSisaSub">0 nota belum lunas</div>
-            </div>
-            <div class="debt-summary-card debt-card-count">
-              <div class="label">📋 Total Nota</div>
-              <div class="value" id="hutangTotalNotaCount">0</div>
-              <div class="sub" id="hutangStatusCount">0 lunas · 0 belum</div>
-            </div>
-          </div>
+          
+          <!-- Statistik Hutang Vendor -->
+<div class="debt-summary-grid" id="debtSummary">
+  <div class="debt-summary-card debt-card-total">
+    <div class="label">💰 Total Belanja</div>
+    <div class="value" id="hutangTotalNota">Rp 0</div>
+    <div class="sub" id="hutangTotalNotaSub">0 nota</div>  <!-- 🔥 ID INI HARUS ADA -->
+  </div>
+  <div class="debt-summary-card debt-card-paid">
+    <div class="label">✅ Sudah Dibayar</div>
+    <div class="value" id="hutangTotalDibayar">Rp 0</div>
+    <div class="sub">Terkumpul dari pembayaran</div>
+  </div>
+  <div class="debt-summary-card debt-card-remaining">
+    <div class="label">⚠️ Sisa Hutang</div>
+    <div class="value" id="hutangTotalSisa">Rp 0</div>
+    <div class="sub" id="hutangTotalSisaSub">0 nota belum lunas</div>  <!-- 🔥 ID INI HARUS ADA -->
+  </div>
+  <div class="debt-summary-card debt-card-count">
+    <div class="label">📋 Total Nota</div>
+    <div class="value" id="hutangTotalNotaCount">0</div>
+    <div class="sub" id="hutangStatusCount">0 lunas · 0 cicilan · 0 belum</div>
+  </div>
+</div>
+
+          
           <div class="debt-table-wrapper">
             <table>
               <thead>
@@ -8972,32 +8976,75 @@ function loadHutangVendor() {
     
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">⏳ Memuat hutang...</td></tr>';
     
-    // Update summary
+    // Update summary ke loading
     var summaryIds = ['hutangTotalNota', 'hutangTotalDibayar', 'hutangTotalSisa', 'hutangTotalNotaCount'];
     for (var i = 0; i < summaryIds.length; i++) {
       var el = document.getElementById(summaryIds[i]);
       if (el) el.textContent = '⏳';
     }
     
+    // 🔥 RESET SUB TEXT KE LOADING
+    var totalNotaSub = document.getElementById('hutangTotalNotaSub');
+    if (totalNotaSub) totalNotaSub.textContent = '⏳';
+    
+    var totalSisaSub = document.getElementById('hutangTotalSisaSub');
+    if (totalSisaSub) totalSisaSub.textContent = '⏳';
+    
+    var statusCount = document.getElementById('hutangStatusCount');
+    if (statusCount) statusCount.textContent = '⏳';
+    
     callGAS('getHutangVendor', {})
     .then(function(res) {
       try {
         if (!res || !res.success) throw new Error(res ? res.error : 'Gagal memuat data');
-        var data = (res && res.data) || [];
-        var s = (res && res.summary) || { totalNota: 0, totalDibayar: 0, totalSisa: 0 };
         
+        var data = (res && res.data) || [];
+        var s = (res && res.summary) || { 
+          totalNota: 0, 
+          totalDibayar: 0, 
+          totalSisa: 0,
+          totalNotaCount: 0,
+          lunas: 0,
+          cicilan: 0,
+          belum: 0
+        };
+        
+        // 🔥 UPDATE NILAI UTAMA
         document.getElementById('hutangTotalNota').textContent = formatRupiah(s.totalNota || 0);
         document.getElementById('hutangTotalDibayar').textContent = formatRupiah(s.totalDibayar || 0);
         document.getElementById('hutangTotalSisa').textContent = formatRupiah(s.totalSisa || 0);
-        document.getElementById('hutangTotalNotaCount').textContent = data.length;
+        document.getElementById('hutangTotalNotaCount').textContent = s.totalNotaCount || data.length;
         
-        var lunas = 0, belum = 0, cicilan = 0;
-        for (var i = 0; i < data.length; i++) {
-          if (data[i].status === 'LUNAS') lunas++;
-          else if (data[i].status === 'CICILAN') cicilan++;
-          else belum++;
+        // 🔥🔥🔥 PERBAIKAN UTAMA: UPDATE SUB TEXT 🔥🔥🔥
+        var totalNotaSubEl = document.getElementById('hutangTotalNotaSub');
+        if (totalNotaSubEl) {
+          totalNotaSubEl.textContent = (s.totalNotaCount || data.length) + ' nota';
         }
-        document.getElementById('hutangStatusCount').textContent = lunas + ' lunas · ' + cicilan + ' cicilan · ' + belum + ' belum';
+        
+        var totalSisaSubEl = document.getElementById('hutangTotalSisaSub');
+        if (totalSisaSubEl) {
+          var belumLunas = (s.belum || 0) + (s.cicilan || 0);
+          totalSisaSubEl.textContent = belumLunas + ' nota belum lunas';
+        }
+        
+        // 🔥 HITUNG STATUS
+        var lunas = s.lunas || 0;
+        var cicilan = s.cicilan || 0;
+        var belum = s.belum || 0;
+        
+        // Jika summary tidak punya data status, hitung manual
+        if (lunas === 0 && cicilan === 0 && belum === 0 && data.length > 0) {
+          for (var i = 0; i < data.length; i++) {
+            if (data[i].status === 'LUNAS') lunas++;
+            else if (data[i].status === 'CICILAN') cicilan++;
+            else belum++;
+          }
+        }
+        
+        var statusCountEl = document.getElementById('hutangStatusCount');
+        if (statusCountEl) {
+          statusCountEl.textContent = lunas + ' lunas · ' + cicilan + ' cicilan · ' + belum + ' belum';
+        }
         
         if (!data.length) {
           tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">📭 Belum ada hutang vendor</td></tr>';
@@ -9017,11 +9064,13 @@ function loadHutangVendor() {
           var noNotaEscaped = String(x.noNota).replace(/'/g, "\\'");
           var sisaHutang = x.sisaHutang || 0;
           
-          // Baris tabel normal (tanpa expandable agar tombol riwayat tidak bentrok)
+          // 🔥 PERBAIKAN: Gunakan x.vendor (bukan x.pemasok) sesuai data dari backend
+          var vendorName = x.vendor || x.pemasok || '-';
+          
           html += '<tr>' +
               '<td><strong>' + escapeHtml(x.noNota) + '</strong></td>' +
               '<td>' + formatTanggalDisplay(x.tanggal) + '</td>' +
-              '<td>' + escapeHtml(x.pemasok || '-') + '</td>' +
+              '<td>' + escapeHtml(vendorName) + '</td>' +
               '<td style="text-align:right;">' + formatRupiah(x.totalNota) + '</td>' +
               '<td style="text-align:right;">' + formatRupiah(x.totalDibayar) + '</td>' +
               '<td style="text-align:right;font-weight:bold;color:' + (sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';">' + formatRupiah(sisaHutang) + '</td>' +
