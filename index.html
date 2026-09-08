@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwFjHUeVuUvZXVVhJzzHEyno5xtk7X9yiKIGxAzU9LDtPT1qME0rQk4aVgu8JGSEHqPMA/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbym8k0sFP9KOa3v5y_8NyS8ngBmgXAjckeuUlo3X6Fsqn-S-dex0-5dTvlzxpxVVr6RWw/exec';
     // ============================================
   </script>
 
@@ -5583,6 +5583,7 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
       if (chartWrapper) chartWrapper.style.display = 'none';
       if (legendEl) legendEl.innerHTML = '🔒 Tidak tersedia untuk Reseller';
       if (totalEl) totalEl.textContent = 'Total: Rp 0';
+      console.log('🚫 Grafik disembunyikan untuk Reseller');
       return;
     }
     
@@ -5594,10 +5595,12 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
     
     console.log('📊 loadBulananChart - Tahun:', tahun, 'Role:', role);
     
+    // 🔥🔥🔥 PERBAIKAN: Kirim kasirFilter = 'all' untuk admin & kasir 🔥🔥🔥
+    // 🔥 Ini memastikan backend tidak memfilter berdasarkan kasir tertentu
     callGAS('getPenjualanBulananPerKasir', {
       bulan: '01',
       tahun: tahun,
-      kasirFilter: kasirFilter,
+      kasirFilter: 'all',  // 🔥 PASTIKAN 'all'
       namaUser: namaUser,
       role: role
     })
@@ -5635,6 +5638,7 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
       var colorIndex = 0;
       
       console.log('📊 Kasir names:', kasirNames);
+      console.log('📊 Jumlah kasir dengan transaksi:', kasirNames.length);
       
       for (var i = 0; i < kasirNames.length; i++) {
         var namaKasir = kasirNames[i];
