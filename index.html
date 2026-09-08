@@ -2495,9 +2495,9 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
             <button class="btn btn-orange" onclick="printTransaksiPreview()">🖨️ Print</button>
           </div>
           
-          <div class="filter-total" id="totalTransaksiDisplay">
-            📊 Total: Transaksi: 0 | Quantity: 0 | Laba: Rp 0
-          </div>
+
+        <div class="filter-total" id="totalTransaksiDisplay">
+            📊 Total: 0 Transaksi | 0 Quantity | Total Penjualan: Rp 0 | Laba: Rp 0 | 💰 0%
         </div>
         
         <div class="table-wrapper">
@@ -7498,7 +7498,7 @@ function loadTransaksi() {
     
     if (!tanggalMulai || !tanggalSampai) {
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⚠️ Pilih rentang tanggal</td></tr>';
-      document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: 0 | Quantity: 0 | Laba: Rp 0';
+      document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: 0 | Quantity: 0 | Total Penjualan: Rp 0 | Laba: Rp 0 | 💰 Laba: 0%';
       return;
     }
     
@@ -7519,27 +7519,42 @@ function loadTransaksi() {
         var data = result.data || [];
         if (!data || data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada transaksi</td></tr>';
-          document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: 0 | Quantity: 0 | Laba: Rp 0';
+          document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: 0 | Quantity: 0 | Total Penjualan: Rp 0 | Laba: Rp 0 | 💰 Laba: 0%';
           return;
         }
         
-        // 🔥🔥🔥 PERUBAHAN: PANGGIL renderTransaksi() 🔥🔥🔥
+        // 🔥 RENDER TRANSAKSI
         renderTransaksi(data);
         
-       // Setelah renderTransaksi(data), hitung total
-var totalTransaksi = data.length;
-var totalQty = 0;
-var totalLaba = 0;
-for (var i = 0; i < data.length; i++) {
-    totalQty += data[i].qty || 0;
-    totalLaba += data[i].laba || 0;
-}
-
-var totalText = '📊 Total: Transaksi: ' + totalTransaksi + ' | Quantity: ' + totalQty;
-if (showLaba) {
-    totalText += ' | Laba: ' + formatRupiah(totalLaba);
-}
-document.getElementById('totalTransaksiDisplay').textContent = totalText;
+        // 🔥🔥🔥 HITUNG TOTAL 🔥🔥🔥
+        var totalTransaksi = data.length;
+        var totalQty = 0;
+        var totalLaba = 0;
+        var totalPenjualan = 0;
+        
+        for (var i = 0; i < data.length; i++) {
+          totalQty += data[i].qty || 0;
+          totalLaba += data[i].laba || 0;
+          totalPenjualan += data[i].total || 0;
+        }
+        
+        // 🔥🔥🔥 HITUNG PERSENTASE LABA 🔥🔥🔥
+        var persenLaba = 0;
+        if (totalPenjualan > 0) {
+          persenLaba = (totalLaba / totalPenjualan) * 100;
+        }
+        
+        // 🔥🔥🔥 TAMPILAN LENGKAP DENGAN TOTAL PENJUALAN 🔥🔥🔥
+        var totalText = '📊 Total: Transaksi: ' + totalTransaksi + 
+                       ' | Quantity: ' + totalQty +
+                       ' | Total Penjualan: ' + formatRupiah(totalPenjualan);
+        
+        if (showLaba) {
+          totalText += ' | Laba: ' + formatRupiah(totalLaba) +
+                       ' | 💰 Laba: ' + persenLaba.toFixed(1) + '%';
+        }
+        
+        document.getElementById('totalTransaksiDisplay').textContent = totalText;
         
       } catch (e) {
         console.error('❌ Error processing transaksi:', e);
@@ -7554,6 +7569,7 @@ document.getElementById('totalTransaksiDisplay').textContent = totalText;
     console.error('❌ Error loadTransaksi:', e);
   }
 }
+  
 
 // ==================== TRANSAKSI - PRINT PREVIEW ====================
 function printTransaksiPreview() {
