@@ -11140,7 +11140,7 @@ function aturHargaReseller(kodeReseller) {
           color = '#2e7d32';
           bgColor = '#e8f5e9';
           label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
-        } else if (hargaReseller === hargaNormal) {
+        } else if (hargaReseller = hargaBeli) {
           icon = '⚖️';
           color = '#e65100';
           bgColor = '#fff3e0';
@@ -11248,13 +11248,13 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
       bgColor = '#fce4ec';
       label = '-Rp ' + formatRupiahPlain(Math.abs(keuntunganRiil));
     } else if (keuntunganRiil >= 0 && hargaReseller < hargaNormal) {
-      // ✅ UNTUNG (di bawah normal)
+      // ✅ UNTUNG 
       icon = '✅';
       color = '#2e7d32';
       bgColor = '#e8f5e9';
       label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
-    } else if (hargaReseller === hargaNormal) {
-      // ⚖️ IMPAS / UNTUNG NORMAL
+    } else if (hargaReseller = hargaBeli) {
+      // ⚖️ IMPAS
       icon = '⚖️';
       color = '#e65100';
       bgColor = '#fff3e0';
