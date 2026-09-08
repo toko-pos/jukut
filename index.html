@@ -3298,9 +3298,6 @@ function showLogin() {
 // ============================================================
 // 🔥 FUNGSI PANGGIL GAS VIA FETCH
 // ============================================================
-// ============================================================
-// 🔥 FUNGSI PANGGIL GAS VIA FETCH
-// ============================================================
 function callGAS(action, data) {
   return new Promise(function(resolve, reject) {
     console.log('📤 callGAS:', action, data);
@@ -3331,7 +3328,6 @@ function callGAS(action, data) {
     });
   });
 }
-
 
 // ============================================================
 // DETEKSI APAKAH SUDAH TERINSTALL SEBAGAI PWA
@@ -5203,6 +5199,7 @@ function simpanInfoToko() {
     btn.textContent = '⏳ Menyimpan...';
     btn.disabled = true;
     
+    // 🔥 PAKAI FETCH LANGSUNG, BUKAN callGAS
     var data = {
         action: 'saveInfoToko',
         data: {
@@ -5223,6 +5220,9 @@ function simpanInfoToko() {
         body: JSON.stringify(data)
     })
     .then(function(response) {
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
         return response.json();
     })
     .then(function(result) {
@@ -5248,6 +5248,12 @@ function simpanInfoToko() {
                 header.textContent = '🛒 ' + namaToko;
             }
             
+            // 🔥 Update form jika ada data dari server
+            if (result.data) {
+                document.getElementById('fNamaToko').value = result.data.namaToko || namaToko;
+                document.getElementById('fAlamatToko').value = result.data.alamat || alamat;
+                document.getElementById('fNoHp').value = result.data.noHp || noHp;
+            }
         } else {
             showToast('❌ Gagal: ' + (result ? result.error : 'Terjadi kesalahan'), 'error');
         }
@@ -5256,7 +5262,7 @@ function simpanInfoToko() {
         btn.textContent = originalText;
         btn.disabled = false;
         console.error('❌ Error:', error);
-        showToast('❌ Error: ' + error.message, 'error');
+        showToast('❌ Error: ' + error.message + '. Periksa koneksi internet.', 'error');
     });
 }
   
@@ -5862,147 +5868,95 @@ function loadPosProduk() {
   
   container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">⏳ Memuat produk...</p>';
   
-  // Ambil kode reseller yang dipilih
-  var selectReseller = document.getElementById('pilihReseller');
-  var kodeReseller = selectReseller ? selectReseller.value : '';
+  // 🔥 PAKAI FETCH LANGSUNG, BUKAN callGAS
+  var data = {
+    action: 'getProduk',
+    data: {}
+  };
   
-  // Jika ada reseller, ambil harga khusus
-  var hargaMap = {};
-  var promise = Promise.resolve();
-  
-  if (kodeReseller) {
-    promise = callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
-      .then(function(result) {
-        if (result && result.success) {
-          hargaMap = result.data || {};
-          console.log('✅ Harga reseller dimuat:', Object.keys(hargaMap).length, 'produk');
-        }
-        return result;
-      })
-      .catch(function(error) {
-        console.error('❌ Error load harga reseller:', error);
-        return null;
-      });
-  }
-  
-  promise.then(function() {
-    callGAS('getProduk', {})
-      .then(function(result) {
-        if (!result || !result.success) {
-          console.error('❌ Error getProduk:', result ? result.error : 'Unknown');
-          var container = document.getElementById('posProducts');
-          if (container) {
-            container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk</p>';
-          }
-          showToast('❌ Gagal memuat produk POS', 'error');
-          return;
-        }
-        
-        var produk = result.data || [];
-        console.log('✅ Data produk POS diterima:', produk);
-        produkList = produk;
-        var container = document.getElementById('posProducts');
-        if (!container) return;
-        
-        if (produkList.length === 0) {
-          container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
-          return;
-        }
-        
-        var html = '';
-        var hasDate = getTanggalTransaksi() !== '';
-        var processedKode = {};
-        
-        for (var i = 0; i < produkList.length; i++) {
-          var p = produkList[i];
-          if (processedKode[p.Kode]) continue;
-          processedKode[p.Kode] = true;
-          
-          var stok = parseInt(p.Stok) || 0;
-          var isOutOfStock = stok <= 0;
-          var disabledClass = isOutOfStock ? 'disabled' : '';
-          var posDisabledClass = !hasDate ? 'pos-disabled' : '';
-          var stockClass = isOutOfStock ? 'out-of-stock' : '';
-          var onclickAttr = (isOutOfStock || !hasDate) ? '' : 'onclick="addToCart(\'' + p.Kode + '\')"';
-          var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
-          
-          // 🔥 CEK HARGA RESELLER
-          var hargaNormal = p['Harga Jual'] || 0;
-          var hargaTampil = hargaNormal;
-          var isResellerPrice = false;
-          var selisih = 0;
-          
-          if (kodeReseller && hargaMap[p.Kode]) {
-            var hargaReseller = hargaMap[p.Kode].hargaReseller || 0;
-            if (hargaReseller > 0) {
-              hargaTampil = hargaReseller;
-              isResellerPrice = true;
-              selisih = hargaNormal - hargaReseller;
-            }
-          }
-          
-          // 🔥 FORMAT HARGA DENGAN INFORMASI RESELLER
-          var priceHtml = '';
-          if (isResellerPrice && selisih > 0) {
-            // Tampilkan harga coret + harga reseller
-            priceHtml = `
-              <div style="display:flex; flex-direction:column; align-items:center;">
-                <span style="text-decoration:line-through; color:#999; font-size:0.6rem;">
-                  ${formatRupiah(hargaNormal)}
-                </span>
-                <span style="color:#4CAF50; font-weight:bold; font-size:1rem;">
-                  ${formatRupiah(hargaTampil)}
-                </span>
-                <span style="color:#FF9800; font-size:0.6rem;">
-                  hemat ${formatRupiah(selisih)}
-                </span>
-              </div>
-            `;
-          } else if (isResellerPrice && selisih === 0) {
-            // Harga sama
-            priceHtml = `
-              <div style="color:#4CAF50; font-weight:bold; font-size:0.95rem;">
-                ${formatRupiah(hargaTampil)}
-                <span style="color:#999; font-size:0.55rem;">(sama)</span>
-              </div>
-            `;
-          } else {
-            // Harga normal
-            priceHtml = `<div class="price">${formatRupiah(hargaTampil)}</div>`;
-          }
-          
-          html += `<div class="product-item ${disabledClass} ${posDisabledClass}" ${onclickAttr} data-kode="${p.Kode}" data-harga="${hargaTampil}">
-            ${imgHtml}
-            ${isOutOfStock ? '<div class="badge-out-of-stock">⛔ HABIS</div>' : ''}
-            ${!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : ''}
-            ${isResellerPrice && selisih > 0 ? '<div class="badge-out-of-stock" style="background:#9C27B0; font-size:0.55rem;">👥 Reseller</div>' : ''}
-            <div class="name">${p['Nama Produk'] || '-'}</div>
-            ${priceHtml}
-            <div class="stock ${stockClass}">${isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.Satuan || 'pcs')}</div>
-          </div>`;
-        }
-        
-        container.innerHTML = html;
-        updatePosUI();
-        updateStokGridPOS();
-        
-        console.log('✅ Produk POS berhasil ditampilkan: ' + produkList.length + ' produk');
-      })
-      .catch(function(error) {
-        console.error('❌ Error loadPosProduk:', error);
-        var container = document.getElementById('posProducts');
-        if (container) {
-          container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk: ' + error.message + '</p>';
-        }
-        showToast('❌ Gagal memuat produk POS: ' + error.message, 'error');
-      });
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(function(response) {
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status);
+    }
+    return response.json();
+  })
+  .then(function(result) {
+    if (!result || !result.success) {
+      console.error('❌ Error getProduk:', result ? result.error : 'Unknown');
+      var container = document.getElementById('posProducts');
+      if (container) {
+        container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk</p>';
+      }
+      showToast('❌ Gagal memuat produk POS', 'error');
+      return;
+    }
+    
+    var produk = result.data || [];
+    console.log('✅ Data produk POS diterima:', produk);
+    produkList = produk;
+    var container = document.getElementById('posProducts');
+    if (!container) return;
+    
+    if (produkList.length === 0) {
+      container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
+      return;
+    }
+    
+    var html = '';
+    var hasDate = getTanggalTransaksi() !== '';
+    var processedKode = {};
+    
+    for (var i = 0; i < produkList.length; i++) {
+      var p = produkList[i];
+      if (processedKode[p.Kode]) continue;
+      processedKode[p.Kode] = true;
+      
+      var stok = parseInt(p.Stok) || 0;
+      var isOutOfStock = stok <= 0;
+      var disabledClass = isOutOfStock ? 'disabled' : '';
+      var posDisabledClass = !hasDate ? 'pos-disabled' : '';
+      var stockClass = isOutOfStock ? 'out-of-stock' : '';
+      var onclickAttr = (isOutOfStock || !hasDate) ? '' : 'onclick="addToCart(\'' + p.Kode + '\')"';
+      var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
+      
+      var hargaNormal = p['Harga Jual'] || 0;
+      var priceHtml = `<div class="price">${formatRupiah(hargaNormal)}</div>`;
+      
+      html += `<div class="product-item ${disabledClass} ${posDisabledClass}" ${onclickAttr} data-kode="${p.Kode}" data-harga="${hargaNormal}">
+        ${imgHtml}
+        ${isOutOfStock ? '<div class="badge-out-of-stock">⛔ HABIS</div>' : ''}
+        ${!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : ''}
+        <div class="name">${p['Nama Produk'] || '-'}</div>
+        ${priceHtml}
+        <div class="stock ${stockClass}">${isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.Satuan || 'pcs')}</div>
+      </div>`;
+    }
+    
+    container.innerHTML = html;
+    updatePosUI();
+    updateStokGridPOS();
+    
+    console.log('✅ Produk POS berhasil ditampilkan: ' + produkList.length + ' produk');
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadPosProduk:', error);
+    var container = document.getElementById('posProducts');
+    if (container) {
+      container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk: ' + error.message + '</p>';
+    }
+    showToast('❌ Gagal memuat produk POS: ' + error.message, 'error');
   });
 }
 
-// ==================== ADD TO CART (PERBAIKI) ====================
-// Modifikasi fungsi addToCart() yang sudah ada
-// Tambahkan panggilan refreshCartPrices() di akhir
 
+  
 // ==================== ADD TO CART (DENGAN HARGA RESELLER) ====================
 function addToCart(kode) {
   if (!currentUser) { showToast('Silakan login terlebih dahulu!', 'warning'); return; }
@@ -8875,30 +8829,54 @@ function getInfoTokoSync() {
   return result;
 }
 
-// ==================== REFRESH INFO TOKO CACHE ====================
+// ============================================================
+// 🔥 REFRESH INFO TOKO CACHE
+// ============================================================
 function refreshInfoTokoCache() {
-  // 🔥 PERBAIKAN: Kirim username
-  callGAS('getInfoToko', { 
-    username: currentUser ? currentUser.username : '' 
-  })
-  .then(function(result) {
-    if (result && result.success) {
-      var data = result.data;
-      if (data && data.data) {
-        data = data.data;
-      }
-      var infoToko = {
-        namaToko: data.namaToko || '',
-        alamat: data.alamat || '',
-        noHp: data.noHp || ''
-      };
-      localStorage.setItem('info_toko', JSON.stringify(infoToko));
-      console.log('✅ Cache Info Toko diupdate:', infoToko);
+    if (!currentUser) {
+        console.warn('⚠️ currentUser null, tidak bisa refresh cache');
+        return;
     }
-  })
-  .catch(function(error) {
-    console.error('❌ Gagal refresh cache info toko:', error);
-  });
+    
+    console.log('🔄 Refresh cache info toko untuk user:', currentUser.username);
+    
+    var data = {
+        action: 'getInfoToko',
+        data: {
+            username: currentUser.username
+        }
+    };
+    
+    fetch(GAS_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(result) {
+        console.log('📥 Result refreshInfoTokoCache:', result);
+        
+        if (result && result.success) {
+            var info = result.data;
+            if (info && info.data) {
+                info = info.data;
+            }
+            var infoToko = {
+                namaToko: info.namaToko || '',
+                alamat: info.alamat || '',
+                noHp: info.noHp || ''
+            };
+            localStorage.setItem('info_toko', JSON.stringify(infoToko));
+            console.log('✅ Cache Info Toko diupdate:', infoToko);
+        }
+    })
+    .catch(function(error) {
+        console.error('❌ Error refreshInfoTokoCache:', error);
+    });
 }
 
 // 🔥 FORMAT RUPIAH TANPA SIMBOL (UNTUK STRUK)
