@@ -2129,16 +2129,17 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 
 /* ===== TOMBOL HAPUS HARGA RESELLER ===== */
 .btn-hapus-harga {
-  padding: 4px 8px;
-  font-size: 0.7rem;
+  padding: 2px 8px;
+  font-size: 0.6rem;
   border: none;
   border-radius: 4px;
   background: #f44336;
   color: white;
   cursor: pointer;
   display: inline-block;
-  margin-left: 4px;
+  margin-left: 3px;
   transition: all 0.2s ease;
+  vertical-align: middle;
   line-height: 1.2;
 }
 
@@ -2150,27 +2151,34 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 .btn-hapus-harga:active {
   transform: scale(0.95) !important;
 }
+
 /* ===== TABEL ATUR HARGA - KOLOM STATIS ===== */
 #modalContent.large .reseller-harga-grid td:last-child {
   white-space: nowrap;
-  min-width: 170px;
+  min-width: 160px;
   max-width: 200px;
-  width: 25%;
+  width: 26%;
   text-align: center;
+  vertical-align: middle;
 }
 
 #modalContent.large .reseller-harga-grid td:last-child span {
   white-space: nowrap;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 85px;
   max-width: 130px;
   overflow: hidden;
   text-overflow: ellipsis;
+  gap: 4px;
+  line-height: 1.3;
 }
 
 #modalContent.large .reseller-harga-grid td:last-child .btn-hapus-harga {
   display: inline-block;
   vertical-align: middle;
-  margin-left: 4px;
+  margin-left: 3px;
 }
 
 /* 🔥🔥🔥 KOLOM NAMA PRODUK - DIBUAT LEBIH LEBAR 🔥🔥🔥 */
@@ -2184,7 +2192,7 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   word-break: break-word !important;
 }
 
-/* 🔥 RESPONSIF HP */
+/* 🔥 RESPONSIF HP (max-width: 768px) */
 @media (max-width: 768px) {
   #modalContent.large .reseller-harga-grid td:nth-child(2),
   #modalContent.large .reseller-harga-grid th:nth-child(2) {
@@ -2208,6 +2216,49 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   #modalContent.large .reseller-harga-grid td:nth-child(2) {
     white-space: normal !important;
     word-wrap: break-word !important;
+  }
+}
+
+/* 🔥 RESPONSIF HP KECIL (max-width: 480px) */
+@media (max-width: 480px) {
+  #modalContent.large .reseller-harga-grid td:last-child {
+    min-width: 120px !important;
+    max-width: 150px !important;
+    width: 30% !important;
+  }
+  
+  #modalContent.large .reseller-harga-grid td:last-child span {
+    min-width: 70px !important;
+    max-width: 90px !important;
+    font-size: 0.5rem !important;
+    padding: 2px 6px !important;
+  }
+  
+  #modalContent.large .reseller-harga-grid td:last-child .btn-hapus-harga {
+    padding: 1px 5px !important;
+    font-size: 0.5rem !important;
+    margin-left: 2px !important;
+  }
+  
+  #modalContent.large .reseller-harga-grid td:nth-child(2),
+  #modalContent.large .reseller-harga-grid th:nth-child(2) {
+    min-width: 100px !important;
+    max-width: 150px !important;
+    width: 22% !important;
+    font-size: 0.6rem !important;
+  }
+  
+  #modalContent.large .reseller-harga-grid td:nth-child(3),
+  #modalContent.large .reseller-harga-grid td:nth-child(4) {
+    font-size: 0.55rem !important;
+    min-width: 50px !important;
+  }
+  
+  #modalContent.large .reseller-harga-grid td:nth-child(5) input {
+    max-width: 70px !important;
+    font-size: 0.6rem !important;
+    padding: 2px 3px !important;
+    min-height: 24px !important;
   }
 }
                                                                                                                                         
@@ -11101,14 +11152,15 @@ function aturHargaReseller(kodeReseller) {
           label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
         }
         
-        // 🔥 BADGE DENGAN UKURAN STATIS
-        badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:700;display:inline-block;white-space:nowrap;min-width:70px;text-align:center;">' + icon + ' ' + label + '</span>';
-        badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kode + '\')" style="padding:2px 6px;font-size:0.6rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:2px;transition:all 0.2s ease;vertical-align:middle;">🗑️</button>';
-      } else {
-        var keuntunganNormal = hargaNormal - hargaBeli;
-        // 🔥 BADGE PAKAI NORMAL - UKURAN STATIS
-        badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:2px 8px;border-radius:12px;font-size:0.6rem;font-weight:600;display:inline-block;white-space:nowrap;min-width:70px;text-align:center;">ℹ️ Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
-      }
+        // 🔥 BADGE DENGAN UKURAN STATIS - TIDAK WRAP
+badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-width:85px;max-width:130px;text-align:center;overflow:hidden;text-overflow:ellipsis;gap:4px;line-height:1.3;">' + icon + ' ' + label + '</span>';
+badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kode + '\')" style="padding:2px 8px;font-size:0.6rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:3px;transition:all 0.2s ease;vertical-align:middle;line-height:1.2;">🗑️</button>';
+
+} else {
+  var keuntunganNormal = hargaNormal - hargaBeli;
+  // 🔥 BADGE PAKAI NORMAL - UKURAN STATIS
+  badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:20px;font-size:0.65rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-width:85px;max-width:130px;text-align:center;overflow:hidden;text-overflow:ellipsis;gap:4px;line-height:1.3;">ℹ️ Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
+}
       
       html += `
         <tr>
@@ -11215,14 +11267,15 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
       label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
     }
     
-    // 🔥 BADGE DENGAN ICON SAMPAH 🗑️
-    badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">' + icon + ' ' + label + '</span>';
-    badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kodeProduk + '\')" style="padding:4px 8px;font-size:0.7rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:4px;transition:all 0.2s ease;" title="Hapus harga khusus">🗑️</button>';
+    // 🔥 BADGE DENGAN UKURAN STATIS - TIDAK WRAP
+    badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-width:85px;max-width:130px;text-align:center;overflow:hidden;text-overflow:ellipsis;gap:4px;line-height:1.3;">' + icon + ' ' + label + '</span>';
+    badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kodeProduk + '\')" style="padding:2px 8px;font-size:0.6rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:3px;transition:all 0.2s ease;vertical-align:middle;line-height:1.2;">🗑️</button>';
     
   } else {
     // Pakai harga normal
     var keuntunganNormal = hargaNormal - hargaBeli;
-    badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">ℹ️ Pakai Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
+    // 🔥 BADGE PAKAI NORMAL - UKURAN STATIS
+    badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:20px;font-size:0.65rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-width:85px;max-width:130px;text-align:center;overflow:hidden;text-overflow:ellipsis;gap:4px;line-height:1.3;">ℹ️ Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
   }
   
   badgeCell.innerHTML = badgeHtml;
