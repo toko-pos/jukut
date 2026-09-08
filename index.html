@@ -11079,12 +11079,13 @@ function aturHargaReseller(kodeReseller) {
   });
 }
 
-// ==================== ON HARGA RESELLER CHANGE (DENGAN HARGA BELI) ====================
+// ==================== ON HARGA RESELLER CHANGE (FINAL - BENAR) ====================
 function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
   var input = document.getElementById('harga_' + kodeProduk);
+  if (!input) return;
+  
   var hargaReseller = parseInt(input.value) || 0;
   
-  // Cari elemen badge di baris yang sama
   var row = input.closest('tr');
   if (!row) return;
   
@@ -11092,54 +11093,58 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
   if (!badgeCell) return;
   
   // 🔥 HITUNG KEUNTUNGAN RIIL KASIR
-  var keuntunganNormal = hargaNormal - hargaBeli;
-  var keuntunganReseller = hargaReseller - hargaBeli;
-  var keuntunganRiil = keuntunganNormal - keuntunganReseller;
+  // Keuntungan Riil = Harga Reseller - Harga Beli
+  var keuntunganRiil = hargaReseller - hargaBeli;
   
-  // Ambil kode reseller dari atribut atau dari data
   var kodeReseller = '';
-  var modalBody = document.getElementById('modalBody');
-  if (modalBody) {
-    var match = modalBody.innerHTML.match(/kodeReseller: '([^']+)'/);
+  var btnSimpan = document.querySelector('#modalBody .btn-success');
+  if (btnSimpan && btnSimpan.getAttribute('onclick')) {
+    var match = btnSimpan.getAttribute('onclick').match(/simpanSemuaHargaReseller\('([^']+)'\)/);
     if (match) kodeReseller = match[1];
   }
   
-  // 🔥 Tentukan badge berdasarkan kondisi
   var badgeHtml = '';
   
   if (hargaReseller > 0) {
-    var icon = '';
-    var color = '';
-    var bgColor = '';
-    var label = '';
+    var icon, color, bgColor, label;
     
-    if (keuntunganRiil > 0) {
-      // Harga reseller di bawah harga normal (MASIH UNTUNG)
-      icon = '✅';
-      color = '#2e7d32';
-      bgColor = '#e8f5e9';
-      label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
-    } else if (keuntunganRiil < 0) {
-      // Harga reseller di bawah harga beli (RUGI)
+    if (keuntunganRiil < 0) {
+      // ❌ RUGI: Keuntungan negatif (jual di bawah harga beli)
       icon = '❌';
       color = '#c62828';
       bgColor = '#fce4ec';
       label = '-Rp ' + formatRupiahPlain(Math.abs(keuntunganRiil));
-    } else {
-      // Harga reseller = harga normal (IMPAS)
+      
+    } else if (keuntunganRiil >= 0 && hargaReseller < hargaNormal) {
+      // ✅ UNTUNG: Keuntungan positif tapi di bawah normal
+      icon = '✅';
+      color = '#2e7d32';
+      bgColor = '#e8f5e9';
+      label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
+      
+    } else if (hargaReseller === hargaNormal) {
+      // ⚖️ IMPAS: Sama dengan normal (keuntungan normal)
       icon = '⚖️';
       color = '#e65100';
       bgColor = '#fff3e0';
-      label = 'Rp 0';
+      label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
+      
+    } else if (hargaReseller > hargaNormal) {
+      // 🏆 PIALA: Keuntungan di atas normal
+      icon = '🏆';
+      color = '#bf360c';
+      bgColor = '#fff8e1';
+      label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
     }
     
     badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">' + icon + ' ' + label + '</span>';
     
-    // 🔥 TAMBAHKAN TOMBOL HAPUS DENGAN ICON SAMPAH 🗑️
-    badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kodeProduk + '\')" style="padding:4px 8px;font-size:0.7rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:4px;transition:all 0.2s ease;" title="Hapus harga khusus" onmouseover="this.style.background=\'#d32f2f\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'#f44336\';this.style.transform=\'scale(1)\'">🗑️</button>';
+    // 🗑️ TOMBOL HAPUS
+    badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kodeProduk + '\')" style="padding:4px 8px;font-size:0.7rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:4px;transition:all 0.2s ease;" title="Hapus harga khusus">🗑️</button>';
     
   } else {
     // Pakai harga normal
+    var keuntunganNormal = hargaNormal - hargaBeli;
     badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">ℹ️ Pakai Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
   }
   
