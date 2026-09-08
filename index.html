@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyBSKJi8P15eNXPUh_ryQ2COstlWgrQINFDycpCZKEJlk8TSoIxGwcgWDkARu-cySWDRQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxUi-2TvAGamzvV5gsZTePKhi3THKEWK44n_rnErkfehbGaTAGaz_s81CIGGP6Wj7pV_A/exec';
     // ============================================
   </script>
 
@@ -5149,167 +5149,129 @@ function loadKasirList() {
 
 
 // ============================================================
-// 🔥 SAVE INFO TOKO
+// 🔥 SAVE INFO TOKO - SIMPAN KE SHEET USER
 // ============================================================
-function saveInfoToko(username, namaToko, alamat, noHp) {
-    var data = {
-        action: 'saveInfoToko',
-        data: {
-            username: username,
-            namaToko: namaToko,
-            alamat: alamat,
-            noHp: noHp
+function saveInfoToko(data) {
+    try {
+        var username = data.username || '';
+        var namaToko = data.namaToko || '';
+        var alamat = data.alamat || '';
+        var noHp = data.noHp || '';
+        
+        if (!username) {
+            return { success: false, error: 'Username tidak ditemukan!' };
         }
-    };
-    
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(result) {
-        if (result.success) {
-            alert('✅ ' + result.message);
-        } else {
-            alert('❌ Gagal: ' + result.error);
+        
+        var ss = SpreadsheetApp.getActiveSpreadsheet();
+        var sheet = ss.getSheetByName('USER');
+        
+        if (!sheet) {
+            return { success: false, error: 'Sheet USER tidak ditemukan!' };
         }
-    })
-    .catch(function(error) {
-        console.error('Error:', error);
-        alert('❌ Error: ' + error.message);
-    });
+        
+        // Cari baris berdasarkan username (kolom A)
+        var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        var dataRange = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn());
+        var values = dataRange.getValues();
+        
+        var foundRow = -1;
+        for (var i = 0; i < values.length; i++) {
+            if (values[i][0] === username) {
+                foundRow = i + 2;
+                break;
+            }
+        }
+        
+        if (foundRow === -1) {
+            return { success: false, error: 'User tidak ditemukan di sheet USER!' };
+        }
+        
+        // Cari indeks kolom
+        var namaTokoCol = headers.indexOf('Nama Toko') + 1;
+        var alamatCol = headers.indexOf('Alamat') + 1;
+        var noHpCol = headers.indexOf('No Telepon') + 1;
+        
+        // Jika kolom tidak ada, tambahkan
+        if (namaTokoCol === 0) {
+            sheet.getRange(1, headers.length + 1).setValue('Nama Toko');
+            namaTokoCol = headers.length + 1;
+        }
+        if (alamatCol === 0) {
+            sheet.getRange(1, headers.length + 1).setValue('Alamat');
+            alamatCol = headers.length + 1;
+        }
+        if (noHpCol === 0) {
+            sheet.getRange(1, headers.length + 1).setValue('No Telepon');
+            noHpCol = headers.length + 1;
+        }
+        
+        // Update data
+        if (namaTokoCol > 0) sheet.getRange(foundRow, namaTokoCol).setValue(namaToko);
+        if (alamatCol > 0) sheet.getRange(foundRow, alamatCol).setValue(alamat);
+        if (noHpCol > 0) sheet.getRange(foundRow, noHpCol).setValue(noHp);
+        
+        return { 
+            success: true, 
+            message: 'Informasi toko berhasil disimpan!',
+            data: {
+                namaToko: namaToko,
+                alamat: alamat,
+                noHp: noHp
+            }
+        };
+        
+    } catch (e) {
+        console.error('❌ Error saveInfoToko:', e);
+        return { success: false, error: e.toString() };
+    }
 }
 
 // ============================================================
-// 🔥 GET INFO TOKO
+// 🔥 GET INFO TOKO - AMBIL DARI SHEET USER
 // ============================================================
 function getInfoToko(username) {
-    var data = {
-        action: 'getInfoToko',
-        data: {
-            username: username
-        }
-    };
-    
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(result) {
-        if (result.success) {
-            console.log('✅ Data Toko:', result.data);
-            // Isi form dengan data
-            document.getElementById('namaToko').value = result.data.namaToko || '';
-            document.getElementById('alamat').value = result.data.alamat || '';
-            document.getElementById('noHp').value = result.data.noHp || '';
-        } else {
-            console.error('❌ Error:', result.error);
-        }
-    })
-    .catch(function(error) {
-        console.error('Error:', error);
-    });
-}
-
-  
-// ==================== UPDATE HEADER INFO ====================
-function updateHeaderInfo() {
-   // 🔥 Refresh cache info toko
-  refreshInfoTokoCache();
-  console.log('🔄 updateHeaderInfo() dipanggil');
-  
-  // 🔥 PERBAIKAN: Kirim username
-  callGAS('getInfoToko', { 
-    username: currentUser ? currentUser.username : '' 
-  })
-  .then(function(result) {
-    console.log('📥 Result updateHeaderInfo:', result);
-    
-    if (result && result.success) {
-      // 🔥 AMBIL DARI result.data
-      var data = result.data;
-      
-      // Jika data masih punya property 'data', ambil dari situ
-      if (data && data.data) {
-        data = data.data;
-      }
-      
-      if (data && data.namaToko) {
-        var header = document.getElementById('headerTitle');
-        if (header) {
-          header.textContent = '🛒 ' + data.namaToko;
-          console.log('✅ Header diupdate:', header.textContent);
+    try {
+        var ss = SpreadsheetApp.getActiveSpreadsheet();
+        var sheet = ss.getSheetByName('USER');
+        
+        if (!sheet) {
+            return { success: false, error: 'Sheet USER tidak ditemukan!' };
         }
         
-        var loginTitle = document.getElementById('loginTitle');
-        if (loginTitle) {
-          loginTitle.textContent = '🛒 ' + data.namaToko;
+        var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        var dataRange = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn());
+        var values = dataRange.getValues();
+        
+        for (var i = 0; i < values.length; i++) {
+            if (values[i][0] === username) {
+                var namaTokoCol = headers.indexOf('Nama Toko') + 1;
+                var alamatCol = headers.indexOf('Alamat') + 1;
+                var noHpCol = headers.indexOf('No Telepon') + 1;
+                
+                return {
+                    success: true,
+                    data: {
+                        namaToko: namaTokoCol > 0 ? values[i][namaTokoCol - 1] || '' : '',
+                        alamat: alamatCol > 0 ? values[i][alamatCol - 1] || '' : '',
+                        noHp: noHpCol > 0 ? values[i][noHpCol - 1] || '' : ''
+                    }
+                };
+            }
         }
         
-        // 🔥 UPDATE FORM DI PROFILE (jika sudah terbuka)
-        var fn = document.getElementById('fNamaToko');
-        var fa = document.getElementById('fAlamatToko');
-        var fh = document.getElementById('fNoHp');
-        if (fn) fn.value = data.namaToko || '';
-        if (fa) fa.value = data.alamat || '';
-        if (fh) fh.value = data.noHp || '';
-      }
+        return { 
+            success: true, 
+            data: { 
+                namaToko: '', 
+                alamat: '', 
+                noHp: '' 
+            } 
+        };
+        
+    } catch (e) {
+        console.error('❌ Error getInfoToko:', e);
+        return { success: false, error: e.toString() };
     }
-  })
-  .catch(function(error) {
-    console.error('❌ Error updateHeaderInfo:', error);
-  });
-}
-
-function debugInfoToko() {
-  console.log('🔍 Mengecek data Info Toko...');
-  // 🔥 PERBAIKAN: Kirim username
-  callGAS('getInfoToko', { 
-    username: currentUser ? currentUser.username : '' 
-  })
-  .then(function(result) {
-    console.log('📊 Hasil getInfoToko:', JSON.stringify(result));
-    if (result && result.success) {
-      showToast('✅ Data Info Toko: ' + JSON.stringify(result.data), 'info');
-    } else {
-      showToast('❌ Data Info Toko kosong atau error: ' + (result ? result.error : 'Unknown'), 'error');
-    }
-  })
-  .catch(function(error) {
-    console.error('❌ Error debugInfoToko:', error);
-    showToast('❌ Error: ' + error.message, 'error');
-  });
-}
-
-
-function debugInfoToko() {
-  console.log('🔍 Mengecek data Info Toko...');
-  callGAS('getInfoToko', {})
-  .then(function(result) {
-    console.log('📊 Hasil getInfoToko:', JSON.stringify(result));
-    if (result && result.success) {
-      showToast('✅ Data Info Toko: ' + JSON.stringify(result.data), 'info');
-    } else {
-      showToast('❌ Data Info Toko kosong atau error: ' + (result ? result.error : 'Unknown'), 'error');
-    }
-  })
-  .catch(function(error) {
-    console.error('❌ Error debugInfoToko:', error);
-    showToast('❌ Error: ' + error.message, 'error');
-  });
 }
 
   
