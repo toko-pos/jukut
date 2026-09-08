@@ -2497,7 +2497,7 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
           
 
         <div class="filter-total" id="totalTransaksiDisplay">
-            📊 Total: 0 Transaksi | 0 Quantity | Total Penjualan: Rp 0 | Laba: Rp 0 | 💰 0%
+            📊 Total: 0 Transaksi | 0 Qty | Omzet: Rp 0 | Laba: Rp 0 | 💰 0%
         </div>
          </div>
         <div class="table-wrapper">
@@ -7550,7 +7550,7 @@ function loadTransaksi() {
                        ' | Omzet: ' + formatRupiah(totalPenjualan);
         
         if (showLaba) {
-          totalText += ' | Laba: ' + formatRupiah(totalLaba) ' 💰 ' + persenLaba.toFixed(1) + '%';
+          totalText += ' | Laba: ' + formatRupiah(totalLaba) + ' | 💰 ' + persenLaba.toFixed(1) + '%';
         }
         
         document.getElementById('totalTransaksiDisplay').textContent = totalText;
