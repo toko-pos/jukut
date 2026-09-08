@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbym8k0sFP9KOa3v5y_8NyS8ngBmgXAjckeuUlo3X6Fsqn-S-dex0-5dTvlzxpxVVr6RWw/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyBSKJi8P15eNXPUh_ryQ2COstlWgrQINFDycpCZKEJlk8TSoIxGwcgWDkARu-cySWDRQ/exec';
     // ============================================
   </script>
 
@@ -5556,14 +5556,16 @@ function loadLowStock() {
 
   
 // ============================================================
-// 🔥 LOAD BULANAN CHART - ADMIN & KASIR BISA LIHAT, RESELLER TIDAK
+// 🔥 LOAD BULANAN CHART - TAHUN SAAT INI
 // ============================================================
 
 function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
   try {
-    // AMBIL TAHUN DARI TANGGAL
-    var tahun = new Date().getFullYear().toString();
+    // 🔥 AMBIL TAHUN SAAT INI
+    var now = new Date();
+    var tahun = now.getFullYear().toString();
     
+    // Jika ada tanggal filter, gunakan tahun dari tanggal tersebut
     if (tanggal && tanggal !== '') {
       var dateParts = tanggal.split('-');
       if (dateParts.length === 3) {
@@ -5595,12 +5597,11 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
     
     console.log('📊 loadBulananChart - Tahun:', tahun, 'Role:', role);
     
-    // 🔥🔥🔥 PERBAIKAN: Kirim kasirFilter = 'all' untuk admin & kasir 🔥🔥🔥
-    // 🔥 Ini memastikan backend tidak memfilter berdasarkan kasir tertentu
+    // 🔥 KIRIM REQUEST KE BACKEND
     callGAS('getPenjualanBulananPerKasir', {
-      bulan: '01',
+      bulan: '01',  // Tidak dipakai, backend menggunakan tahun
       tahun: tahun,
-      kasirFilter: 'all',  // 🔥 PASTIKAN 'all'
+      kasirFilter: 'all',
       namaUser: namaUser,
       role: role
     })
@@ -5630,6 +5631,7 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
         data = {};
       }
       
+      // 🔥 LABEL BULAN
       var labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
       var datasets = [];
       var totalAll = 0;
