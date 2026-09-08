@@ -11140,12 +11140,12 @@ function aturHargaReseller(kodeReseller) {
           color = '#2e7d32';
           bgColor = '#e8f5e9';
           label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
-        } else if (hargaReseller = hargaBeli) {
+        } else if (keuntunganRiil === 0) {
           icon = '⚖️';
           color = '#e65100';
           bgColor = '#fff3e0';
-          label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
-        } else if (hargaReseller >= hargaNormal) {
+          label = 'Rp 0';
+        } else if (hargaReseller > hargaNormal) {
           icon = '🏆';
           color = '#bf360c';
           bgColor = '#fff8e1';
@@ -11153,14 +11153,14 @@ function aturHargaReseller(kodeReseller) {
         }
         
         // 🔥 BADGE DENGAN UKURAN STATIS - TIDAK WRAP
-badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-width:85px;max-width:130px;text-align:center;overflow:hidden;text-overflow:ellipsis;gap:4px;line-height:1.3;">' + icon + ' ' + label + '</span>';
-badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kode + '\')" style="padding:2px 8px;font-size:0.6rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:3px;transition:all 0.2s ease;vertical-align:middle;line-height:1.2;">🗑️</button>';
+        badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-width:85px;max-width:130px;text-align:center;overflow:hidden;text-overflow:ellipsis;gap:4px;line-height:1.3;">' + icon + ' ' + label + '</span>';
+        badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kode + '\')" style="padding:2px 8px;font-size:0.6rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:3px;transition:all 0.2s ease;vertical-align:middle;line-height:1.2;">🗑️</button>';
 
-} else {
-  var keuntunganNormal = hargaNormal - hargaBeli;
-  // 🔥 BADGE PAKAI NORMAL - UKURAN STATIS
-  badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:20px;font-size:0.65rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-width:85px;max-width:130px;text-align:center;overflow:hidden;text-overflow:ellipsis;gap:4px;line-height:1.3;">ℹ️ Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
-}
+      } else {
+        var keuntunganNormal = hargaNormal - hargaBeli;
+        // 🔥 BADGE PAKAI NORMAL - UKURAN STATIS
+        badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:20px;font-size:0.65rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-width:85px;max-width:130px;text-align:center;overflow:hidden;text-overflow:ellipsis;gap:4px;line-height:1.3;">ℹ️ Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
+      }
       
       html += `
         <tr>
@@ -11171,7 +11171,7 @@ badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' +
           <td style="padding:4px 6px;text-align:right;">
             <input type="number" id="harga_${kode}" value="${hargaReseller}" 
                    style="width:100%;max-width:100px;padding:3px 4px;border:1.5px solid #dce3f0;border-radius:4px;font-size:0.75rem;font-weight:600;text-align:right;min-height:30px;"
-                   onchange="onHargaResellerChange('${kode}', ${hargaNormal}, ${hargaBeli})"
+                   oninput="onHargaResellerChange('${kode}', ${hargaNormal}, ${hargaBeli})"
                    placeholder="Kosongkan">
           </td>
           <!-- 🔥🔥🔥 KOLOM KEUNTUNGAN - STATIS dengan text-align:center 🔥🔥🔥 -->
@@ -11201,6 +11201,22 @@ badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' +
     
     document.getElementById('modalBody').innerHTML = html;
     document.getElementById('modal').classList.add('active');
+    
+    // 🔥🔥🔥 TAMBAHKAN BLOK INI - AUTO UPDATE BADGE 🔥🔥🔥
+    setTimeout(function() {
+      var inputs = document.querySelectorAll('#modalBody input[type="number"]');
+      for (var i = 0; i < inputs.length; i++) {
+        var input = inputs[i];
+        var id = input.id;
+        if (id && id.startsWith('harga_')) {
+          // Trigger event oninput secara manual
+          var event = new Event('input', { bubbles: true });
+          input.dispatchEvent(event);
+        }
+      }
+      console.log('✅ Semua badge otomatis diupdate!');
+    }, 100);
+    
   })
   .catch(function(error) {
     showToast('❌ Error: ' + error.message, 'error');
