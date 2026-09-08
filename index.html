@@ -7498,7 +7498,7 @@ function loadTransaksi() {
     
     if (!tanggalMulai || !tanggalSampai) {
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⚠️ Pilih rentang tanggal</td></tr>';
-      document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: 0 | Quantity: 0 | Total Penjualan: Rp 0 | Laba: Rp 0 | 💰 Laba: 0%';
+      document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Trans: 0 | Qty: 0 | Pjualan: Rp 0 | Laba: Rp 0 💰: 0%';
       return;
     }
     
@@ -7519,7 +7519,7 @@ function loadTransaksi() {
         var data = result.data || [];
         if (!data || data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada transaksi</td></tr>';
-          document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Transaksi: 0 | Quantity: 0 | Total Penjualan: Rp 0 | Laba: Rp 0 | 💰 Laba: 0%';
+          document.getElementById('totalTransaksiDisplay').textContent = '📊 Total: Trans: 0 | Qty: 0 | Pjualan: Rp 0 | Laba: Rp 0 💰: 0%';
           return;
         }
         
