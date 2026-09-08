@@ -2127,7 +2127,29 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     }
 }
 
+/* ===== TOMBOL HAPUS HARGA RESELLER ===== */
+.btn-hapus-harga {
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  border: none;
+  border-radius: 4px;
+  background: #f44336;
+  color: white;
+  cursor: pointer;
+  display: inline-block;
+  margin-left: 4px;
+  transition: all 0.2s ease;
+  line-height: 1.2;
+}
 
+.btn-hapus-harga:hover {
+  background: #d32f2f !important;
+  transform: scale(1.05) !important;
+}
+
+.btn-hapus-harga:active {
+  transform: scale(0.95) !important;
+}
     
                                                                                                                                         
   </style>
@@ -11069,24 +11091,132 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
   var badgeCell = row.querySelector('td:last-child');
   if (!badgeCell) return;
   
-  // 🔥🔥🔥 HITUNG KEUNTUNGAN RIIL KASIR 🔥🔥🔥
+  // 🔥 HITUNG KEUNTUNGAN RIIL KASIR
   var keuntunganNormal = hargaNormal - hargaBeli;
   var keuntunganReseller = hargaReseller - hargaBeli;
   var keuntunganRiil = keuntunganNormal - keuntunganReseller;
   
-  // Update badge
-  if (hargaReseller > 0) {
-    if (keuntunganRiil > 0) {
-      badgeCell.innerHTML = '<span style="background:#e8f5e9;color:#2e7d32;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">✅ Rp ' + formatRupiahPlain(keuntunganRiil) + '</span>';
-    } else if (keuntunganRiil < 0) {
-      badgeCell.innerHTML = '<span style="background:#fce4ec;color:#c62828;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">⚠️ -Rp ' + formatRupiahPlain(Math.abs(keuntunganRiil)) + '</span>';
-    } else {
-      badgeCell.innerHTML = '<span style="background:#f5f5f5;color:#999;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">Rp 0</span>';
-    }
-  } else {
-    badgeCell.innerHTML = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">Pakai Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
+  // Ambil kode reseller dari atribut atau dari data
+  var kodeReseller = '';
+  var modalBody = document.getElementById('modalBody');
+  if (modalBody) {
+    var match = modalBody.innerHTML.match(/kodeReseller: '([^']+)'/);
+    if (match) kodeReseller = match[1];
   }
+  
+  // 🔥 Tentukan badge berdasarkan kondisi
+  var badgeHtml = '';
+  
+  if (hargaReseller > 0) {
+    var icon = '';
+    var color = '';
+    var bgColor = '';
+    var label = '';
+    
+    if (keuntunganRiil > 0) {
+      // Harga reseller di bawah harga normal (MASIH UNTUNG)
+      icon = '✅';
+      color = '#2e7d32';
+      bgColor = '#e8f5e9';
+      label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
+    } else if (keuntunganRiil < 0) {
+      // Harga reseller di bawah harga beli (RUGI)
+      icon = '❌';
+      color = '#c62828';
+      bgColor = '#fce4ec';
+      label = '-Rp ' + formatRupiahPlain(Math.abs(keuntunganRiil));
+    } else {
+      // Harga reseller = harga normal (IMPAS)
+      icon = '⚖️';
+      color = '#e65100';
+      bgColor = '#fff3e0';
+      label = 'Rp 0';
+    }
+    
+    badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">' + icon + ' ' + label + '</span>';
+    
+    // 🔥 TAMBAHKAN TOMBOL HAPUS DENGAN ICON SAMPAH 🗑️
+    badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kodeProduk + '\')" style="padding:4px 8px;font-size:0.7rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:4px;transition:all 0.2s ease;" title="Hapus harga khusus" onmouseover="this.style.background=\'#d32f2f\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'#f44336\';this.style.transform=\'scale(1)\'">🗑️</button>';
+    
+  } else {
+    // Pakai harga normal
+    badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">ℹ️ Pakai Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
+  }
+  
+  badgeCell.innerHTML = badgeHtml;
 }
+
+// ==================== ON HARGA RESELLER CHANGE ====================
+function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
+  var input = document.getElementById('harga_' + kodeProduk);
+  var hargaReseller = parseInt(input.value) || 0;
+  
+  // Cari elemen badge di baris yang sama
+  var row = input.closest('tr');
+  if (!row) return;
+  
+  var badgeCell = row.querySelector('td:last-child');
+  if (!badgeCell) return;
+  
+  // 🔥 HITUNG KEUNTUNGAN RIIL KASIR
+  var keuntunganNormal = hargaNormal - hargaBeli;
+  var keuntunganReseller = hargaReseller - hargaBeli;
+  var keuntunganRiil = keuntunganNormal - keuntunganReseller;
+  
+  // Ambil kode reseller dari atribut data atau dari modal
+  var kodeReseller = '';
+  var modalBody = document.getElementById('modalBody');
+  if (modalBody) {
+    // Cari dari tombol Simpan Semua
+    var btnSimpan = modalBody.querySelector('.btn-success');
+    if (btnSimpan && btnSimpan.getAttribute('onclick')) {
+      var match = btnSimpan.getAttribute('onclick').match(/simpanSemuaHargaReseller\('([^']+)'\)/);
+      if (match) kodeReseller = match[1];
+    }
+  }
+  
+  // 🔥 Tentukan badge berdasarkan kondisi
+  var badgeHtml = '';
+  
+  if (hargaReseller > 0) {
+    var icon = '';
+    var color = '';
+    var bgColor = '';
+    var label = '';
+    
+    if (keuntunganRiil > 0) {
+      // Harga reseller di bawah harga normal (MASIH UNTUNG)
+      icon = '✅';
+      color = '#2e7d32';
+      bgColor = '#e8f5e9';
+      label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
+    } else if (keuntunganRiil < 0) {
+      // Harga reseller di bawah harga beli (RUGI)
+      icon = '❌';
+      color = '#c62828';
+      bgColor = '#fce4ec';
+      label = '-Rp ' + formatRupiahPlain(Math.abs(keuntunganRiil));
+    } else {
+      // Harga reseller = harga normal (IMPAS)
+      icon = '⚖️';
+      color = '#e65100';
+      bgColor = '#fff3e0';
+      label = 'Rp 0';
+    }
+    
+    badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">' + icon + ' ' + label + '</span>';
+    
+    // 🔥 TAMBAHKAN TOMBOL HAPUS DENGAN ICON SAMPAH 🗑️
+    badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kodeProduk + '\')" style="padding:4px 8px;font-size:0.7rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:4px;transition:all 0.2s ease;" title="Hapus harga khusus" onmouseover="this.style.background=\'#d32f2f\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'#f44336\';this.style.transform=\'scale(1)\'">🗑️</button>';
+    
+  } else {
+    // Pakai harga normal
+    badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">ℹ️ Pakai Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
+  }
+  
+  badgeCell.innerHTML = badgeHtml;
+}
+
 
 // ==================== SIMPAN SEMUA HARGA ====================
 function simpanSemuaHargaReseller(kodeReseller) {
@@ -11105,6 +11235,12 @@ function simpanSemuaHargaReseller(kodeReseller) {
   
   showToast('⏳ Menyimpan semua harga...', 'info');
   
+  // 🔥 GUNAKAN CLOSURE UNTUK MENANGKAP NILAI totalSaved DAN totalFailed
+  var counter = {
+    saved: 0,
+    failed: 0
+  };
+  
   for (var i = 0; i < inputs.length; i++) {
     var input = inputs[i];
     var id = input.id;
@@ -11114,27 +11250,30 @@ function simpanSemuaHargaReseller(kodeReseller) {
     var hargaReseller = parseInt(input.value) || 0;
     
     if (hargaReseller > 0) {
-      var p = new Promise(function(resolve, reject) {
-        callGAS('simpanHargaReseller', {
-          kodeReseller: kodeReseller,
-          kodeProduk: kodeProduk,
-          hargaReseller: hargaReseller
-        })
-        .then(function(result) {
-          if (result && result.success) {
-            totalSaved++;
-            resolve(result);
-          } else {
-            totalFailed++;
-            reject(new Error(result ? result.error : 'Gagal simpan'));
-          }
-        })
-        .catch(function(error) {
-          totalFailed++;
-          reject(error);
+      // 🔥 GUNAKAN IIFE UNTUK MENANGKAP NILAI YANG BENAR
+      (function(kodeProd, harga) {
+        var p = new Promise(function(resolve, reject) {
+          callGAS('simpanHargaReseller', {
+            kodeReseller: kodeReseller,
+            kodeProduk: kodeProd,
+            hargaReseller: harga
+          })
+          .then(function(result) {
+            if (result && result.success) {
+              counter.saved++;
+              resolve(result);
+            } else {
+              counter.failed++;
+              reject(new Error(result ? result.error : 'Gagal simpan'));
+            }
+          })
+          .catch(function(error) {
+            counter.failed++;
+            reject(error);
+          });
         });
-      });
-      promises.push(p);
+        promises.push(p);
+      })(kodeProduk, hargaReseller);
     }
   }
   
@@ -11155,7 +11294,7 @@ function simpanSemuaHargaReseller(kodeReseller) {
       btn.disabled = false;
       btn.style.opacity = '1';
     }
-    showToast('✅ ' + totalSaved + ' harga berhasil disimpan!', 'success');
+    showToast('✅ ' + counter.saved + ' harga berhasil disimpan!', 'success');
     closeModal();
     loadReseller();
   })
@@ -11165,7 +11304,7 @@ function simpanSemuaHargaReseller(kodeReseller) {
       btn.disabled = false;
       btn.style.opacity = '1';
     }
-    showToast('⚠️ ' + totalSaved + ' berhasil, ' + totalFailed + ' gagal', 'warning');
+    showToast('⚠️ ' + counter.saved + ' berhasil, ' + counter.failed + ' gagal', 'warning');
   });
 }
 
