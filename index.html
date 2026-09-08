@@ -11146,9 +11146,11 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
   badgeCell.innerHTML = badgeHtml;
 }
 
-// ==================== ON HARGA RESELLER CHANGE ====================
+// ==================== ON HARGA RESELLER CHANGE (DENGAN PIALA 🏆) ====================
 function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
   var input = document.getElementById('harga_' + kodeProduk);
+  if (!input) return;
+  
   var hargaReseller = parseInt(input.value) || 0;
   
   // Cari elemen badge di baris yang sama
@@ -11163,19 +11165,15 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
   var keuntunganReseller = hargaReseller - hargaBeli;
   var keuntunganRiil = keuntunganNormal - keuntunganReseller;
   
-  // Ambil kode reseller dari atribut data atau dari modal
+  // Ambil kode reseller dari tombol Simpan Semua
   var kodeReseller = '';
-  var modalBody = document.getElementById('modalBody');
-  if (modalBody) {
-    // Cari dari tombol Simpan Semua
-    var btnSimpan = modalBody.querySelector('.btn-success');
-    if (btnSimpan && btnSimpan.getAttribute('onclick')) {
-      var match = btnSimpan.getAttribute('onclick').match(/simpanSemuaHargaReseller\('([^']+)'\)/);
-      if (match) kodeReseller = match[1];
-    }
+  var btnSimpan = document.querySelector('#modalBody .btn-success');
+  if (btnSimpan && btnSimpan.getAttribute('onclick')) {
+    var match = btnSimpan.getAttribute('onclick').match(/simpanSemuaHargaReseller\('([^']+)'\)/);
+    if (match) kodeReseller = match[1];
   }
   
-  // 🔥 Tentukan badge berdasarkan kondisi
+  // 🔥 Tentukan badge berdasarkan 4 KONDISI
   var badgeHtml = '';
   
   if (hargaReseller > 0) {
@@ -11184,30 +11182,39 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
     var bgColor = '';
     var label = '';
     
-    if (keuntunganRiil > 0) {
-      // Harga reseller di bawah harga normal (MASIH UNTUNG)
-      icon = '✅';
-      color = '#2e7d32';
-      bgColor = '#e8f5e9';
-      label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
-    } else if (keuntunganRiil < 0) {
-      // Harga reseller di bawah harga beli (RUGI)
+    // 🔥 KONDISI 1: Harga reseller DI BAWAH harga beli (RUGI)
+    if (hargaReseller < hargaBeli) {
       icon = '❌';
       color = '#c62828';
       bgColor = '#fce4ec';
       label = '-Rp ' + formatRupiahPlain(Math.abs(keuntunganRiil));
-    } else {
-      // Harga reseller = harga normal (IMPAS)
+    } 
+    // 🔥 KONDISI 2: Harga reseller DI ANTARA harga beli dan normal (UNTUNG)
+    else if (hargaReseller >= hargaBeli && hargaReseller < hargaNormal) {
+      icon = '✅';
+      color = '#2e7d32';
+      bgColor = '#e8f5e9';
+      label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
+    } 
+    // 🔥 KONDISI 3: Harga reseller SAMA DENGAN normal (IMPAS)
+    else if (hargaReseller === hargaNormal) {
       icon = '⚖️';
       color = '#e65100';
       bgColor = '#fff3e0';
       label = 'Rp 0';
+    } 
+    // 🔥 KONDISI 4: Harga reseller DI ATAS normal (PIALA 🏆)
+    else if (hargaReseller > hargaNormal) {
+      icon = '🏆';
+      color = '#bf360c';
+      bgColor = '#fff8e1';
+      label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
     }
     
     badgeHtml = '<span style="background:' + bgColor + ';color:' + color + ';padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">' + icon + ' ' + label + '</span>';
     
     // 🔥 TAMBAHKAN TOMBOL HAPUS DENGAN ICON SAMPAH 🗑️
-    badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kodeProduk + '\')" style="padding:4px 8px;font-size:0.7rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:4px;transition:all 0.2s ease;" title="Hapus harga khusus" onmouseover="this.style.background=\'#d32f2f\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'#f44336\';this.style.transform=\'scale(1)\'">🗑️</button>';
+    badgeHtml += ' <button class="btn-hapus-harga" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kodeProduk + '\')" style="padding:4px 8px;font-size:0.7rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;margin-left:4px;transition:all 0.2s ease;" title="Hapus harga khusus">🗑️</button>';
     
   } else {
     // Pakai harga normal
@@ -11222,10 +11229,9 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
 function simpanSemuaHargaReseller(kodeReseller) {
   var inputs = document.querySelectorAll('#modalBody input[type="number"]');
   var promises = [];
-  var totalSaved = 0;
-  var totalFailed = 0;
+  var counter = { saved: 0, failed: 0 };
   
-  // 🔥 AMBIL TOMBOL DENGAN SELECTOR YANG LEBIH SPESIFIK
+  // 🔥 AMBIL TOMBOL
   var btn = document.querySelector('#modalBody .btn-success');
   if (btn) {
     btn.textContent = '⏳ Menyimpan...';
@@ -11234,12 +11240,6 @@ function simpanSemuaHargaReseller(kodeReseller) {
   }
   
   showToast('⏳ Menyimpan semua harga...', 'info');
-  
-  // 🔥 GUNAKAN CLOSURE UNTUK MENANGKAP NILAI totalSaved DAN totalFailed
-  var counter = {
-    saved: 0,
-    failed: 0
-  };
   
   for (var i = 0; i < inputs.length; i++) {
     var input = inputs[i];
@@ -11250,7 +11250,7 @@ function simpanSemuaHargaReseller(kodeReseller) {
     var hargaReseller = parseInt(input.value) || 0;
     
     if (hargaReseller > 0) {
-      // 🔥 GUNAKAN IIFE UNTUK MENANGKAP NILAI YANG BENAR
+      // 🔥 GUNAKAN IIFE UNTUK MENANGKAP NILAI
       (function(kodeProd, harga) {
         var p = new Promise(function(resolve, reject) {
           callGAS('simpanHargaReseller', {
@@ -11307,6 +11307,7 @@ function simpanSemuaHargaReseller(kodeReseller) {
     showToast('⚠️ ' + counter.saved + ' berhasil, ' + counter.failed + ' gagal', 'warning');
   });
 }
+
 
 // ==================== HAPUS HARGA RESELLER ====================
 function hapusHargaReseller(kodeReseller, kodeProduk) {
