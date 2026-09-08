@@ -10928,7 +10928,7 @@ function showResellerPriceInfo(hargaMap) {
 }
 
 
-  // ==================== ATUR HARGA RESELLER - VERSION 2 ====================
+  // ==================== ATUR HARGA RESELLER - VERSION 3 (DENGAN HARGA BELI) ====================
 function aturHargaReseller(kodeReseller) {
   // Cari nama reseller
   var reseller = null;
@@ -10968,12 +10968,12 @@ function aturHargaReseller(kodeReseller) {
         <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
           <thead>
             <tr style="background:#f0f4ff;position:sticky;top:0;z-index:10;">
-             
-<th style="padding:10px 12px;text-align:left;font-size:0.7rem;text-transform:uppercase;color:#555;width:10%;white-space:nowrap;">Kode</th>
-<th style="padding:10px 12px;text-align:left;font-size:0.7rem;text-transform:uppercase;color:#555;width:20%;white-space:nowrap;">Nama</th>
-<th style="padding:10px 12px;text-align:right;font-size:0.7rem;text-transform:uppercase;color:#555;width:15%;white-space:nowrap;">Normal</th>
-<th style="padding:10px 12px;text-align:right;font-size:0.7rem;text-transform:uppercase;color:#555;width:35%;white-space:nowrap;">Harga Reseller</th>
-<th style="padding:10px 12px;text-align:center;font-size:0.7rem;text-transform:uppercase;color:#555;width:20%;white-space:nowrap;">Status</th>
+              <th style="padding:10px 12px;text-align:left;font-size:0.7rem;text-transform:uppercase;color:#555;width:8%;white-space:nowrap;">Kode</th>
+              <th style="padding:10px 12px;text-align:left;font-size:0.7rem;text-transform:uppercase;color:#555;width:18%;white-space:nowrap;">Nama</th>
+              <th style="padding:10px 12px;text-align:right;font-size:0.7rem;text-transform:uppercase;color:#555;width:12%;white-space:nowrap;">Harga Beli</th>
+              <th style="padding:10px 12px;text-align:right;font-size:0.7rem;text-transform:uppercase;color:#555;width:12%;white-space:nowrap;">Normal</th>
+              <th style="padding:10px 12px;text-align:right;font-size:0.7rem;text-transform:uppercase;color:#555;width:25%;white-space:nowrap;">Harga Reseller</th>
+              <th style="padding:10px 12px;text-align:center;font-size:0.7rem;text-transform:uppercase;color:#555;width:25%;white-space:nowrap;">Keuntungan Riil Kasir</th>
             </tr>
           </thead>
           <tbody>
@@ -10983,39 +10983,49 @@ function aturHargaReseller(kodeReseller) {
       var p = produkList[i];
       var kode = p.Kode;
       var nama = p['Nama Produk'] || '-';
+      var hargaBeli = p['Harga Beli'] || 0;
       var hargaNormal = p['Harga Jual'] || 0;
       var hargaReseller = (hargaMap[kode] && hargaMap[kode].hargaReseller) ? hargaMap[kode].hargaReseller : '';
-      var selisih = (hargaMap[kode] && hargaMap[kode].selisih) ? hargaMap[kode].selisih : 0;
       
-      // SESUDAH - HANYA ANGKA SELISIH (TANPA MINUS)
-var badgeHtml = '';
-if (selisih < 0) {
-  // Selisih negatif = harga reseller lebih murah, tampilkan angka positif tanpa minus
-  badgeHtml = '<span style="background:#e8f5e9;color:#2e7d32;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">' + formatRupiah(Math.abs(selisih)) + '</span>';
-} else if (selisih > 0) {
-  // Selisih positif = harga reseller lebih mahal
-  badgeHtml = '<span style="background:#fce4ec;color:#c62828;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">' + formatRupiah(selisih) + '</span>';
-} else if (selisih === 0 && hargaReseller > 0) {
-  // Sama persis
-  badgeHtml = '<span style="background:#f5f5f5;color:#999;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">Sama</span>';
-}
+      // 🔥🔥🔥 HITUNG KEUNTUNGAN RIIL KASIR 🔥🔥🔥
+      // Rumus: (Harga Normal - Harga Beli) - (Harga Reseller - Harga Beli)
+      // Sederhana: Harga Normal - Harga Reseller
+      var keuntunganNormal = hargaNormal - hargaBeli;
+      var keuntunganReseller = 0;
+      var keuntunganRiil = 0;
+      var badgeHtml = '';
+      
+      if (hargaReseller > 0) {
+        keuntunganReseller = hargaReseller - hargaBeli;
+        keuntunganRiil = keuntunganNormal - keuntunganReseller;
+        
+        if (keuntunganRiil > 0) {
+          badgeHtml = '<span style="background:#e8f5e9;color:#2e7d32;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">✅ Rp ' + formatRupiahPlain(keuntunganRiil) + '</span>';
+        } else if (keuntunganRiil < 0) {
+          badgeHtml = '<span style="background:#fce4ec;color:#c62828;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">⚠️ -Rp ' + formatRupiahPlain(Math.abs(keuntunganRiil)) + '</span>';
+        } else {
+          badgeHtml = '<span style="background:#f5f5f5;color:#999;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">Rp 0</span>';
+        }
+      } else {
+        // Jika harga reseller kosong, keuntungan = keuntungan normal
+        badgeHtml = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">Pakai Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
+      }
       
       html += `
         <tr>
           <td style="padding:6px 10px;font-weight:bold;font-size:0.8rem;">${escapeHtml(kode)}</td>
           <td style="padding:6px 10px;font-size:0.8rem;">${escapeHtml(nama)}</td>
+          <td style="padding:6px 10px;text-align:right;font-size:0.8rem;color:#666;">${formatRupiah(hargaBeli)}</td>
           <td style="padding:6px 10px;text-align:right;font-weight:bold;font-size:0.8rem;">${formatRupiah(hargaNormal)}</td>
           <td style="padding:12px 16px;text-align:right;">
             <input type="number" id="harga_${kode}" value="${hargaReseller}" 
                    style="width:100%;max-width:120px;padding:5px 8px;border:1.5px solid #dce3f0;border-radius:6px;font-size:0.85rem;font-weight:600;text-align:right;"
-                   onchange="onHargaResellerChange('${kode}', ${hargaNormal})"
-                  
+                   onchange="onHargaResellerChange('${kode}', ${hargaNormal}, ${hargaBeli})"
+                   placeholder="Kosongkan">
           </td>
           <td style="padding:10px 12px;text-align:center;font-size:0.75rem;white-space:nowrap;">
             ${badgeHtml}
             ${hargaReseller > 0 ? ' <button class="btn btn-danger btn-sm" onclick="hapusHargaReseller(\'' + kodeReseller + '\',\'' + kode + '\')" style="padding:4px 8px;font-size:0.6rem;border:none;border-radius:4px;background:#f44336;color:white;cursor:pointer;display:inline-block;">✕</button>' : ''}
-</td>
-          
           </td>
         </tr>
       `;
@@ -11026,7 +11036,7 @@ if (selisih < 0) {
         </table>
       </div>
       
-      <!-- ===== TOMBOL - DIPERBAIKI UNTUK HP ===== -->
+      <!-- ===== TOMBOL ===== -->
       <div style="display:flex;gap:12px;margin-top:18px;padding-top:16px;border-top:2px solid #eee;flex-wrap:wrap;">
         <button class="btn btn-success" onclick="simpanSemuaHargaReseller('${kodeReseller}')" 
                 style="flex:2;min-width:120px;padding:14px 20px;font-size:0.95rem;font-weight:700;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,#4CAF50,#388E3C);color:white;box-shadow:0 4px 15px rgba(76,175,80,0.3);display:flex;align-items:center;justify-content:center;gap:8px;height:50px;">
@@ -11047,21 +11057,34 @@ if (selisih < 0) {
   });
 }
 
-// ==================== ON HARGA RESELLER CHANGE ====================
-function onHargaResellerChange(kodeProduk, hargaNormal) {
+// ==================== ON HARGA RESELLER CHANGE (DENGAN HARGA BELI) ====================
+function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
   var input = document.getElementById('harga_' + kodeProduk);
   var hargaReseller = parseInt(input.value) || 0;
-  var selisih = hargaReseller - hargaNormal;
-  var selisihEl = document.getElementById('selisih_' + kodeProduk);
   
-  if (selisihEl) {
-    if (hargaReseller > 0) {
-      var warna = selisih < 0 ? '#4CAF50' : (selisih > 0 ? '#f44336' : '#999');
-      selisihEl.textContent = (selisih < 0 ? '✅ ' : '⚠️ ') + formatRupiah(selisih);
-      selisihEl.style.color = warna;
+  // Cari elemen badge di baris yang sama
+  var row = input.closest('tr');
+  if (!row) return;
+  
+  var badgeCell = row.querySelector('td:last-child');
+  if (!badgeCell) return;
+  
+  // 🔥🔥🔥 HITUNG KEUNTUNGAN RIIL KASIR 🔥🔥🔥
+  var keuntunganNormal = hargaNormal - hargaBeli;
+  var keuntunganReseller = hargaReseller - hargaBeli;
+  var keuntunganRiil = keuntunganNormal - keuntunganReseller;
+  
+  // Update badge
+  if (hargaReseller > 0) {
+    if (keuntunganRiil > 0) {
+      badgeCell.innerHTML = '<span style="background:#e8f5e9;color:#2e7d32;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">✅ Rp ' + formatRupiahPlain(keuntunganRiil) + '</span>';
+    } else if (keuntunganRiil < 0) {
+      badgeCell.innerHTML = '<span style="background:#fce4ec;color:#c62828;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;">⚠️ -Rp ' + formatRupiahPlain(Math.abs(keuntunganRiil)) + '</span>';
     } else {
-      selisihEl.textContent = '';
+      badgeCell.innerHTML = '<span style="background:#f5f5f5;color:#999;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">Rp 0</span>';
     }
+  } else {
+    badgeCell.innerHTML = '<span style="background:#e3f2fd;color:#0d47a1;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:inline-block;">Pakai Normal: Rp ' + formatRupiahPlain(keuntunganNormal) + '</span>';
   }
 }
 
