@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycby0SoOnipoZsCV_l2916wuZi-VMCCyUByN4jfUJ-w-FnSMzIqqtJxwqOvQv6ktcS3alhg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyBSKJi8P15eNXPUh_ryQ2COstlWgrQINFDycpCZKEJlk8TSoIxGwcgWDkARu-cySWDRQ/exec';
     // ============================================
   </script>
 
@@ -3298,9 +3298,6 @@ function showLogin() {
 // ============================================================
 // 🔥 FUNGSI PANGGIL GAS VIA FETCH
 // ============================================================
-// ============================================================
-// 🔥 FUNGSI PANGGIL GAS VIA FETCH
-// ============================================================
 function callGAS(action, data) {
   return new Promise(function(resolve, reject) {
     console.log('📤 callGAS:', action, data);
@@ -3308,7 +3305,7 @@ function callGAS(action, data) {
     fetch(GAS_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'  // ✅ PERBAIKI: application/json
+        'Content-Type': 'text/plain;charset=utf-8'
       },
       body: JSON.stringify({
         action: action,
@@ -4779,32 +4776,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
 
-  // ============================================================
-// 🔥 FORM TOKO - SIMPAN INFORMASI TOKO
-// ============================================================
-var formToko = document.getElementById('formToko');
-if (formToko) {
-    // Hapus event listener lama jika ada
-    formToko.removeEventListener('submit', handleFormTokoSubmit);
-    formToko.addEventListener('submit', handleFormTokoSubmit);
-    console.log('✅ Event listener formToko terpasang');
-}
-
-function handleFormTokoSubmit(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log('🔄 Form Toko disubmit');
-    
-    if (!currentUser) {
-        showToast('❌ Sesi Anda telah berakhir! Silakan login ulang.', 'error');
-        return;
-    }
-    
-    simpanInfoToko();
-}
-
-
 // ==================== REGISTER ====================
 // Di dalam event listener submit register
 document.getElementById('formRegister').addEventListener('submit', function(e) {
@@ -5177,46 +5148,23 @@ function loadKasirList() {
 }
 
 
-
-
 // ============================================================
-// 🔥 SIMPAN INFO TOKO - FRONTEND
+// 🔥 SAVE INFO TOKO
 // ============================================================
-function simpanInfoToko() {
-    var namaToko = document.getElementById('fNamaToko').value.trim();
-    var alamat = document.getElementById('fAlamatToko').value.trim();
-    var noHp = document.getElementById('fNoHp').value.trim();
-    
-    if (!namaToko) {
-        showToast('⚠️ Nama Toko wajib diisi!', 'error');
-        document.getElementById('fNamaToko').focus();
-        return;
-    }
-    
-    if (!currentUser) {
-        showToast('❌ Sesi Anda telah berakhir! Silakan login ulang.', 'error');
-        return;
-    }
-    
-    var btn = document.querySelector('#formToko button[type="submit"]');
-    var originalText = btn.textContent;
-    btn.textContent = '⏳ Menyimpan...';
-    btn.disabled = true;
-    
+function saveInfoToko(username, namaToko, alamat, noHp) {
     var data = {
         action: 'saveInfoToko',
         data: {
-            username: currentUser.username,
+            username: username,
             namaToko: namaToko,
             alamat: alamat,
             noHp: noHp
         }
     };
     
-    console.log('📤 Mengirim data ke GAS:', data);
-    
-    fetch(GAS_URL, {
+    fetch(SCRIPT_URL, {
         method: 'POST',
+        mode: 'cors',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -5226,39 +5174,144 @@ function simpanInfoToko() {
         return response.json();
     })
     .then(function(result) {
-        btn.textContent = originalText;
-        btn.disabled = false;
-        
-        console.log('📥 Result dari GAS:', result);
-        
-        if (result && result.success) {
-            showToast('✅ ' + (result.message || 'Informasi toko berhasil disimpan!'), 'success');
-            
-            // 🔥 Update cache
-            var infoToko = {
-                namaToko: namaToko,
-                alamat: alamat,
-                noHp: noHp
-            };
-            localStorage.setItem('info_toko', JSON.stringify(infoToko));
-            
-            // 🔥 Update header
-            var header = document.getElementById('headerTitle');
-            if (header) {
-                header.textContent = '🛒 ' + namaToko;
-            }
-            
+        if (result.success) {
+            alert('✅ ' + result.message);
         } else {
-            showToast('❌ Gagal: ' + (result ? result.error : 'Terjadi kesalahan'), 'error');
+            alert('❌ Gagal: ' + result.error);
         }
     })
     .catch(function(error) {
-        btn.textContent = originalText;
-        btn.disabled = false;
-        console.error('❌ Error:', error);
-        showToast('❌ Error: ' + error.message, 'error');
+        console.error('Error:', error);
+        alert('❌ Error: ' + error.message);
     });
 }
+
+// ============================================================
+// 🔥 GET INFO TOKO
+// ============================================================
+function getInfoToko(username) {
+    var data = {
+        action: 'getInfoToko',
+        data: {
+            username: username
+        }
+    };
+    
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(result) {
+        if (result.success) {
+            console.log('✅ Data Toko:', result.data);
+            // Isi form dengan data
+            document.getElementById('namaToko').value = result.data.namaToko || '';
+            document.getElementById('alamat').value = result.data.alamat || '';
+            document.getElementById('noHp').value = result.data.noHp || '';
+        } else {
+            console.error('❌ Error:', result.error);
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+    });
+}
+
+  
+// ==================== UPDATE HEADER INFO ====================
+function updateHeaderInfo() {
+   // 🔥 Refresh cache info toko
+  refreshInfoTokoCache();
+  console.log('🔄 updateHeaderInfo() dipanggil');
+  
+  // 🔥 PERBAIKAN: Kirim username
+  callGAS('getInfoToko', { 
+    username: currentUser ? currentUser.username : '' 
+  })
+  .then(function(result) {
+    console.log('📥 Result updateHeaderInfo:', result);
+    
+    if (result && result.success) {
+      // 🔥 AMBIL DARI result.data
+      var data = result.data;
+      
+      // Jika data masih punya property 'data', ambil dari situ
+      if (data && data.data) {
+        data = data.data;
+      }
+      
+      if (data && data.namaToko) {
+        var header = document.getElementById('headerTitle');
+        if (header) {
+          header.textContent = '🛒 ' + data.namaToko;
+          console.log('✅ Header diupdate:', header.textContent);
+        }
+        
+        var loginTitle = document.getElementById('loginTitle');
+        if (loginTitle) {
+          loginTitle.textContent = '🛒 ' + data.namaToko;
+        }
+        
+        // 🔥 UPDATE FORM DI PROFILE (jika sudah terbuka)
+        var fn = document.getElementById('fNamaToko');
+        var fa = document.getElementById('fAlamatToko');
+        var fh = document.getElementById('fNoHp');
+        if (fn) fn.value = data.namaToko || '';
+        if (fa) fa.value = data.alamat || '';
+        if (fh) fh.value = data.noHp || '';
+      }
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error updateHeaderInfo:', error);
+  });
+}
+
+function debugInfoToko() {
+  console.log('🔍 Mengecek data Info Toko...');
+  // 🔥 PERBAIKAN: Kirim username
+  callGAS('getInfoToko', { 
+    username: currentUser ? currentUser.username : '' 
+  })
+  .then(function(result) {
+    console.log('📊 Hasil getInfoToko:', JSON.stringify(result));
+    if (result && result.success) {
+      showToast('✅ Data Info Toko: ' + JSON.stringify(result.data), 'info');
+    } else {
+      showToast('❌ Data Info Toko kosong atau error: ' + (result ? result.error : 'Unknown'), 'error');
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error debugInfoToko:', error);
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+
+function debugInfoToko() {
+  console.log('🔍 Mengecek data Info Toko...');
+  callGAS('getInfoToko', {})
+  .then(function(result) {
+    console.log('📊 Hasil getInfoToko:', JSON.stringify(result));
+    if (result && result.success) {
+      showToast('✅ Data Info Toko: ' + JSON.stringify(result.data), 'info');
+    } else {
+      showToast('❌ Data Info Toko kosong atau error: ' + (result ? result.error : 'Unknown'), 'error');
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error debugInfoToko:', error);
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
   
   
 
