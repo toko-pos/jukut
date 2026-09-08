@@ -11079,7 +11079,7 @@ function aturHargaReseller(kodeReseller) {
   });
 }
 
-// ==================== ON HARGA RESELLER CHANGE (FINAL - BENAR) ====================
+// ==================== ON HARGA RESELLER CHANGE (FINAL) ====================
 function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
   var input = document.getElementById('harga_' + kodeProduk);
   if (!input) return;
@@ -11092,8 +11092,7 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
   var badgeCell = row.querySelector('td:last-child');
   if (!badgeCell) return;
   
-  // 🔥 HITUNG KEUNTUNGAN RIIL KASIR
-  // Keuntungan Riil = Harga Reseller - Harga Beli
+  // 🔥 RUMUS YANG BENAR: Keuntungan Riil Kasir = Harga Reseller - Harga Beli
   var keuntunganRiil = hargaReseller - hargaBeli;
   
   var kodeReseller = '';
@@ -11109,28 +11108,25 @@ function onHargaResellerChange(kodeProduk, hargaNormal, hargaBeli) {
     var icon, color, bgColor, label;
     
     if (keuntunganRiil < 0) {
-      // ❌ RUGI: Keuntungan negatif (jual di bawah harga beli)
+      // ❌ RUGI
       icon = '❌';
       color = '#c62828';
       bgColor = '#fce4ec';
       label = '-Rp ' + formatRupiahPlain(Math.abs(keuntunganRiil));
-      
     } else if (keuntunganRiil >= 0 && hargaReseller < hargaNormal) {
-      // ✅ UNTUNG: Keuntungan positif tapi di bawah normal
+      // ✅ UNTUNG (di bawah normal)
       icon = '✅';
       color = '#2e7d32';
       bgColor = '#e8f5e9';
       label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
-      
     } else if (hargaReseller === hargaNormal) {
-      // ⚖️ IMPAS: Sama dengan normal (keuntungan normal)
+      // ⚖️ UNTUNG NORMAL (IMPAS)
       icon = '⚖️';
       color = '#e65100';
       bgColor = '#fff3e0';
       label = 'Rp ' + formatRupiahPlain(keuntunganRiil);
-      
     } else if (hargaReseller > hargaNormal) {
-      // 🏆 PIALA: Keuntungan di atas normal
+      // 🏆 PIALA (untung ekstra)
       icon = '🏆';
       color = '#bf360c';
       bgColor = '#fff8e1';
