@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbz3HPwjye3blZOHoaso-nvAdy3yRcoLtgVrhAlTJyHYcS8AVHnVYV9bS_ptD9t_kchq4A/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwHTSn8LII7N8PpJxvUBI-WsOUe6oyxjHLRY0sMqLXuNd50qGHOi2XU3ht089NEpPUa9g/exec';
     // ============================================
   </script>
 
@@ -11280,6 +11280,50 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
   // Hapus cookie translate
   document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 })();
+
+// ============================================================
+// 🔥 TEST KONEKSI KE GAS
+// ============================================================
+
+function testKoneksiGAS() {
+  console.log('🔄 Testing koneksi ke GAS...');
+  console.log('📡 GAS_URL:', GAS_URL);
+  
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      action: 'testCORS',
+      data: {}
+    })
+  })
+  .then(function(response) {
+    console.log('📥 Response status:', response.status);
+    return response.json();
+  })
+  .then(function(result) {
+    console.log('✅ Result:', result);
+    if (result && result.success) {
+      showToast('✅ Koneksi ke GAS berhasil!', 'success');
+    } else {
+      showToast('❌ Koneksi gagal: ' + (result.error || 'Unknown error'), 'error');
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error:', error);
+    showToast('❌ Gagal terhubung ke GAS: ' + error.message, 'error');
+  });
+}
+
+// Panggil saat halaman dimuat
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(testKoneksiGAS, 2000);
+});
+
+
+  
 </script>
 
 
