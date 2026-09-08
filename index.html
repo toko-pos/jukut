@@ -2150,7 +2150,7 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 .btn-hapus-harga:active {
   transform: scale(0.95) !important;
 }
-    /* ===== TABEL ATUR HARGA - KOLOM KEUNTUNGAN STATIS ===== */
+/* ===== TABEL ATUR HARGA - KOLOM STATIS ===== */
 #modalContent.large .reseller-harga-grid td:last-child {
   white-space: nowrap;
   min-width: 170px;
@@ -2171,6 +2171,44 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   display: inline-block;
   vertical-align: middle;
   margin-left: 4px;
+}
+
+/* 🔥🔥🔥 KOLOM NAMA PRODUK - DIBUAT LEBIH LEBAR 🔥🔥🔥 */
+#modalContent.large .reseller-harga-grid td:nth-child(2),
+#modalContent.large .reseller-harga-grid th:nth-child(2) {
+  min-width: 200px !important;
+  max-width: 300px !important;
+  width: 28% !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+}
+
+/* 🔥 RESPONSIF HP */
+@media (max-width: 768px) {
+  #modalContent.large .reseller-harga-grid td:nth-child(2),
+  #modalContent.large .reseller-harga-grid th:nth-child(2) {
+    min-width: 140px !important;
+    max-width: 200px !important;
+    width: 24% !important;
+    font-size: 0.7rem !important;
+  }
+  
+  #modalContent.large .reseller-harga-grid td:last-child {
+    min-width: 140px !important;
+    max-width: 170px !important;
+    width: 28% !important;
+  }
+  
+  #modalContent.large .reseller-harga-grid td:last-child span {
+    max-width: 100px !important;
+    font-size: 0.55rem !important;
+  }
+  
+  #modalContent.large .reseller-harga-grid td:nth-child(2) {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+  }
 }
                                                                                                                                         
   </style>
