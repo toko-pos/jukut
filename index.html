@@ -2261,6 +2261,57 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     min-height: 24px !important;
   }
 }
+
+/* ===== KOLOM NAMA PEMBELI DI TABEL TRANSAKSI ===== */
+#transaksiTable .badge-reseller {
+    background: #9C27B0;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.55rem;
+    font-weight: bold;
+    margin-left: 4px;
+    display: inline-block;
+}
+
+/* Responsive untuk layar kecil */
+@media (max-width: 768px) {
+    #transaksiTable {
+        font-size: 0.75rem;
+    }
+    #transaksiTable th,
+    #transaksiTable td {
+        padding: 6px 8px;
+    }
+    /* Sembunyikan kolom Laba di HP */
+    #transaksiTable .col-laba {
+        display: none;
+    }
+    /* 🔥 TAMBAHKAN: kolom Nama Pembeli tetap terlihat */
+    #transaksiTable th:nth-child(4),
+    #transaksiTable td:nth-child(4) {
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    #transaksiTable {
+        font-size: 0.65rem;
+    }
+    #transaksiTable th,
+    #transaksiTable td {
+        padding: 4px 6px;
+    }
+    /* 🔥 Nama Pembeli - tampilkan sebagai badge kecil di HP */
+    #transaksiTable td:nth-child(4) {
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+    
                                                                                                                                         
   </style>
 </head>
@@ -2639,6 +2690,7 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
                 <th>No</th>
                 <th>Tanggal</th>
                 <th>ID Transaksi</th>
+                <th>Nama Pembeli</th>  
                 <th>Kasir</th>
                 <th>Total</th>
                 <th id="thLaba" style="display:none;">Laba</th>
@@ -3968,7 +4020,7 @@ function renderTransaksi(data) {
     if (!tbody) return;
     
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">📭 Tidak ada transaksi</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">📭 Tidak ada transaksi</td></tr>';
         return;
     }
     
@@ -3995,7 +4047,19 @@ function renderTransaksi(data) {
         html += '</a>';
         html += '</td>';
         
+        // ============================================================
+        // 🔥🔥🔥 TAMBAHKAN KOLOM "NAMA PEMBELI" DI SINI 🔥🔥🔥
+        // ============================================================
+        var namaPembeli = t.namaPembeli || t['Nama Pembeli'] || '-';
+        if (namaPembeli && namaPembeli !== '-' && t.isReseller) {
+            // Tambahkan badge Reseller jika transaksi reseller
+            namaPembeli = namaPembeli + ' <span class="badge-reseller" style="background:#9C27B0;color:white;padding:2px 8px;border-radius:12px;font-size:0.55rem;font-weight:bold;">👥</span>';
+        }
+        html += '<td style="white-space:nowrap; font-weight:500; color:#1a2332;">' + namaPembeli + '</td>';
+        
+        // 🔥 KOLOM KASIR (tetap dipertahankan)
         html += '<td style="white-space:nowrap;">' + (t.kasir || '-') + '</td>';
+        
         html += '<td style="white-space:nowrap; text-align:right; font-weight:600;">Rp ' + formatRupiah(t.total || 0) + '</td>';
         html += '<td style="white-space:nowrap; text-align:right; color:' + (t.laba >= 0 ? '#4CAF50' : '#dc3545') + '; font-weight:600;">Rp ' + formatRupiah(t.laba || 0) + '</td>';
         html += '<td style="white-space:nowrap; text-align:center;"><span class="badge-status">' + (t.status || 'Selesai') + '</span></td>';
@@ -7619,7 +7683,8 @@ function loadTransaksi() {
   try {
     var tbody = document.getElementById('transaksiTable');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
+    // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
     
     var role = currentUser ? currentUser.role : 'kasir';
     var namaUser = currentUser ? currentUser.nama : '';
@@ -7629,7 +7694,8 @@ function loadTransaksi() {
     var showLaba = document.querySelector('input[name="opsiLaba"]:checked').value === 'dengan';
     
     if (!tanggalMulai || !tanggalSampai) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⚠️ Pilih rentang tanggal</td></tr>';
+      // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">⚠️ Pilih rentang tanggal</td></tr>';
       document.getElementById('totalTransaksiDisplay').textContent = '📊Trans: 0 | Qty: 0 | Omzet: Rp 0 | Laba: Rp 0 | 💰 0%';
       return;
     }
@@ -7650,12 +7716,13 @@ function loadTransaksi() {
         }
         var data = result.data || [];
         if (!data || data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Tidak ada transaksi</td></tr>';
+          // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">📭 Tidak ada transaksi</td></tr>';
           document.getElementById('totalTransaksiDisplay').textContent = '📊Trans: 0 | Qty: 0 | Omzet: Rp 0 | Laba: Rp 0 | 💰 0%';
           return;
         }
         
-        // 🔥 RENDER TRANSAKSI
+        // 🔥 RENDER TRANSAKSI (SUDAH MENGGUNAKAN 9 KOLOM)
         renderTransaksi(data);
         
         // 🔥🔥🔥 HITUNG TOTAL 🔥🔥🔥
@@ -7689,12 +7756,14 @@ function loadTransaksi() {
         
       } catch (e) {
         console.error('❌ Error processing transaksi:', e);
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + e.message + '</td></tr>';
+        // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;">❌ Error: ' + e.message + '</td></tr>';
       }
     })
     .catch(function(error) {
       console.error('❌ Error loadTransaksi:', error);
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Error: ' + (error.message || 'Unknown error') + '</td></tr>';
+      // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;">❌ Error: ' + (error.message || 'Unknown error') + '</td></tr>';
     });
   } catch (e) {
     console.error('❌ Error loadTransaksi:', e);
