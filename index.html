@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyhCeMFOi9aCVJ6y7M1RT0hpkERTsMxbDhPoQiTnr60rLe_7ARAdOKkHMgfce9y39xh/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbz2wpUSJdFw9fXk3BA5okU-yAPY0A8uuCe-gfTAKBSyqbJYnC_AH-tC0-j1XH-bLVbarA/exec';
     // ============================================
   </script>
 
@@ -2496,103 +2496,104 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   
   <div class="container">
     <!-- ===== DASHBOARD ===== -->
-<div id="page-dashboard" class="page active">
-  <div class="filter-dashboard" id="filterDashboard">
-    <div class="filter-group" id="tanggalFilterGroup">
-      <label>📅 Tanggal:</label>
-      <input type="date" id="filterTanggal">
-    </div>
-    <div class="filter-group" id="filterKasirGroup" style="display:none;">
-      <label>👤 Kasir:</label>
-      <select id="filterKasir">
-        <option value="all">Semua Kasir</option>
-      </select>
-    </div>
-    <button class="btn-refresh" id="btnRefresh" onclick="refreshDashboard()">🔄 Refresh</button>
-    <span class="dashboard-info" id="dashboardInfo">Menampilkan data hari ini</span>
+    <div id="page-dashboard" class="page active">
+      <div class="filter-dashboard" id="filterDashboard">
+        <div class="filter-group" id="tanggalFilterGroup">
+          <label>📅 Tanggal:</label>
+          <input type="date" id="filterTanggal">
+        </div>
+        <div class="filter-group" id="filterKasirGroup" style="display:none;">
+          <label>👤 Kasir:</label>
+          <select id="filterKasir">
+            <option value="all">Semua Kasir</option>
+          </select>
+        </div>
+        <button class="btn-refresh" id="btnRefresh" onclick="refreshDashboard()">🔄 Refresh</button>
+        <span class="dashboard-info" id="dashboardInfo">Menampilkan data hari ini</span>
+      </div>
+      
+      <!-- STAT CARD - 4 KOLOM -->
+      <!-- STAT CARD - 4 KOLOM -->
+<div class="dashboard-grid" id="dashboardStats">
+  <!-- 1. KEUNTUNGAN HARI INI -->
+  <div class="stat-card orange">
+    <div class="number" id="keuntunganHari">Rp 0</div>
+    <div class="label">📈 Keuntungan Hari Ini</div>
   </div>
   
-  <!-- 🔥🔥🔥 HANYA SATU BLOK DASHBOARD-GRID 🔥🔥🔥 -->
-  <div class="dashboard-grid" id="dashboardStats">
-    <!-- 1. KEUNTUNGAN HARI INI -->
-    <div class="stat-card orange">
-      <div class="number" id="keuntunganHari">Rp 0</div>
-      <div class="label">📈 Keuntungan Hari Ini</div>
-    </div>
-    
-    <!-- 2. PENJUALAN HARI INI -->
-    <div class="stat-card purple">
-      <div class="number" id="penjualanHari">Rp 0</div>
-      <div class="label">🛒 Penjualan Hari Ini</div>
-    </div>
-    
-    <!-- 3. QUANTITY HARI INI -->
-    <div class="stat-card pink">
-      <div class="number" id="quantityHari">0</div>
-      <div class="label">📦 Quantity Hari Ini</div>
-    </div>
-    
-    <!-- 4. TRANSAKSI HARI INI -->
-    <div class="stat-card blue">
-      <div class="number" id="totalTransaksi">0</div>
-      <div class="label">📋 Transaksi Hari Ini</div>
-    </div>
-    
-    <!-- 5. KEUNTUNGAN BULAN INI -->
-    <div class="stat-card cyan">
-      <div class="number" id="keuntunganBulan">Rp 0</div>
-      <div class="label" id="keuntunganBulanLabel">💰 Keuntungan Bulan Ini</div>
-    </div>
-    
-    <!-- 6. PENJUALAN BULAN INI -->
-    <div class="stat-card red">
-      <div class="number" id="penjualanBulan">Rp 0</div>
-      <div class="label">🛒 Penjualan Bulan Ini</div>
-    </div>
-    
-    <!-- 7. TOTAL QUANTITY BULAN INI -->
-    <div class="stat-card green">
-      <div class="number" id="totalQuantityBulan">0</div>
-      <div class="label" id="totalQuantityBulanLabel">📦 Total Qty Bulan Ini</div>
-    </div>
-    
-    <!-- 8. TRANSAKSI BULAN INI -->
-    <div class="stat-card teal">
-      <div class="number" id="totalTransaksiBulan">0</div>
-      <div class="label" id="totalTransaksiBulanLabel">📋 Transaksi Bulan Ini</div>
-    </div>
-    
-    <!-- NILAI STOK - FULL WIDTH -->
-    <div class="stat-card dark-blue" style="grid-column: span 2;">
-      <div class="number" id="nilaiStok">Rp 0</div>
-      <div class="label">📦 Nilai Stok (Harga Beli)</div>
-      <div class="sub" id="nilaiStokSub">-</div>
-    </div>
-    
-    <!-- POTENSI PENJUALAN - FULL WIDTH -->
-    <div class="stat-card dark-green" style="grid-column: span 2;">
-      <div class="number" id="potensiPenjualan">Rp 0</div>
-      <div class="label">💰 Potensi Penjualan (Harga Jual)</div>
-      <div class="sub" id="potensiPenjualanSub">-</div>
-    </div>
+  <!-- 2. PENJUALAN HARI INI -->
+  <div class="stat-card purple">
+    <div class="number" id="penjualanHari">Rp 0</div>
+    <div class="label">🛒 Penjualan Hari Ini</div>
   </div>
   
-  <!-- GRAFIK -->
-  <div class="chart-wrapper" id="chartWrapper">
-    <h3>📊 Grafik Penjualan Bulanan per Kasir</h3>
-    <div class="chart-container">
-      <canvas id="penjualanBulananChart"></canvas>
-    </div>
-    <div class="chart-legend" id="bulananLegend"></div>
-    <div class="chart-total" id="bulananTotal">Total: Rp 0</div>
+  <!-- 3. QUANTITY HARI INI -->
+  <div class="stat-card pink">
+    <div class="number" id="quantityHari">0</div>
+    <div class="label">📦 Quantity Hari Ini</div>
   </div>
   
-  <!-- PRODUK STOK RENDAH -->
-  <div class="card">
-    <h3>⚠️ Produk Stok Rendah</h3>
-    <div id="lowStockList">Memuat data...</div>
+  <!-- 4. TRANSAKSI HARI INI -->
+  <div class="stat-card blue">
+    <div class="number" id="totalTransaksi">0</div>
+    <div class="label">📋 Transaksi Hari Ini</div>
+  </div>
+  
+  <!-- 5. KEUNTUNGAN BULAN INI -->
+  <div class="stat-card cyan">
+    <div class="number" id="keuntunganBulan">Rp 0</div>
+    <div class="label" id="keuntunganBulanLabel">💰 Keuntungan Bulan Ini</div>
+  </div>
+  
+  <!-- 6. STOK RENDAH -->
+  <div class="stat-card red">
+    <div class="number" id="stokRendah">0</div>
+    <div class="label">⚠️ Stok Rendah</div>
+  </div>
+  
+  <!-- 7. TOTAL QUANTITY BULAN INI -->
+  <div class="stat-card green">
+    <div class="number" id="totalQuantityBulan">0</div>
+    <div class="label" id="totalQuantityBulanLabel">📦 Total Qty Bulan Ini</div>
+  </div>
+  
+  <!-- 8. TRANSAKSI BULAN INI -->
+  <div class="stat-card teal">
+    <div class="number" id="totalTransaksiBulan">0</div>
+    <div class="label" id="totalTransaksiBulanLabel">📋 Transaksi Bulan Ini</div>
+  </div>
+  
+  <!-- NILAI STOK - FULL WIDTH -->
+  <div class="stat-card dark-blue" style="grid-column: span 2;">
+    <div class="number" id="nilaiStok">Rp 0</div>
+    <div class="label">📦 Nilai Stok (Harga Beli)</div>
+    <div class="sub" id="nilaiStokSub">-</div>
+  </div>
+  
+  <!-- POTENSI PENJUALAN - FULL WIDTH -->
+  <div class="stat-card dark-green" style="grid-column: span 2;">
+    <div class="number" id="potensiPenjualan">Rp 0</div>
+    <div class="label">💰 Potensi Penjualan (Harga Jual)</div>
+    <div class="sub" id="potensiPenjualanSub">-</div>
   </div>
 </div>
+      
+      <!-- GRAFIK -->
+<div class="chart-wrapper" id="chartWrapper">  <!-- 🔥 TAMBAHKAN ID INI -->
+  <h3>📊 Grafik Penjualan Bulanan per Kasir</h3>
+  <div class="chart-container">
+    <canvas id="penjualanBulananChart"></canvas>
+  </div>
+  <div class="chart-legend" id="bulananLegend"></div>
+  <div class="chart-total" id="bulananTotal">Total: Rp 0</div>
+</div>
+      
+      <!-- PRODUK STOK RENDAH -->
+      <div class="card">
+        <h3>⚠️ Produk Stok Rendah</h3>
+        <div id="lowStockList">Memuat data...</div>
+      </div>
+    </div>
     
     <!-- ===== POS ===== -->
 <div id="page-pos" class="page">
@@ -5607,6 +5608,7 @@ function loadDashboard() {
       chartWrapper.style.display = 'none';
       console.log('🚫 Grafik disembunyikan untuk Reseller');
     }
+    // Set legend dan total ke pesan khusus
     document.getElementById('bulananLegend').innerHTML = '🔒 Tidak tersedia untuk Reseller';
     document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
   } else {
@@ -5618,14 +5620,13 @@ function loadDashboard() {
     document.getElementById('bulananTotal').textContent = '⏳ Memuat total...';
   }
   
-  // SET LOADING STATE
+  // ... update label ...
+  
   document.getElementById('keuntunganHari').textContent = '⏳';
   document.getElementById('penjualanHari').textContent = '⏳';
   document.getElementById('quantityHari').textContent = '⏳';
   document.getElementById('totalTransaksi').textContent = '⏳';
   document.getElementById('keuntunganBulan').textContent = '⏳';
-  // 🔥🔥🔥 TAMBAHKAN INI 🔥🔥🔥
-  document.getElementById('penjualanBulan').textContent = '⏳';
   document.getElementById('stokRendah').textContent = '⏳';
   document.getElementById('totalQuantityBulan').textContent = '⏳';
   document.getElementById('totalTransaksiBulan').textContent = '⏳';
@@ -5643,7 +5644,6 @@ function loadDashboard() {
     document.getElementById('quantityHari').textContent = '🔒';
     document.getElementById('totalTransaksi').textContent = '🔒';
     document.getElementById('keuntunganBulan').textContent = '🔒';
-    document.getElementById('penjualanBulan').textContent = '🔒';
     document.getElementById('stokRendah').textContent = '🔒';
     document.getElementById('totalQuantityBulan').textContent = '🔒';
     document.getElementById('totalTransaksiBulan').textContent = '🔒';
@@ -5668,9 +5668,7 @@ function loadDashboard() {
     document.getElementById('quantityHari').textContent = data.quantityHari || 0;
     document.getElementById('totalTransaksi').textContent = data.totalTransaksi || 0;
     document.getElementById('keuntunganBulan').textContent = formatRupiah(data.keuntunganBulan || 0);
-    
-    // 🔥🔥🔥 TAMBAHKAN INI - PENJUALAN BULAN INI 🔥🔥🔥
-    document.getElementById('penjualanBulan').textContent = formatRupiah(data.penjualanBulan || 0);
+    document.getElementById('stokRendah').textContent = data.stokRendah || 0;
     document.getElementById('totalQuantityBulan').textContent = data.totalQuantityBulan || 0;
     document.getElementById('totalTransaksiBulan').textContent = data.totalTransaksiBulan || 0;
     document.getElementById('nilaiStok').textContent = formatRupiah(data.nilaiStok || 0);
@@ -5695,7 +5693,6 @@ function loadDashboard() {
     document.getElementById('quantityHari').textContent = '❌';
     document.getElementById('totalTransaksi').textContent = '❌';
     document.getElementById('keuntunganBulan').textContent = '❌';
-    document.getElementById('penjualanBulan').textContent = '❌';
     document.getElementById('stokRendah').textContent = '❌';
     document.getElementById('totalQuantityBulan').textContent = '❌';
     document.getElementById('totalTransaksiBulan').textContent = '❌';
