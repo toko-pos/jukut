@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbz2wpUSJdFw9fXk3BA5okU-yAPY0A8uuCe-gfTAKBSyqbJYnC_AH-tC0-j1XH-bLVbarA/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyIQGBKAeNOEfyx_8vUmuK_Y_ZxPWUrTGrLKDE4jA7n5lkkle25h-recMb8snH0ETcm-g/exec';
     // ============================================
   </script>
 
@@ -2545,10 +2545,10 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     <div class="label" id="keuntunganBulanLabel">💰 Keuntungan Bulan Ini</div>
   </div>
   
-  <!-- 6. STOK RENDAH -->
+  <!-- 6. PENJUALAN BULAN INI (GANTI STOK RENDAH) -->
   <div class="stat-card red">
-    <div class="number" id="stokRendah">0</div>
-    <div class="label">⚠️ Stok Rendah</div>
+    <div class="number" id="penjualanBulan">Rp 0</div>
+    <div class="label">🛒 Penjualan Bulan Ini</div>
   </div>
   
   <!-- 7. TOTAL QUANTITY BULAN INI -->
@@ -5608,7 +5608,6 @@ function loadDashboard() {
       chartWrapper.style.display = 'none';
       console.log('🚫 Grafik disembunyikan untuk Reseller');
     }
-    // Set legend dan total ke pesan khusus
     document.getElementById('bulananLegend').innerHTML = '🔒 Tidak tersedia untuk Reseller';
     document.getElementById('bulananTotal').textContent = 'Total: Rp 0';
   } else {
@@ -5620,13 +5619,14 @@ function loadDashboard() {
     document.getElementById('bulananTotal').textContent = '⏳ Memuat total...';
   }
   
-  // ... update label ...
-  
+  // SET LOADING STATE
   document.getElementById('keuntunganHari').textContent = '⏳';
   document.getElementById('penjualanHari').textContent = '⏳';
   document.getElementById('quantityHari').textContent = '⏳';
   document.getElementById('totalTransaksi').textContent = '⏳';
   document.getElementById('keuntunganBulan').textContent = '⏳';
+  // 🔥🔥🔥 TAMBAHKAN INI 🔥🔥🔥
+  document.getElementById('penjualanBulan').textContent = '⏳';
   document.getElementById('stokRendah').textContent = '⏳';
   document.getElementById('totalQuantityBulan').textContent = '⏳';
   document.getElementById('totalTransaksiBulan').textContent = '⏳';
@@ -5644,6 +5644,7 @@ function loadDashboard() {
     document.getElementById('quantityHari').textContent = '🔒';
     document.getElementById('totalTransaksi').textContent = '🔒';
     document.getElementById('keuntunganBulan').textContent = '🔒';
+    document.getElementById('penjualanBulan').textContent = '🔒';
     document.getElementById('stokRendah').textContent = '🔒';
     document.getElementById('totalQuantityBulan').textContent = '🔒';
     document.getElementById('totalTransaksiBulan').textContent = '🔒';
@@ -5668,6 +5669,10 @@ function loadDashboard() {
     document.getElementById('quantityHari').textContent = data.quantityHari || 0;
     document.getElementById('totalTransaksi').textContent = data.totalTransaksi || 0;
     document.getElementById('keuntunganBulan').textContent = formatRupiah(data.keuntunganBulan || 0);
+    
+    // 🔥🔥🔥 TAMBAHKAN INI - PENJUALAN BULAN INI 🔥🔥🔥
+    document.getElementById('penjualanBulan').textContent = formatRupiah(data.penjualanBulan || 0);
+    
     document.getElementById('stokRendah').textContent = data.stokRendah || 0;
     document.getElementById('totalQuantityBulan').textContent = data.totalQuantityBulan || 0;
     document.getElementById('totalTransaksiBulan').textContent = data.totalTransaksiBulan || 0;
@@ -5693,6 +5698,7 @@ function loadDashboard() {
     document.getElementById('quantityHari').textContent = '❌';
     document.getElementById('totalTransaksi').textContent = '❌';
     document.getElementById('keuntunganBulan').textContent = '❌';
+    document.getElementById('penjualanBulan').textContent = '❌';
     document.getElementById('stokRendah').textContent = '❌';
     document.getElementById('totalQuantityBulan').textContent = '❌';
     document.getElementById('totalTransaksiBulan').textContent = '❌';
