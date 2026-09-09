@@ -4997,7 +4997,44 @@ document.getElementById('formRegister').addEventListener('submit', function(e) {
   });
 });
 
-
+  // ============================================================
+  // 🔥 FORM SAVE INFO TOKO - TAMBAHKAN INI!
+  // ============================================================
+  var formToko = document.getElementById('formToko');
+  if (formToko) {
+    formToko.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // 🔥 CEK LOGIN
+      if (!currentUser || !currentUser.username) {
+        showToast('⚠️ Silakan login terlebih dahulu!', 'error');
+        return;
+      }
+      
+      var namaToko = document.getElementById('fNamaToko').value.trim();
+      var alamat = document.getElementById('fAlamatToko').value.trim();
+      var noHp = document.getElementById('fNoHp').value.trim();
+      
+      console.log('📝 Submit form Toko - Username:', currentUser.username);
+      console.log('📝 Nama Toko:', namaToko);
+      console.log('📝 Alamat:', alamat);
+      console.log('📝 No HP:', noHp);
+      
+      if (!namaToko) {
+        showToast('⚠️ Nama Toko wajib diisi!', 'error');
+        document.getElementById('fNamaToko').focus();
+        return;
+      }
+      
+      var btn = this.querySelector('button[type="submit"]');
+      var originalText = btn.textContent;
+      btn.textContent = '⏳ Menyimpan...';
+      btn.disabled = true;
+      
+      // 🔥 PANGGIL FUNGSI SAVE
+      saveInfoToko(currentUser.username, namaToko, alamat, noHp);
+    });
+  }
 
 
   
@@ -5270,40 +5307,51 @@ function loadKasirList() {
 
 
 // ============================================================
-// 🔥 SAVE INFO TOKO
+// 🔥 SAVE INFO TOKO - PERBAIKI
 // ============================================================
 function saveInfoToko(username, namaToko, alamat, noHp) {
-    var data = {
-        action: 'saveInfoToko',
-        data: {
-            username: username,
-            namaToko: namaToko,
-            alamat: alamat,
-            noHp: noHp
-        }
-    };
+    console.log('📝 Menyimpan info toko untuk:', username);
+    console.log('📝 Nama Toko:', namaToko);
+    console.log('📝 Alamat:', alamat);
+    console.log('📝 No HP:', noHp);
     
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(function(response) {
-        return response.json();
+    // 🔥 PAKAI callGAS() BUKAN FETCH LANGSUNG!
+    callGAS('saveInfoToko', {
+        username: username,
+        namaToko: namaToko,
+        alamat: alamat,
+        noHp: noHp
     })
     .then(function(result) {
-        if (result.success) {
-            alert('✅ ' + result.message);
+        console.log('📥 Result saveInfoToko:', result);
+        
+        if (result && result.success) {
+            showToast('✅ ' + result.message, 'success');
+            
+            // 🔥 UPDATE HEADER LANGSUNG
+            var headerTitle = document.getElementById('headerTitle');
+            if (headerTitle && namaToko) {
+                headerTitle.textContent = '🛒 ' + namaToko;
+            }
+            
+            // 🔥 UPDATE CACHE
+            refreshInfoTokoCache();
+            
+            // 🔥 UPDATE FORM DI PROFILE
+            var fn = document.getElementById('fNamaToko');
+            var fa = document.getElementById('fAlamatToko');
+            var fh = document.getElementById('fNoHp');
+            if (fn) fn.value = namaToko || '';
+            if (fa) fa.value = alamat || '';
+            if (fh) fh.value = noHp || '';
+            
         } else {
-            alert('❌ Gagal: ' + result.error);
+            showToast('❌ Gagal: ' + (result ? result.error : 'Terjadi kesalahan'), 'error');
         }
     })
     .catch(function(error) {
-        console.error('Error:', error);
-        alert('❌ Error: ' + error.message);
+        console.error('❌ Error saveInfoToko:', error);
+        showToast('❌ Error: ' + error.message, 'error');
     });
 }
 
