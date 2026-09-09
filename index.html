@@ -2513,50 +2513,70 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
       </div>
       
       <!-- STAT CARD - 4 KOLOM -->
-      <div class="dashboard-grid" id="dashboardStats">
-        <div class="stat-card orange">
-          <div class="number" id="keuntunganHari">Rp 0</div>
-          <div class="label">📈 Keuntungan Hari Ini</div>
-        </div>
-        <div class="stat-card purple">
-          <div class="number" id="penjualanHari">Rp 0</div>
-          <div class="label">🛒 Penjualan Hari Ini</div>
-        </div>
-        <div class="stat-card pink">
-          <div class="number" id="quantityHari">0</div>
-          <div class="label">📦 Quantity Hari Ini</div>
-        </div>
-        <div class="stat-card blue">
-          <div class="number" id="totalTransaksi">0</div>
-          <div class="label">📋 Transaksi Hari Ini</div>
-        </div>
-        <div class="stat-card red">
-          <div class="number" id="stokRendah">0</div>
-          <div class="label">⚠️ Stok Rendah</div>
-        </div>
-        <div class="stat-card green">
-          <div class="number" id="totalQuantityBulan">0</div>
-          <div class="label" id="totalQuantityBulanLabel">📦 Total Qty Bulan Ini</div>
-        </div>
-        <div class="stat-card cyan">
-          <div class="number" id="keuntunganBulan">Rp 0</div>
-          <div class="label" id="keuntunganBulanLabel">💰 Keuntungan Bulan Ini</div>
-        </div>
-        <div class="stat-card teal">
-          <div class="number" id="totalTransaksiBulan">0</div>
-          <div class="label" id="totalTransaksiBulanLabel">📋 Transaksi Bulan Ini</div>
-        </div>
-        <div class="stat-card dark-blue" style="grid-column: span 2;">
-          <div class="number" id="nilaiStok">Rp 0</div>
-          <div class="label">📦 Nilai Stok (Harga Beli)</div>
-          <div class="sub" id="nilaiStokSub">-</div>
-        </div>
-        <div class="stat-card dark-green" style="grid-column: span 2;">
-          <div class="number" id="potensiPenjualan">Rp 0</div>
-          <div class="label">💰 Potensi Penjualan (Harga Jual)</div>
-          <div class="sub" id="potensiPenjualanSub">-</div>
-        </div>
-      </div>
+      <!-- STAT CARD - 4 KOLOM -->
+<div class="dashboard-grid" id="dashboardStats">
+  <!-- 1. KEUNTUNGAN HARI INI -->
+  <div class="stat-card orange">
+    <div class="number" id="keuntunganHari">Rp 0</div>
+    <div class="label">📈 Keuntungan Hari Ini</div>
+  </div>
+  
+  <!-- 2. PENJUALAN HARI INI -->
+  <div class="stat-card purple">
+    <div class="number" id="penjualanHari">Rp 0</div>
+    <div class="label">🛒 Penjualan Hari Ini</div>
+  </div>
+  
+  <!-- 3. QUANTITY HARI INI -->
+  <div class="stat-card pink">
+    <div class="number" id="quantityHari">0</div>
+    <div class="label">📦 Quantity Hari Ini</div>
+  </div>
+  
+  <!-- 4. TRANSAKSI HARI INI -->
+  <div class="stat-card blue">
+    <div class="number" id="totalTransaksi">0</div>
+    <div class="label">📋 Transaksi Hari Ini</div>
+  </div>
+  
+  <!-- 5. KEUNTUNGAN BULAN INI -->
+  <div class="stat-card cyan">
+    <div class="number" id="keuntunganBulan">Rp 0</div>
+    <div class="label" id="keuntunganBulanLabel">💰 Keuntungan Bulan Ini</div>
+  </div>
+  
+  <!-- 6. STOK RENDAH -->
+  <div class="stat-card red">
+    <div class="number" id="stokRendah">0</div>
+    <div class="label">⚠️ Stok Rendah</div>
+  </div>
+  
+  <!-- 7. TOTAL QUANTITY BULAN INI -->
+  <div class="stat-card green">
+    <div class="number" id="totalQuantityBulan">0</div>
+    <div class="label" id="totalQuantityBulanLabel">📦 Total Qty Bulan Ini</div>
+  </div>
+  
+  <!-- 8. TRANSAKSI BULAN INI -->
+  <div class="stat-card teal">
+    <div class="number" id="totalTransaksiBulan">0</div>
+    <div class="label" id="totalTransaksiBulanLabel">📋 Transaksi Bulan Ini</div>
+  </div>
+  
+  <!-- NILAI STOK - FULL WIDTH -->
+  <div class="stat-card dark-blue" style="grid-column: span 2;">
+    <div class="number" id="nilaiStok">Rp 0</div>
+    <div class="label">📦 Nilai Stok (Harga Beli)</div>
+    <div class="sub" id="nilaiStokSub">-</div>
+  </div>
+  
+  <!-- POTENSI PENJUALAN - FULL WIDTH -->
+  <div class="stat-card dark-green" style="grid-column: span 2;">
+    <div class="number" id="potensiPenjualan">Rp 0</div>
+    <div class="label">💰 Potensi Penjualan (Harga Jual)</div>
+    <div class="sub" id="potensiPenjualanSub">-</div>
+  </div>
+</div>
       
       <!-- GRAFIK -->
 <div class="chart-wrapper" id="chartWrapper">  <!-- 🔥 TAMBAHKAN ID INI -->
