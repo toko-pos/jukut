@@ -7670,11 +7670,6 @@ function prosesBatalStok(batchId) {
 
 // ==================== LOG PEMBALATAN STOK ====================
 function loadLogPembatalanStok() {
-  try {
-    if (!currentUser) {
-      document.getElementById('logPembatalanStokTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Silakan login terlebih dahulu</td></tr>';
-      return;
-    }
     
     if (currentUser.role !== 'admin' && currentUser.role !== 'owner') {
       document.getElementById('logPembatalanStokTable').innerHTML = `
@@ -7896,8 +7891,13 @@ function printTransaksiPreview() {
 // ==================== LOG PEMBALATAN TRANSAKSI ====================
 function loadLogPembatalan() {
   try {
-    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'owner')) {
-      document.getElementById('logPembatalanTable').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">🔒 Hanya Admin & Owner yang dapat melihat log pembatalan</td></tr>';
+    // 🔥 PERBAIKI: Gunakan toUpperCase() untuk case-insensitive
+    var role = currentUser ? currentUser.role.toUpperCase() : '';
+    var isAdmin = (role === 'ADMIN' || role === 'OWNER');
+    
+    if (!isAdmin) {
+      document.getElementById('logPembatalanTable').innerHTML = 
+        '<tr><td colspan="7" style="text-align:center;color:#999;">🔒 Hanya Admin & Owner yang dapat melihat log pembatalan</td></tr>';
       return;
     }
     
@@ -8277,7 +8277,7 @@ function prosesBatalTransaksi(idTransaksi) {
 
 // ==================== USER MANAGEMENT ====================
 function loadUsers() {
-  // 🔥 PERBAIKI: Gunakan toUpperCase() untuk case insensitive
+  // 🔥 PERBAIKI: Gunakan toUpperCase()
   var role = currentUser ? currentUser.role.toUpperCase() : '';
   var isAdmin = (role === 'ADMIN' || role === 'OWNER');
   
