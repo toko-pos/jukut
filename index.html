@@ -70,7 +70,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzcCjmQzTKJfQl8mfuct63v0h9Cng6URCaNE2DEYt5VxaKIlWimHcIdD56sVgSOSC1Jcg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzZiw-uZWqYUIjZAnrGwgE_w2C4Y0ozufSeKG2AXJLh1i4ZBIT8OV9b_BXhCGax1oIUCQ/exec';
     // ============================================
   </script>
 
@@ -4323,6 +4323,7 @@ var currentUser = null;
 var currentCart = [];
 var currentStokCart = [];
 var produkList = [];
+var batchCache = [];  // 🔥 TAMBAHKAN INI
 var allUsers = [];
 var isRefreshing = false;
 var riwayatStok = [];
@@ -4337,6 +4338,7 @@ var batchUntukDibatalkan = [];
 var chartColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
 var _isProcessingPayment = false;
 var _isProcessingStok = false;
+
 
 
 // 🔥🔥🔥 TAMBAHKAN DI AWAL SCRIPT (setelah variabel global)
@@ -5511,11 +5513,26 @@ function loadAllData() {
   loadRiwayatStok();
   loadStokProduk();
   loadBatchList();
+  loadBatchCache();  // 🔥 TAMBAHKAN INI
   loadBatchUntukDibatalkan();
   loadLogPembatalanStok();
   updatePosUI();
   updateStokMasukUI();
   generateNoNotaStok();
+}
+
+// 🔥 FUNGSI BARU: Load batch cache
+function loadBatchCache() {
+  callGAS('getAllBatch', {})
+  .then(function(result) {
+    if (result && result.success) {
+      batchCache = result.data || [];
+      console.log('✅ Batch cache loaded:', batchCache.length);
+    }
+  })
+  .catch(function(error) {
+    console.error('❌ Error loadBatchCache:', error);
+  });
 }
 
 // ==================== NAVIGATION ====================
@@ -6255,7 +6272,6 @@ function loadPosProduk() {
 function addToCart(kode) {
   if (!currentUser) { showToast('Silakan login terlebih dahulu!', 'warning'); return; }
   
-  // Cari produk dari produkList
   var produk = null;
   for (var i = 0; i < produkList.length; i++) { 
     if (produkList[i].Kode === kode) { 
@@ -6265,7 +6281,20 @@ function addToCart(kode) {
   }
   if (!produk) return;
   
-  var stokAsli = parseInt(produk.Stok) || 0;
+  // 🔥 CEK STOK PRODUK
+  var stokProduk = parseInt(produk.Stok) || 0;
+  
+  // 🔥 CEK STOK BATCH
+  var stokBatch = 0;
+  for (var b = 0; b < batchCache.length; b++) {
+    if (batchCache[b].kode === kode) {
+      stokBatch += parseInt(batchCache[b].stok) || 0;
+    }
+  }
+  
+  // 🔥 PAKAI YANG LEBIH KECIL
+  var stokEfektif = Math.min(stokProduk, stokBatch);
+  
   var qtyDiCart = 0;
   var existing = null;
   for (var i = 0; i < currentCart.length; i++) { 
@@ -6276,16 +6305,17 @@ function addToCart(kode) {
     } 
   }
   
-  var stokTersedia = stokAsli - qtyDiCart;
-  if (stokTersedia <= 0) { showToast('Stok produk habis!', 'error'); return; }
+  var stokTersedia = stokEfektif - qtyDiCart;
+  if (stokTersedia <= 0) { 
+    showToast('Stok produk habis! (Batch: ' + stokBatch + ')', 'error'); 
+    return; 
+  }
   
-  // 🔥 TENTUKAN HARGA (NORMAL ATAU RESELLER)
   var harga = produk['Harga Jual'] || 0;
   var selectReseller = document.getElementById('pilihReseller');
   var kodeReseller = selectReseller ? selectReseller.value : '';
   
   if (kodeReseller) {
-    // Ambil harga reseller dari cache atau panggil API
     callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
       .then(function(result) {
         if (result && result.success) {
@@ -6294,11 +6324,9 @@ function addToCart(kode) {
             harga = hargaMap[kode].hargaReseller;
           }
         }
-        // Lanjutkan proses dengan harga yang sudah ditentukan
         prosesAddToCart(produk, kode, harga, existing);
       })
       .catch(function(error) {
-        console.error('❌ Error get harga reseller:', error);
         prosesAddToCart(produk, kode, harga, existing);
       });
   } else {
@@ -6504,42 +6532,22 @@ function updateStokMasukUI() {
 // ==================== UPDATE STOK GRID POS REAL-TIME ====================
 function updateStokGridPOS() {
   try {
-    console.log('🔄 updateStokGridPOS() dipanggil');
-    
     var container = document.getElementById('posProducts');
-    if (!container) {
-      console.log('❌ Container posProducts tidak ditemukan');
-      return;
-    }
+    if (!container) return;
     
-    // ⭐ AMBIL STATUS TANGGAL
     var hasDate = getTanggalTransaksi() !== '';
-    
     var productItems = container.querySelectorAll('.product-item');
-    if (!productItems || productItems.length === 0) {
-      console.log('❌ Tidak ada produk di grid');
-      return;
-    }
-    
-    console.log('📦 Jumlah produk di grid:', productItems.length);
-    console.log('🛒 Isi keranjang:', currentCart);
-    console.log('📅 hasDate:', hasDate);
     
     var cartStokMap = {};
     for (var i = 0; i < currentCart.length; i++) {
       var item = currentCart[i];
       cartStokMap[item.kode] = (cartStokMap[item.kode] || 0) + item.qty;
     }
-    console.log('📊 Cart map:', cartStokMap);
     
     for (var i = 0; i < productItems.length; i++) {
       var item = productItems[i];
       var kode = item.getAttribute('data-kode');
-      
-      if (!kode) {
-        console.log('⚠️ Produk ke-' + i + ' tidak memiliki data-kode');
-        continue;
-      }
+      if (!kode) continue;
       
       var produkAsli = null;
       for (var j = 0; j < produkList.length; j++) {
@@ -6548,20 +6556,26 @@ function updateStokGridPOS() {
           break;
         }
       }
+      if (!produkAsli) continue;
       
-      if (!produkAsli) {
-        console.log('⚠️ Produk dengan kode ' + kode + ' tidak ditemukan di produkList');
-        continue;
+      // 🔥 CEK STOK PRODUK
+      var stokProduk = parseInt(produkAsli.Stok) || 0;
+      
+      // 🔥 CEK STOK BATCH
+      var stokBatch = 0;
+      for (var b = 0; b < batchCache.length; b++) {
+        if (batchCache[b].kode === kode) {
+          stokBatch += parseInt(batchCache[b].stok) || 0;
+        }
       }
       
-      var stokAsli = parseInt(produkAsli.Stok) || 0;
+      // 🔥 PAKAI YANG LEBIH KECIL
+      var stokEfektif = Math.min(stokProduk, stokBatch);
+      
       var qtyDiCart = cartStokMap[kode] || 0;
-      var stokTampil = stokAsli - qtyDiCart;
+      var stokTampil = stokEfektif - qtyDiCart;
       var satuan = produkAsli.Satuan || 'pcs';
       
-      console.log('📊 ' + kode + ': stokAsli=' + stokAsli + ', qtyCart=' + qtyDiCart + ', stokTampil=' + stokTampil);
-      
-      // Update stok display
       var stockEl = item.querySelector('.stock');
       if (stockEl) {
         var isOutOfStock = stokTampil <= 0;
@@ -6571,11 +6585,38 @@ function updateStokGridPOS() {
         stockEl.className = 'stock ' + stockClass;
       }
       
-      // Hapus semua badge lama
+      // Hapus badge lama
       var badges = item.querySelectorAll('.badge-out-of-stock');
       for (var b = 0; b < badges.length; b++) {
         badges[b].remove();
       }
+      
+      if (!hasDate) {
+        var dateBadge = document.createElement('div');
+        dateBadge.className = 'badge-out-of-stock';
+        dateBadge.textContent = '📅 Pilih Tanggal';
+        dateBadge.style.background = '#ff9800';
+        item.appendChild(dateBadge);
+        item.classList.add('pos-disabled');
+        item.style.pointerEvents = 'none';
+      } else if (stokTampil <= 0) {
+        var newBadge = document.createElement('div');
+        newBadge.className = 'badge-out-of-stock';
+        newBadge.textContent = '⛔ HABIS';
+        item.appendChild(newBadge);
+        item.classList.add('disabled');
+        item.classList.add('pos-disabled');
+        item.style.pointerEvents = 'none';
+      } else {
+        item.classList.remove('disabled');
+        item.classList.remove('pos-disabled');
+        item.style.pointerEvents = '';
+      }
+    }
+  } catch (e) {
+    console.error('❌ Error updateStokGridPOS:', e);
+  }
+}
       
       // ============================================================
       // ⭐ LOGIKA DISABLE UNTUK TAB POS
@@ -8461,6 +8502,23 @@ function checkout() {
     showToast('⚠️ Keranjang belanja kosong!', 'warning');
     return;
   }
+
+  // 🔥 VALIDASI STOK BATCH SEBELUM CHECKOUT
+  for (var i = 0; i < currentCart.length; i++) {
+    var item = currentCart[i];
+    var stokBatch = 0;
+    for (var b = 0; b < batchCache.length; b++) {
+      if (batchCache[b].kode === item.kode) {
+        stokBatch += parseInt(batchCache[b].stok) || 0;
+      }
+    }
+    
+    if (stokBatch < item.qty) {
+      showToast('❌ Stok ' + item.nama + ' tidak mencukupi! Tersedia: ' + stokBatch + ', Diminta: ' + item.qty, 'error');
+      return;
+    }
+  }
+  
   
   var total = 0;
   for (var i = 0; i < currentCart.length; i++) {
