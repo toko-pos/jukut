@@ -11965,50 +11965,35 @@ function simpanSemuaHargaReseller(kodeReseller) {
   });
 }
 
-  // ============================================================
-// 🔥🔥🔥 AUDIT STOK LENGKAP - KHUSUS ADMIN 🔥🔥🔥
+  <!-- ============================================================ -->
+<!-- 🔥🔥🔥 SCRIPT AUDIT STOK - WAJIB ADA 🔥🔥🔥 -->
+<!-- ============================================================ -->
+<script>
 // ============================================================
-
-/**
- * Cek apakah user adalah Admin/Owner
- */
+// 🔥 CEK APAKAH USER ADMIN
+// ============================================================
 function isUserAdmin() {
   if (!currentUser || !currentUser.role) return false;
-  var role = currentUser.role.toUpperCase();
+  var role = String(currentUser.role).toUpperCase();
   return (role === 'ADMIN' || role === 'OWNER');
 }
 
-/**
- * Tampilkan/sembunyikan tombol Audit berdasarkan role
- * Panggil fungsi ini di showAppAfterLogin() atau showPage('produk')
- */
-function setupAuditButtonVisibility() {
-  var btn = document.getElementById('btnAuditStok');
-  if (!btn) return;
-  
-  if (isUserAdmin()) {
-    btn.style.display = 'inline-flex';
-    console.log('✅ Tombol Audit Stok ditampilkan (Admin)');
-  } else {
-    btn.style.display = 'none';
-    console.log('🚫 Tombol Audit Stok disembunyikan (bukan Admin)');
-  }
-}
-
-/**
- * Buka Modal Audit & Jalankan Audit
- */
+// ============================================================
+// 🔥 BUKA MODAL AUDIT & JALANKAN
+// ============================================================
 function bukaAuditStok() {
-  // 🔥 CEK AKSES - HANYA ADMIN
+  // Cek akses
   if (!isUserAdmin()) {
     showToast('⛔ Akses ditolak! Hanya Admin yang dapat melakukan audit stok.', 'error');
     return;
   }
   
+  console.log('🔍 Memulai audit stok lengkap...');
+  
   // Tampilkan modal
   var modal = document.getElementById('auditStokModal');
   if (!modal) {
-    showToast('❌ Modal audit tidak ditemukan!', 'error');
+    showToast('❌ Modal audit tidak ditemukan! Tambahkan HTML modal audit.', 'error');
     return;
   }
   modal.classList.add('active');
@@ -12018,8 +12003,6 @@ function bukaAuditStok() {
   document.getElementById('auditHasil').style.display = 'none';
   document.getElementById('auditError').style.display = 'none';
   document.getElementById('auditFooter').style.display = 'none';
-  
-  console.log('🔍 Memulai audit stok lengkap...');
   
   // Panggil GAS
   callGAS('auditStokLengkap', {})
@@ -12033,12 +12016,9 @@ function bukaAuditStok() {
       return;
     }
     
-    // Tampilkan hasil
     renderAuditHasil(result);
     document.getElementById('auditHasil').style.display = 'block';
     document.getElementById('auditFooter').style.display = 'flex';
-    
-    // Simpan hasil ke global untuk export
     window._auditResult = result;
     
   })
@@ -12049,22 +12029,294 @@ function bukaAuditStok() {
   });
 }
 
-/**
- * Tampilkan Error
- */
-function showAuditError(msg) {
-  document.getElementById('auditErrorMsg').textContent = '❌ ' + msg;
-  document.getElementById('auditError').style.display = 'block';
+// ============================================================
+// 🔥 TUTUP MODAL
+// ============================================================
+function closeAuditStokModal() {
+  var modal = document.getElementById('auditStokModal');
+  if (modal) modal.classList.remove('active');
 }
 
-/**
- * Render Hasil Audit
- */
+// ============================================================
+// 🔥 TAMPILKAN ERROR
+// ============================================================
+function showAuditError(msg) {
+  var el = document.getElementById('auditErrorMsg');
+  var box = document.getElementById('auditError');
+  if (el) el.textContent = '❌ ' + msg;
+  if (box) box.style.display = 'block';
+}
+
+// ============================================================
+// 🔥 RENDER HASIL AUDIT
+// ============================================================
 function renderAuditHasil(result) {
   var totalSelisih = result.totalSelisih || 0;
   var isAkurat = totalSelisih === 0;
   
   var html = '';
+  
+  // Banner Status
+  var bannerBg = isAkurat 
+    ? 'linear-gradient(135deg, #4CAF50, #388E3C)' 
+    : 'linear-gradient(135deg, #FF6B6B, #E53935)';
+  var bannerIcon = isAkurat ? '🎉' : '⚠️';
+  var bannerText = isAkurat ? 'STOK 100% AKURAT' : 'ADA ' + totalSelisih + ' SELISIH';
+  var bannerSub = isAkurat 
+    ? 'Semua lapis audit menunjukkan hasil yang sinkron' 
+    : 'Periksa detail di bawah untuk menemukan masalah';
+  
+  html += '<div style="background: ' + bannerBg + '; color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 20px;">';
+  html += '  <div style="font-size: 3rem; margin-bottom: 8px;">' + bannerIcon + '</div>';
+  html += '  <div style="font-size: 1.5rem; font-weight: 800;">' + bannerText + '</div>';
+  html += '  <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 6px;">' + bannerSub + '</div>';
+  html += '</div>';
+  
+  // Ringkasan 3 Lapis
+  var l1 = result.lapis1 || {};
+  var l2 = result.lapis2 || {};
+  var l3 = result.lapis3 || {};
+  
+  html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">';
+  
+  var layers = [
+    { name: 'LAPIS 1', desc: 'Produk vs Batch', data: l1 },
+    { name: 'LAPIS 2', desc: 'Batch vs (Masuk−Jual)', data: l2 },
+    { name: 'LAPIS 3', desc: 'Detail per Batch', data: l3 }
+  ];
+  
+  for (var i = 0; i < layers.length; i++) {
+    var L = layers[i];
+    var ok = L.data.totalSelisih === 0;
+    html += '<div style="background: ' + (ok ? '#e8f5e9' : '#ffebee') + '; border-left: 4px solid ' + (ok ? '#4CAF50' : '#f44336') + '; padding: 15px; border-radius: 8px;">';
+    html += '  <div style="font-size: 0.75rem; font-weight: 700; color: ' + (ok ? '#2e7d32' : '#c62828') + ';">' + L.name + '</div>';
+    html += '  <div style="font-size: 0.85rem; color: #333; margin-top: 4px;">' + L.desc + '</div>';
+    html += '  <div style="font-size: 1.3rem; font-weight: 800; color: ' + (ok ? '#2e7d32' : '#c62828') + '; margin-top: 6px;">' + (ok ? '✅ OK' : '❌ ' + L.data.totalSelisih) + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  
+  // Tabel Lapis 1
+  if (l1.hasil && l1.hasil.length > 0) {
+    html += '<div style="margin-bottom: 20px;">';
+    html += '<h4 style="margin: 0 0 10px 0; font-size: 1rem;">📋 LAPIS 1: Produk vs Batch</h4>';
+    html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px;">';
+    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">';
+    html += '<thead><tr style="background: #f0f4ff;">';
+    html += '<th style="padding: 8px; text-align: left;">Kode</th>';
+    html += '<th style="padding: 8px; text-align: left;">Nama</th>';
+    html += '<th style="padding: 8px; text-align: right;">Produk</th>';
+    html += '<th style="padding: 8px; text-align: right;">Batch</th>';
+    html += '<th style="padding: 8px; text-align: right;">Selisih</th>';
+    html += '<th style="padding: 8px; text-align: center;">Status</th>';
+    html += '</tr></thead><tbody>';
+    
+    for (var i = 0; i < l1.hasil.length; i++) {
+      var r = l1.hasil[i];
+      var beda = r.selisih !== 0;
+      html += '<tr style="background: ' + (beda ? '#fff5f5' : '') + '; border-bottom: 1px solid #f0f0f0;">';
+      html += '<td style="padding: 6px 8px; font-weight: 700;">' + r.kode + '</td>';
+      html += '<td style="padding: 6px 8px;">' + r.nama + '</td>';
+      html += '<td style="padding: 6px 8px; text-align: right;">' + r.produk + '</td>';
+      html += '<td style="padding: 6px 8px; text-align: right;">' + r.batch + '</td>';
+      html += '<td style="padding: 6px 8px; text-align: right; font-weight: 800; color: ' + (beda ? '#c62828' : '#2e7d32') + ';">' + (r.selisih > 0 ? '+' : '') + r.selisih + '</td>';
+      html += '<td style="padding: 6px 8px; text-align: center;">' + (beda ? '❌' : '✅') + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table></div></div>';
+  }
+  
+  // Tabel Lapis 2
+  if (l2.hasil && l2.hasil.length > 0) {
+    html += '<div style="margin-bottom: 20px;">';
+    html += '<h4 style="margin: 0 0 10px 0; font-size: 1rem;">📋 LAPIS 2: Batch vs (Masuk − Jual)</h4>';
+    html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px;">';
+    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">';
+    html += '<thead><tr style="background: #f0f4ff;">';
+    html += '<th style="padding: 6px;">Kode</th>';
+    html += '<th style="padding: 6px;">Nama</th>';
+    html += '<th style="padding: 6px;">Masuk</th>';
+    html += '<th style="padding: 6px;">Jual Non-RS</th>';
+    html += '<th style="padding: 6px;">Jual RS</th>';
+    html += '<th style="padding: 6px;">Total Jual</th>';
+    html += '<th style="padding: 6px;">Seharusnya</th>';
+    html += '<th style="padding: 6px;">Batch</th>';
+    html += '<th style="padding: 6px;">Selisih</th>';
+    html += '<th style="padding: 6px;">Status</th>';
+    html += '</tr></thead><tbody>';
+    
+    for (var i = 0; i < l2.hasil.length; i++) {
+      var r = l2.hasil[i];
+      var beda = r.selisih !== 0;
+      html += '<tr style="background: ' + (beda ? '#fff5f5' : '') + '; border-bottom: 1px solid #f0f0f0;">';
+      html += '<td style="padding: 4px 6px; font-weight: 700;">' + r.kode + '</td>';
+      html += '<td style="padding: 4px 6px;">' + r.nama + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right;">' + r.masuk + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right;">' + r.jualNonRS + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right;">' + r.jualRS + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right;">' + r.totalJual + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right; color: #1976D2;">' + r.stokSeharusnya + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right;">' + r.stokBatch + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right; font-weight: 800; color: ' + (beda ? '#c62828' : '#2e7d32') + ';">' + (r.selisih > 0 ? '+' : '') + r.selisih + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: center;">' + (beda ? '❌' : '✅') + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table></div></div>';
+  }
+  
+  // Tabel Lapis 3 (hanya yang ada pergerakan)
+  if (l3.hasil && l3.hasil.length > 0) {
+    var filtered = [];
+    for (var i = 0; i < l3.hasil.length; i++) {
+      if (l3.hasil[i].terjual !== 0 || l3.hasil[i].stok !== 0) {
+        filtered.push(l3.hasil[i]);
+      }
+    }
+    if (filtered.length > 0) {
+      html += '<div style="margin-bottom: 20px;">';
+      html += '<h4 style="margin: 0 0 10px 0; font-size: 1rem;">📋 LAPIS 3: Detail per Batch</h4>';
+      html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px; max-height: 350px; overflow-y: auto;">';
+      html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">';
+      html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
+      html += '<th style="padding: 6px;">Kode</th>';
+      html += '<th style="padding: 6px;">Batch</th>';
+      html += '<th style="padding: 6px;">Stok Awal</th>';
+      html += '<th style="padding: 6px;">Stok</th>';
+      html += '<th style="padding: 6px;">Terjual</th>';
+      html += '<th style="padding: 6px;">Tgl Masuk</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (var i = 0; i < filtered.length; i++) {
+        var b = filtered[i];
+        html += '<tr style="border-bottom: 1px solid #f0f0f0;">';
+        html += '<td style="padding: 4px 6px; font-weight: 700;">' + b.kode + '</td>';
+        html += '<td style="padding: 4px 6px; font-size: 0.7rem;">' + b.batch + '</td>';
+        html += '<td style="padding: 4px 6px; text-align: right;">' + b.stokAwal + '</td>';
+        html += '<td style="padding: 4px 6px; text-align: right; font-weight: 600;">' + b.stok + '</td>';
+        html += '<td style="padding: 4px 6px; text-align: right; color: ' + (b.terjual > 0 ? '#c62828' : '#666') + ';">' + b.terjual + '</td>';
+        html += '<td style="padding: 4px 6px; font-size: 0.7rem;">' + (b.tanggalMasuk || '-') + '</td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table></div></div>';
+    }
+  }
+  
+  // Timestamp
+  var now = new Date();
+  var ts = now.getDate() + '/' + (now.getMonth()+1) + '/' + now.getFullYear() + ' ' + 
+           String(now.getHours()).padStart(2,'0') + ':' + 
+           String(now.getMinutes()).padStart(2,'0') + ':' + 
+           String(now.getSeconds()).padStart(2,'0');
+  
+  html += '<div style="text-align: center; color: #999; font-size: 0.75rem; margin-top: 10px;">';
+  html += '🕐 Audit: ' + ts + ' oleh ' + (currentUser ? currentUser.nama : '-');
+  html += '</div>';
+  
+  document.getElementById('auditHasil').innerHTML = html;
+}
+
+// ============================================================
+// 🔥 EXPORT CSV
+// ============================================================
+function exportAuditCSV() {
+  if (!window._auditResult) {
+    showToast('⚠️ Tidak ada data audit!', 'warning');
+    return;
+  }
+  
+  var result = window._auditResult;
+  var rows = [];
+  
+  rows.push(['===== AUDIT STOK LENGKAP =====']);
+  rows.push(['Tanggal', new Date().toLocaleString('id-ID')]);
+  rows.push(['User', currentUser ? currentUser.nama : '-']);
+  rows.push(['Total Selisih', result.totalSelisih]);
+  rows.push(['Kesimpulan', result.kesimpulan]);
+  rows.push([]);
+  
+  if (result.lapis1 && result.lapis1.hasil) {
+    rows.push(['===== LAPIS 1: PRODUK vs BATCH =====']);
+    rows.push(['Kode', 'Nama', 'Produk', 'Batch', 'Selisih', 'Status']);
+    for (var i = 0; i < result.lapis1.hasil.length; i++) {
+      var r = result.lapis1.hasil[i];
+      rows.push([r.kode, r.nama, r.produk, r.batch, r.selisih, r.status]);
+    }
+    rows.push([]);
+  }
+  
+  if (result.lapis2 && result.lapis2.hasil) {
+    rows.push(['===== LAPIS 2: BATCH vs (MASUK - JUAL) =====']);
+    rows.push(['Kode', 'Nama', 'Masuk', 'Jual Non-RS', 'Jual RS', 'Total Jual', 'Seharusnya', 'Batch', 'Selisih', 'Status']);
+    for (var i = 0; i < result.lapis2.hasil.length; i++) {
+      var r = result.lapis2.hasil[i];
+      rows.push([r.kode, r.nama, r.masuk, r.jualNonRS, r.jualRS, r.totalJual, r.stokSeharusnya, r.stokBatch, r.selisih, r.status]);
+    }
+    rows.push([]);
+  }
+  
+  if (result.lapis3 && result.lapis3.hasil) {
+    rows.push(['===== LAPIS 3: DETAIL PER BATCH =====']);
+    rows.push(['Kode', 'Batch', 'Stok Awal', 'Stok', 'Terjual', 'Tanggal Masuk']);
+    for (var i = 0; i < result.lapis3.hasil.length; i++) {
+      var r = result.lapis3.hasil[i];
+      rows.push([r.kode, r.batch, r.stokAwal, r.stok, r.terjual, r.tanggalMasuk]);
+    }
+  }
+  
+  var csvContent = '';
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var escaped = [];
+    for (var j = 0; j < row.length; j++) {
+      var val = row[j] === undefined || row[j] === null ? '' : String(row[j]);
+      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+        val = '"' + val.replace(/"/g, '""') + '"';
+      }
+      escaped.push(val);
+    }
+    csvContent += escaped.join(',') + '\n';
+  }
+  
+  var filename = 'Audit_Stok_' + getTodayString();
+  var blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement('a');
+  var url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename + '.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  
+  showToast('✅ File audit diunduh!', 'success');
+}
+
+// ============================================================
+// 🔥 SETUP TOMBOL AUDIT (auto show)
+// ============================================================
+function setupAuditButtonVisibility() {
+  var btn = document.getElementById('btnAuditStok');
+  if (!btn) return;
+  
+  var isAdmin = isUserAdmin();
+  
+  if (isAdmin) {
+    btn.style.display = 'inline-flex';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+// Panggil berkali-kali
+setTimeout(setupAuditButtonVisibility, 500);
+setTimeout(setupAuditButtonVisibility, 1500);
+setTimeout(setupAuditButtonVisibility, 3000);
+window.addEventListener('load', function() {
+  setTimeout(setupAuditButtonVisibility, 1000);
+});
+
+console.log('✅ Script Audit Stok loaded!');
+</script>
   
   // ============================================================
   // 🔥 BANNER STATUS UTAMA
