@@ -12623,19 +12623,30 @@ console.log('✅ Script Audit Stok loaded!');
     }
   }
   
-  // ============================================================
-  // 🔥 TIMESTAMP
-  // ============================================================
+
+
+
+// ============================================================
+// 🔥 TIMESTAMP
+// ============================================================
+try {
   var now = new Date();
   var ts = now.getDate() + '/' + (now.getMonth()+1) + '/' + now.getFullYear() + ' ' + 
-           String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+           String(now.getHours()).padStart(2,'0') + ':' + 
+           String(now.getMinutes()).padStart(2,'0') + ':' + 
+           String(now.getSeconds()).padStart(2,'0');
   
-  html += '<div style="text-align: center; color: #999; font-size: 0.75rem; margin-top: 10px;">';
-  html += '🕐 Audit dilakukan pada: ' + ts + ' oleh ' + escapeHtml(currentUser ? currentUser.nama : '-');
+  var namaUser = (currentUser && currentUser.nama) ? currentUser.nama : '-';
+  
+  html += '<div style="text-align: center; color: #999; font-size: 0.75rem; margin-top: 10px; padding: 10px; border-top: 1px dashed #ddd;">';
+  html += '🕐 Audit dilakukan pada: <strong>' + ts + '</strong>';
+  html += ' &nbsp;|&nbsp; ';
+  html += '👤 Oleh: <strong>' + escapeHtml(namaUser) + '</strong>';
   html += '</div>';
-  
-  document.getElementById('auditHasil').innerHTML = html;
+} catch (e) {
+  console.warn('⚠️ Error render timestamp:', e);
 }
+  
 
 /**
  * Tutup Modal Audit
