@@ -69,7 +69,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwwUO7zIHO3ydQeJ7YJhWiSPK_IpITg6y7ns8GwlXjQTF5m11lMEkBFz_nxM1iLBgLAWw/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzZiw-uZWqYUIjZAnrGwgE_w2C4Y0ozufSeKG2AXJLh1i4ZBIT8OV9b_BXhCGax1oIUCQ/exec';
     // ============================================
   </script>
 
@@ -2310,49 +2310,7 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     }
 }
 
-    /* ===== DASHBOARD PIUTANG ===== */
-.dash-piutang-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-
-.dash-card {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.dash-card:hover {
-  transform: translateY(-3px);
-}
-
-@media (max-width: 768px) {
-  .dash-piutang-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
-  }
-  .dash-card {
-    padding: 12px 14px !important;
-  }
-  .dash-card > div:nth-child(2) {
-    font-size: 1.1rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .dash-piutang-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 6px !important;
-  }
-  .dash-card {
-    padding: 10px 8px !important;
-  }
-  .dash-card > div:nth-child(2) {
-    font-size: 0.9rem !important;
-  }
-  .dash-card > div:nth-child(3) {
-    font-size: 0.55rem !important;
-  }
-}
+    
                                                                                                                                         
   </style>
 </head>
@@ -2787,175 +2745,16 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
           </table>
         </div>
       </div>
-
-          <!-- ==================== MANAJEMEN PIUTANG RESELLER ==================== -->
-<div style="margin-top:30px;padding-top:20px;border-top:3px solid #eee;">
-  
-  <!-- HEADER -->
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
-    <h3 style="margin:0;display:flex;align-items:center;gap:8px;">
-      💳 Piutang Reseller
-      <span id="badgeJumlahPiutang" style="background:#f44336;color:white;padding:2px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;">0</span>
-    </h3>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-info btn-sm" onclick="loadPiutangReseller()" style="padding:6px 14px;font-size:0.8rem;">🔄 Refresh</button>
-      <button class="btn btn-excel btn-sm" onclick="exportPiutangResellerCSV()" style="padding:6px 14px;font-size:0.8rem;">📊 Excel</button>
-    </div>
-  </div>
-  
-  <!-- ============================================================ -->
-  <!-- DASHBOARD PIUTANG -->
-  <!-- ============================================================ -->
-  
-  <!-- BARIS 1: 4 KARTU UTAMA -->
-  <div class="dash-piutang-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;">
-    
-    <!-- KARTU 1: TOTAL PIUTANG -->
-    <div class="dash-card" style="background:linear-gradient(135deg,#6C63FF,#5A52D5);padding:16px 18px;border-radius:12px;color:white;box-shadow:0 4px 14px rgba(90,82,213,0.3);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-10px;right:-10px;font-size:5rem;opacity:0.12;">💳</div>
-      <div style="font-size:0.7rem;opacity:0.9;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">💳 Total Piutang</div>
-      <div style="font-size:1.5rem;font-weight:800;margin-top:6px;line-height:1.1;" id="dashTotalPiutang">Rp 0</div>
-      <div style="font-size:0.7rem;opacity:0.85;margin-top:4px;" id="dashTotalPiutangSub">0 nota</div>
     </div>
     
-    <!-- KARTU 2: SUDAH DITERIMA -->
-    <div class="dash-card" style="background:linear-gradient(135deg,#00C853,#009624);padding:16px 18px;border-radius:12px;color:white;box-shadow:0 4px 14px rgba(0,150,36,0.3);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-10px;right:-10px;font-size:5rem;opacity:0.12;">✅</div>
-      <div style="font-size:0.7rem;opacity:0.9;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">✅ Sudah Diterima</div>
-      <div style="font-size:1.5rem;font-weight:800;margin-top:6px;line-height:1.1;" id="dashSudahDiterima">Rp 0</div>
-      <div style="font-size:0.7rem;opacity:0.85;margin-top:4px;" id="dashSudahDiterimaSub">0% dari total</div>
-    </div>
-    
-    <!-- KARTU 3: SISA PIUTANG -->
-    <div class="dash-card" style="background:linear-gradient(135deg,#FF6B6B,#E53935);padding:16px 18px;border-radius:12px;color:white;box-shadow:0 4px 14px rgba(229,57,53,0.3);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-10px;right:-10px;font-size:5rem;opacity:0.12;">⚠️</div>
-      <div style="font-size:0.7rem;opacity:0.9;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">⚠️ Sisa Piutang</div>
-      <div style="font-size:1.5rem;font-weight:800;margin-top:6px;line-height:1.1;" id="dashSisaPiutang">Rp 0</div>
-      <div style="font-size:0.7rem;opacity:0.85;margin-top:4px;" id="dashSisaPiutangSub">0 nota aktif</div>
-    </div>
-    
-    <!-- KARTU 4: JUMLAH NOTA -->
-    <div class="dash-card" style="background:linear-gradient(135deg,#FFA726,#FB8C00);padding:16px 18px;border-radius:12px;color:white;box-shadow:0 4px 14px rgba(251,140,0,0.3);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-10px;right:-10px;font-size:5rem;opacity:0.12;">📋</div>
-      <div style="font-size:0.7rem;opacity:0.9;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">📋 Jumlah Nota</div>
-      <div style="font-size:1.5rem;font-weight:800;margin-top:6px;line-height:1.1;" id="dashJumlahNota">0</div>
-      <div style="font-size:0.7rem;opacity:0.85;margin-top:4px;" id="dashJumlahNotaSub">nota belum lunas</div>
-    </div>
-    
-  </div>
-  
-  <!-- BARIS 2: 4 KARTU STATUS -->
-  <div class="dash-piutang-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:15px;">
-    
-    <!-- KARTU 5: JATUH TEMPO -->
-    <div class="dash-card" style="background:linear-gradient(135deg,#D32F2F,#B71C1C);padding:14px 16px;border-radius:12px;color:white;box-shadow:0 4px 14px rgba(183,28,28,0.3);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-10px;right:-10px;font-size:5rem;opacity:0.12;">⏰</div>
-      <div style="font-size:0.65rem;opacity:0.9;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">⏰ Jatuh Tempo</div>
-      <div style="font-size:1.3rem;font-weight:800;margin-top:6px;line-height:1.1;" id="dashJatuhTempo">0</div>
-      <div style="font-size:0.65rem;opacity:0.85;margin-top:4px;">&gt; 30 hari</div>
-    </div>
-    
-    <!-- KARTU 6: CICILAN AKTIF -->
-    <div class="dash-card" style="background:linear-gradient(135deg,#F57C00,#E65100);padding:14px 16px;border-radius:12px;color:white;box-shadow:0 4px 14px rgba(230,81,0,0.3);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-10px;right:-10px;font-size:5rem;opacity:0.12;">🔄</div>
-      <div style="font-size:0.65rem;opacity:0.9;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">🔄 Cicilan Aktif</div>
-      <div style="font-size:1.3rem;font-weight:800;margin-top:6px;line-height:1.1;" id="dashCicilanAktif">0</div>
-      <div style="font-size:0.65rem;opacity:0.85;margin-top:4px;">sedang dicicil</div>
-    </div>
-    
-    <!-- KARTU 7: BELUM BAYAR -->
-    <div class="dash-card" style="background:linear-gradient(135deg,#C62828,#8E0000);padding:14px 16px;border-radius:12px;color:white;box-shadow:0 4px 14px rgba(142,0,0,0.3);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-10px;right:-10px;font-size:5rem;opacity:0.12;">⚠️</div>
-      <div style="font-size:0.65rem;opacity:0.9;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">⚠️ Belum Bayar</div>
-      <div style="font-size:1.3rem;font-weight:800;margin-top:6px;line-height:1.1;" id="dashBelumBayar">0</div>
-      <div style="font-size:0.65rem;opacity:0.85;margin-top:4px;">0% diterima</div>
-    </div>
-    
-    <!-- KARTU 8: RATA-RATA UMUR -->
-    <div class="dash-card" style="background:linear-gradient(135deg,#00897B,#004D40);padding:14px 16px;border-radius:12px;color:white;box-shadow:0 4px 14px rgba(0,77,64,0.3);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-10px;right:-10px;font-size:5rem;opacity:0.12;">📅</div>
-      <div style="font-size:0.65rem;opacity:0.9;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">📅 Rata-rata Umur</div>
-      <div style="font-size:1.3rem;font-weight:800;margin-top:6px;line-height:1.1;" id="dashRataUmur">0 hari</div>
-      <div style="font-size:0.65rem;opacity:0.85;margin-top:4px;">piutang tertua</div>
-    </div>
-    
-  </div>
-  
-  <!-- PROGRESS BAR GLOBAL -->
-  <div style="background:white;padding:14px 18px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:15px;border:1px solid #e8ecf4;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
-      <div style="font-size:0.85rem;font-weight:600;color:#37474f;">📊 Progress Penerimaan Piutang</div>
-      <div id="dashProgressPersen" style="font-size:0.9rem;font-weight:800;color:#4CAF50;">0%</div>
-    </div>
-    <div style="width:100%;height:12px;background:#e8ecf4;border-radius:6px;overflow:hidden;position:relative;">
-      <div id="dashProgressBar" style="width:0%;height:100%;background:linear-gradient(90deg,#4CAF50,#388E3C);border-radius:6px;transition:width 0.6s ease;"></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.7rem;color:#666;">
-      <span id="dashProgressDiterima">Diterima: Rp 0</span>
-      <span id="dashProgressSisa">Sisa: Rp 0</span>
-    </div>
-  </div>
-  
-  <!-- TOP 5 RESELLER DENGAN PIUTANG TERBESAR -->
-  <div style="background:white;padding:14px 18px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:15px;border:1px solid #e8ecf4;">
-    <div style="font-size:0.85rem;font-weight:700;color:#37474f;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-      🏆 Top 5 Reseller dengan Piutang Terbesar
-    </div>
-    <div id="dashTopReseller" style="display:flex;flex-direction:column;gap:8px;">
-      <div style="text-align:center;color:#999;font-size:0.85rem;padding:10px;">⏳ Memuat data...</div>
-    </div>
-  </div>
-  
-  <!-- ============================================================ -->
-  <!-- TABEL PIUTANG RESELLER -->
-  <!-- ============================================================ -->
-  
-  <div class="table-wrapper" style="margin-top:15px;">
-    <table id="tabelPiutang">
-      <thead>
-        <tr>
-          <th style="width:40px;">No</th>
-          <th>Tanggal</th>
-          <th>ID Transaksi</th>
-          <th>Reseller</th>
-          <th style="text-align:right;">Total Piutang</th>
-          <th style="text-align:right;">Sudah Diterima</th>
-          <th style="text-align:right;">Sisa Piutang</th>
-          <th style="text-align:center;">Umur</th>
-          <th style="text-align:center;">Status</th>
-          <th style="text-align:center;min-width:100px;">Aksi</th>
-        </tr>
-      </thead>
-      <tbody id="piutangResellerTable">
-        <tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">⏳ Memuat data...</td></tr>
-      </tbody>
-    </table>
-  </div>
-  
-</div>
-
-
-
-      
-    </div>
-    
-   <!-- ===== PRODUK ===== -->
-<div id="page-produk" class="page">
-  <div class="card">
-    <h2>📦 Manajemen Produk</h2>
-    
-    <!-- 🔥 SUB-TAB PRODUK - DENGAN TOMBOL AUDIT -->
-    <div class="sub-tab-produk">
-      <button class="tab-btn-produk tab-tambah-produk" onclick="showTambahProduk()">➕ Tambah Produk</button>
-      <button class="tab-refresh-produk" onclick="loadProdukWithRetry()">🔄 Refresh</button>
-      
-      <!-- 🔥🔥🔥 TOMBOL AUDIT STOK - KHUSUS ADMIN 🔥🔥🔥 -->
-      <button id="btnAuditStok" class="tab-btn-produk" onclick="bukaAuditStok()" 
-              style="background: linear-gradient(135deg, #FF6B6B, #E53935); color: white; box-shadow: 0 2px 8px rgba(229,57,53,0.3); display: none;">
-        🔍 Audit Stok
-      </button>
-    </div>
-  
+    <!-- ===== PRODUK ===== -->
+    <div id="page-produk" class="page">
+      <div class="card">
+        <h2>📦 Manajemen Produk</h2>
+        <div class="sub-tab-produk">
+          <button class="tab-btn-produk tab-tambah-produk" onclick="showTambahProduk()">➕ Tambah Produk</button>
+          <button class="tab-refresh-produk" onclick="loadProdukWithRetry()">🔄 Refresh</button>
+        </div>
 
 
         <!-- FORM EDIT HARGA JUAL - DROPDOWN & AUTO REFRESH -->
@@ -3016,63 +2815,6 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
           </table>
         </div>
 
-    
-<!-- ============================================================ -->
-<!-- 🔥🔥🔥 MODAL AUDIT STOK LENGKAP - KHUSUS ADMIN 🔥🔥🔥 -->
-<!-- ============================================================ -->
-<div class="modal" id="auditStokModal">
-  <div class="modal-content" style="max-width: 1200px; width: 95%; max-height: 90vh; border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-    
-    <!-- HEADER -->
-    <div style="background: linear-gradient(135deg, #FF6B6B, #E53935); padding: 20px 25px; display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="color: white; margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
-        <span>🔍</span> Audit Stok Lengkap
-      </h3>
-      <button onclick="closeAuditStokModal()" style="background: transparent; border: none; color: white; font-size: 1.8rem; cursor: pointer; opacity: 0.8;">×</button>
-    </div>
-    
-    <!-- BODY -->
-    <div style="padding: 20px 25px; overflow-y: auto; max-height: calc(90vh - 80px);">
-      
-      <!-- INFO -->
-      <div style="background: #fff3e0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; color: #e65100;">
-        <strong>⚠️ Peringatan:</strong> Audit ini membandingkan 3 lapis data. Proses mungkin memakan waktu 5-30 detik tergantung jumlah data.
-      </div>
-      
-      <!-- LOADING -->
-      <div id="auditLoading" style="display: none; text-align: center; padding: 60px 20px;">
-        <div style="display: inline-block; width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #E53935; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-        <p style="margin-top: 20px; color: #666; font-weight: 600;">⏳ Sedang menganalisis stok...</p>
-        <p style="margin-top: 8px; color: #999; font-size: 0.85rem;">Mohon tunggu, jangan tutup halaman ini</p>
-      </div>
-      
-      <!-- HASIL -->
-      <div id="auditHasil" style="display: none;">
-        <!-- Akan diisi oleh JavaScript -->
-      </div>
-      
-      <!-- ERROR -->
-      <div id="auditError" style="display: none; text-align: center; padding: 40px 20px;">
-        <div style="font-size: 3rem; margin-bottom: 15px;">❌</div>
-        <p id="auditErrorMsg" style="color: #c62828; font-weight: 600;"></p>
-      </div>
-      
-    </div>
-    
-    <!-- FOOTER -->
-    <div id="auditFooter" style="display: none; padding: 15px 25px; border-top: 2px solid #eee; background: #fafafa; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
-      <button onclick="exportAuditCSV()" style="padding: 10px 20px; border: none; border-radius: 8px; background: #217346; color: white; font-weight: 700; cursor: pointer; font-size: 0.9rem;">
-        📊 Export CSV
-      </button>
-      <button onclick="closeAuditStokModal()" style="padding: 10px 20px; border: none; border-radius: 8px; background: #f44336; color: white; font-weight: 700; cursor: pointer; font-size: 0.9rem;">
-        ✖ Tutup
-      </button>
-    </div>
-    
-  </div>
-</div>
-
-    
         <!-- HUTANG VENDOR -->
         <div class="vendor-debt-container">
           <div class="debt-header-actions">
@@ -4580,12 +4322,12 @@ var currentUser = null;
 var currentCart = [];
 var currentStokCart = [];
 var produkList = [];
-var batchCache = [];
+var batchCache = [];  // 🔥 TAMBAHKAN INI
 var allUsers = [];
 var isRefreshing = false;
 var riwayatStok = [];
 var batchList = [];
-var penjualanBulananChart = null;
+var penjualanBulananChart = null;  // <-- PASTIKAN ADA BARIS INI
 var allLogs = [];
 var allLogStok = [];
 var isDataLoaded = false;
@@ -4596,175 +4338,7 @@ var chartColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F
 var _isProcessingPayment = false;
 var _isProcessingStok = false;
 
-// ============================================================
-// 🔥 CACHE HARGA RESELLER - DENGAN METADATA LENGKAP
-// ============================================================
-var hargaResellerCache = {
-  data: {},
-  kodeReseller: '',
-  timestamp: 0,
-  username: '',
-  isValid: false
-};
 
-// 🔥 KONFIGURASI CACHE
-var CACHE_TTL = 5 * 60 * 1000;  // 5 menit
-var CACHE_ENABLED = true;        // Master switch
-
-// 🔥 FLAG: Apakah sedang ganti reseller (untuk cegah double-click)
-var _isChangingReseller = false;
-  
-// ============================================================
-// 🔥 CACHE MANAGEMENT - HARGA RESELLER
-// ============================================================
-
-/**
- * Cek apakah cache masih valid
- */
-function isHargaCacheValid(kodeReseller) {
-  if (!CACHE_ENABLED) {
-    console.log('🔒 Cache disabled');
-    return false;
-  }
-  
-  if (!hargaResellerCache.isValid) {
-    console.log('❌ Cache invalid: flag false');
-    return false;
-  }
-  
-  if (hargaResellerCache.kodeReseller !== kodeReseller) {
-    console.log('❌ Cache beda reseller. Cache: ' + hargaResellerCache.kodeReseller + ', Butuh: ' + kodeReseller);
-    return false;
-  }
-  
-  var currentUsername = currentUser ? currentUser.username : '';
-  if (hargaResellerCache.username !== currentUsername) {
-    console.log('❌ Cache beda user');
-    return false;
-  }
-  
-  var age = Date.now() - hargaResellerCache.timestamp;
-  if (age > CACHE_TTL) {
-    console.log('❌ Cache expired (' + Math.round(age/1000) + 's)');
-    return false;
-  }
-  
-  if (!hargaResellerCache.data || typeof hargaResellerCache.data !== 'object') {
-    console.log('❌ Cache data invalid');
-    return false;
-  }
-  
-  // Cek isi cache tidak semua null
-  var validCount = 0;
-  for (var kode in hargaResellerCache.data) {
-    var item = hargaResellerCache.data[kode];
-    if (item && typeof item === 'object' && !isNaN(item.hargaReseller)) {
-      validCount++;
-    }
-  }
-  
-  var totalKeys = Object.keys(hargaResellerCache.data).length;
-  if (totalKeys > 0 && validCount === 0) {
-    console.log('❌ Cache corrupt');
-    return false;
-  }
-  
-  console.log('✅ Cache VALID: ' + kodeReseller + ' (' + totalKeys + ' produk, ' + Math.round(age/1000) + 's)');
-  return true;
-}
-
-/**
- * Simpan ke cache
- */
-function setHargaCache(kodeReseller, data) {
-  hargaResellerCache = {
-    data: data || {},
-    kodeReseller: kodeReseller || '',
-    timestamp: Date.now(),
-    username: currentUser ? currentUser.username : '',
-    isValid: true
-  };
-  console.log('💾 Cache disimpan: ' + kodeReseller + ' (' + Object.keys(data || {}).length + ' produk)');
-}
-
-/**
- * Hapus cache
- */
-function clearHargaCache() {
-  hargaResellerCache = {
-    data: {},
-    kodeReseller: '',
-    timestamp: 0,
-    username: '',
-    isValid: false
-  };
-  console.log('🗑️ Cache dihapus');
-}
-
-/**
- * Ambil harga dari cache
- */
-function getHargaFromCache(kodeProduk, hargaNormal) {
-  if (!hargaResellerCache.isValid) return hargaNormal;
-  
-  var item = hargaResellerCache.data[kodeProduk];
-  if (!item || typeof item !== 'object') return hargaNormal;
-  
-  var hargaReseller = parseInt(item.hargaReseller) || 0;
-  if (hargaReseller > 0) return hargaReseller;
-  
-  return hargaNormal;
-}
-
-/**
- * 🔥 FETCH HARGA DENGAN VALIDASI
- * Return Promise yang resolve dengan harga map
- */
-function fetchHargaReseller(kodeReseller, forceRefresh) {
-  return new Promise(function(resolve, reject) {
-    if (!kodeReseller) {
-      clearHargaCache();
-      resolve({});
-      return;
-    }
-    
-    // Kalau cache valid & tidak force refresh
-    if (!forceRefresh && isHargaCacheValid(kodeReseller)) {
-      resolve(hargaResellerCache.data);
-      return;
-    }
-    
-    // Fetch dari GAS
-    console.log('🌐 Fetch harga reseller: ' + kodeReseller);
-    
-    callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
-    .then(function(result) {
-      if (result && result.success) {
-        var data = result.data || {};
-        
-        if (typeof data !== 'object' || Array.isArray(data)) {
-          data = {};
-        }
-        
-        setHargaCache(kodeReseller, data);
-        resolve(data);
-      } else {
-        clearHargaCache();
-        resolve({});
-      }
-    })
-    .catch(function(error) {
-      console.error('❌ Error fetch harga:', error);
-      clearHargaCache();
-      resolve({});
-    });
-  });
-}
-
-
-
-
-  
 
 // 🔥🔥🔥 TAMBAHKAN DI AWAL SCRIPT (setelah variabel global)
 // Observer untuk memantau perubahan di navigasi
@@ -5184,44 +4758,6 @@ function showAppAfterLogin() {
     }
   }, 600);
   
-  // ============================================================
-  // 🔥🔥🔥 TAMBAHKAN INI - AUTO SHOW TOMBOL AUDIT STOK 🔥🔥🔥
-  // ============================================================
-  // Panggil berkali-kali untuk memastikan tombol audit muncul
-  // setelah login/logout tanpa perlu hard refresh (Ctrl+Shift+R)
-  // ============================================================
-  if (typeof setupAuditButtonVisibility === 'function') {
-    setTimeout(setupAuditButtonVisibility, 100);
-    setTimeout(setupAuditButtonVisibility, 300);
-    setTimeout(setupAuditButtonVisibility, 600);
-    setTimeout(setupAuditButtonVisibility, 1000);
-    setTimeout(setupAuditButtonVisibility, 1500);
-    console.log('🔍 Setup tombol audit dijadwalkan (5x)');
-  } else {
-    console.warn('⚠️ Fungsi setupAuditButtonVisibility belum ada!');
-  }
-  
-  // 🔥 FALLBACK: Kalau setupAuditButtonVisibility belum ada,
-  // coba langsung tampilkan tombol audit berdasarkan role
-  var btnAudit = document.getElementById('btnAuditStok');
-  if (btnAudit) {
-    var roleUpper = (currentUser.role || '').toUpperCase();
-    var isAdmin = (roleUpper === 'ADMIN' || roleUpper === 'OWNER');
-    
-    setTimeout(function() {
-      if (isAdmin) {
-        btnAudit.style.display = 'inline-flex';
-        console.log('✅ Tombol Audit Stok ditampilkan via fallback');
-      } else {
-        btnAudit.style.display = 'none';
-        console.log('🚫 Tombol Audit Stok disembunyikan via fallback');
-      }
-    }, 800);
-  }
-  // ============================================================
-  // 🔥 AKHIR TAMBAHAN 🔥
-  // ============================================================
-  
   // Setup filter & load data
   if (typeof setupFilters === 'function') setupFilters();
   if (typeof loadAllData === 'function') {
@@ -5253,34 +4789,19 @@ function closeLogoutModal() {
 
 function confirmLogout() {
   closeLogoutModal();
-  
-  // 🔥 HAPUS SEMUA CACHE USER
-  try {
-    var keysToRemove = ['pos_tanggal', 'stok_tanggal', 'pos_user', 
-                        'info_toko', 'pos_login_time', 'pwa_initialized'];
-    for (var i = 0; i < keysToRemove.length; i++) {
-      localStorage.removeItem(keysToRemove[i]);
-    }
-  } catch(e) {
-    console.error('❌ Error clear cache:', e);
-  }
-  
-  // 🔥 RESET CACHE HARGA RESELLER
-  clearHargaCache();
-  
-  // 🔥 RESET CART
+  localStorage.removeItem('pos_tanggal');
+  localStorage.removeItem('stok_tanggal');
+  localStorage.removeItem('pos_user');
+  currentUser = null;
   currentCart = [];
   currentStokCart = [];
-  
-  currentUser = null;
-  
   var app = document.getElementById('app');
   var loginPage = document.getElementById('loginPage');
   if (app) app.style.display = 'none';
   if (loginPage) loginPage.style.display = 'block';
-  
   window.location.reload();
 }
+
 // ==================== AUTH ====================
 // GANTI FUNGSI LOGIN DI BARIS 1480-1560
 document.getElementById('formLogin').addEventListener('submit', function(e) {
@@ -5309,7 +4830,7 @@ document.getElementById('formLogin').addEventListener('submit', function(e) {
     btn.textContent = 'Login';
     btn.disabled = false;
     showToast('❌ Koneksi timeout, periksa internet Anda!', 'error');
-  }, 45000);
+  }, 45000); // 45 detik
   
   callGAS('login', { username: username, password: password })
   .then(function(result) {
@@ -5321,17 +4842,7 @@ document.getElementById('formLogin').addEventListener('submit', function(e) {
       currentUser = result.user;
       console.log('✅ Login success! User:', currentUser);
       
-      // ============================================================
-      // 🔥 RESET CACHE KARENA USER BARU
-      // ============================================================
-      clearHargaCache();
-      currentCart = [];
-      currentStokCart = [];
-      _isChangingReseller = false;
-      
-      // ============================================================
       // 🔥 SIMPAN SESSION DENGAN AMAN
-      // ============================================================
       localStorage.setItem('pos_user', JSON.stringify(currentUser));
       localStorage.setItem('pos_login_time', Date.now().toString());
       localStorage.setItem('pwa_initialized', 'true');
@@ -5362,7 +4873,6 @@ document.getElementById('formLogin').addEventListener('submit', function(e) {
   });
 });
 
-  
 // ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 DOM siap!');
@@ -6078,12 +5588,10 @@ function showPage(page) {
     updateCartDisplay(); 
     loadResellerOptions();
   }
- if (page === 'transaksi') { 
-  loadTransaksi(); 
-  loadLogPembatalan(); 
-  loadPiutangReseller();  // 🔥 TAMBAHKAN INI
+  if (page === 'transaksi') { 
+    loadTransaksi(); 
+    loadLogPembatalan(); 
   }
-  
   if (page === 'user') loadUsers();
   if (page === 'stok') {
     if (currentUser && currentUser.role && currentUser.role.toUpperCase() === 'RESELLER') {
@@ -6094,12 +5602,6 @@ function showPage(page) {
   }
   if (page === 'produk') { 
     loadProdukWithRetry(); 
-// 🔥🔥🔥 TAMBAHKAN INI 🔥🔥🔥
-  if (typeof setupAuditButtonVisibility === 'function') {
-    setTimeout(setupAuditButtonVisibility, 100);
-    setTimeout(setupAuditButtonVisibility, 500);
-  }
-  
   }
   if (page === 'profile') { 
     loadProfile(); 
@@ -6608,131 +6110,156 @@ function loadBulananChart(tanggal, kasirFilter, namaUser, role) {
   }
 }
 
-// ============================================================
-// 🔥 LOAD POS PRODUK
-// ============================================================
+// ==================== LOAD POS PRODUK DENGAN HARGA RESELLER ====================
 function loadPosProduk() {
+  // 🔥 CEK KEAMANAN
   if (!currentUser) {
-    console.warn('⚠️ loadPosProduk: currentUser null');
+    console.warn('⚠️ loadPosProduk: currentUser null, skip!');
+    return;
+  }
+  console.log('🔄 Memuat produk untuk POS...');
+  var container = document.getElementById('posProducts');
+  if (!container) {
+    console.error('❌ Elemen posProducts tidak ditemukan!');
     return;
   }
   
-  var container = document.getElementById('posProducts');
-  if (!container) return;
-  
   container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">⏳ Memuat produk...</p>';
   
+  // Ambil kode reseller yang dipilih
   var selectReseller = document.getElementById('pilihReseller');
   var kodeReseller = selectReseller ? selectReseller.value : '';
   
-  // 🔥 PAKAI FUNGSI FETCH (validasi cache)
-  fetchHargaReseller(kodeReseller, false)
-  .then(function(hargaMap) {
-    renderPosProducts(hargaMap, kodeReseller);
-  })
-  .catch(function(error) {
-    console.error('❌ Error loadPosProduk:', error);
-    renderPosProducts({}, kodeReseller);
-  });
-}
-
-// ============================================================
-// 🔥 RENDER POS PRODUK
-// ============================================================
-function renderPosProducts(hargaMap, kodeReseller) {
-  callGAS('getProduk', {})
-  .then(function(result) {
-    if (!result || !result.success) {
-      var container = document.getElementById('posProducts');
-      if (container) {
-        container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk</p>';
-      }
-      return;
-    }
-    
-    var produk = result.data || [];
-    produkList = produk;
-    var container = document.getElementById('posProducts');
-    if (!container) return;
-    
-    if (produkList.length === 0) {
-      container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
-      return;
-    }
-    
-    var html = '';
-    var hasDate = getTanggalTransaksi() !== '';
-    var processedKode = {};
-    
-    for (var i = 0; i < produkList.length; i++) {
-      var p = produkList[i];
-      if (processedKode[p.Kode]) continue;
-      processedKode[p.Kode] = true;
-      
-      var stok = parseInt(p.Stok) || 0;
-      var isOutOfStock = stok <= 0;
-      var disabledClass = isOutOfStock ? 'disabled' : '';
-      var posDisabledClass = !hasDate ? 'pos-disabled' : '';
-      var stockClass = isOutOfStock ? 'out-of-stock' : '';
-      var onclickAttr = (isOutOfStock || !hasDate) ? '' : 'onclick="addToCart(\'' + p.Kode + '\')"';
-      var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
-      
-      var hargaNormal = p['Harga Jual'] || 0;
-      var hargaTampil = hargaNormal;
-      var isResellerPrice = false;
-      var selisih = 0;
-      
-      if (kodeReseller && hargaMap[p.Kode] && hargaMap[p.Kode].hargaReseller > 0) {
-        hargaTampil = hargaMap[p.Kode].hargaReseller;
-        isResellerPrice = true;
-        selisih = hargaNormal - hargaTampil;
-      }
-      
-      var priceHtml = '';
-      if (isResellerPrice && selisih > 0) {
-        priceHtml = `
-          <div style="display:flex; flex-direction:column; align-items:center;">
-            <span style="text-decoration:line-through; color:#999; font-size:0.6rem;">
-              ${formatRupiah(hargaNormal)}
-            </span>
-            <span style="color:#4CAF50; font-weight:bold; font-size:1rem;">
-              ${formatRupiah(hargaTampil)}
-            </span>
-            <span style="color:#FF9800; font-size:0.6rem;">
-              hemat ${formatRupiah(selisih)}
-            </span>
-          </div>
-        `;
-      } else if (isResellerPrice && selisih === 0) {
-        priceHtml = `
-          <div style="color:#4CAF50; font-weight:bold; font-size:0.95rem;">
-            ${formatRupiah(hargaTampil)}
-            <span style="color:#999; font-size:0.55rem;">(sama)</span>
-          </div>
-        `;
-      } else {
-        priceHtml = `<div class="price">${formatRupiah(hargaTampil)}</div>`;
-      }
-      
-      html += `<div class="product-item ${disabledClass} ${posDisabledClass}" ${onclickAttr} data-kode="${p.Kode}" data-harga="${hargaTampil}">
-        ${imgHtml}
-        ${isOutOfStock ? '<div class="badge-out-of-stock">⛔ HABIS</div>' : ''}
-        ${!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : ''}
-        ${isResellerPrice && selisih > 0 ? '<div class="badge-out-of-stock" style="background:#9C27B0; font-size:0.55rem;">👥 Reseller</div>' : ''}
-        <div class="name">${p['Nama Produk'] || '-'}</div>
-        ${priceHtml}
-        <div class="stock ${stockClass}">${isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.Satuan || 'pcs')}</div>
-      </div>`;
-    }
-    
-    container.innerHTML = html;
-    updatePosUI();
-    updateStokGridPOS();
-    
-    console.log('✅ Produk POS dirender:', produkList.length);
-  })
-  .catch(function(error) {
-    console.error('❌ Error renderPosProducts:', error);
+  // Jika ada reseller, ambil harga khusus
+  var hargaMap = {};
+  var promise = Promise.resolve();
+  
+  if (kodeReseller) {
+    promise = callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
+      .then(function(result) {
+        if (result && result.success) {
+          hargaMap = result.data || {};
+          console.log('✅ Harga reseller dimuat:', Object.keys(hargaMap).length, 'produk');
+        }
+        return result;
+      })
+      .catch(function(error) {
+        console.error('❌ Error load harga reseller:', error);
+        return null;
+      });
+  }
+  
+  promise.then(function() {
+    callGAS('getProduk', {})
+      .then(function(result) {
+        if (!result || !result.success) {
+          console.error('❌ Error getProduk:', result ? result.error : 'Unknown');
+          var container = document.getElementById('posProducts');
+          if (container) {
+            container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk</p>';
+          }
+          showToast('❌ Gagal memuat produk POS', 'error');
+          return;
+        }
+        
+        var produk = result.data || [];
+        console.log('✅ Data produk POS diterima:', produk);
+        produkList = produk;
+        var container = document.getElementById('posProducts');
+        if (!container) return;
+        
+        if (produkList.length === 0) {
+          container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;">📭 Belum ada produk</p>';
+          return;
+        }
+        
+        var html = '';
+        var hasDate = getTanggalTransaksi() !== '';
+        var processedKode = {};
+        
+        for (var i = 0; i < produkList.length; i++) {
+          var p = produkList[i];
+          if (processedKode[p.Kode]) continue;
+          processedKode[p.Kode] = true;
+          
+          var stok = parseInt(p.Stok) || 0;
+          var isOutOfStock = stok <= 0;
+          var disabledClass = isOutOfStock ? 'disabled' : '';
+          var posDisabledClass = !hasDate ? 'pos-disabled' : '';
+          var stockClass = isOutOfStock ? 'out-of-stock' : '';
+          var onclickAttr = (isOutOfStock || !hasDate) ? '' : 'onclick="addToCart(\'' + p.Kode + '\')"';
+          var imgHtml = getProductImage(p['URL Gambar'], p['Nama Produk']);
+          
+          // 🔥 CEK HARGA RESELLER
+          var hargaNormal = p['Harga Jual'] || 0;
+          var hargaTampil = hargaNormal;
+          var isResellerPrice = false;
+          var selisih = 0;
+          
+          if (kodeReseller && hargaMap[p.Kode]) {
+            var hargaReseller = hargaMap[p.Kode].hargaReseller || 0;
+            if (hargaReseller > 0) {
+              hargaTampil = hargaReseller;
+              isResellerPrice = true;
+              selisih = hargaNormal - hargaReseller;
+            }
+          }
+          
+          // 🔥 FORMAT HARGA DENGAN INFORMASI RESELLER
+          var priceHtml = '';
+          if (isResellerPrice && selisih > 0) {
+            // Tampilkan harga coret + harga reseller
+            priceHtml = `
+              <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="text-decoration:line-through; color:#999; font-size:0.6rem;">
+                  ${formatRupiah(hargaNormal)}
+                </span>
+                <span style="color:#4CAF50; font-weight:bold; font-size:1rem;">
+                  ${formatRupiah(hargaTampil)}
+                </span>
+                <span style="color:#FF9800; font-size:0.6rem;">
+                  hemat ${formatRupiah(selisih)}
+                </span>
+              </div>
+            `;
+          } else if (isResellerPrice && selisih === 0) {
+            // Harga sama
+            priceHtml = `
+              <div style="color:#4CAF50; font-weight:bold; font-size:0.95rem;">
+                ${formatRupiah(hargaTampil)}
+                <span style="color:#999; font-size:0.55rem;">(sama)</span>
+              </div>
+            `;
+          } else {
+            // Harga normal
+            priceHtml = `<div class="price">${formatRupiah(hargaTampil)}</div>`;
+          }
+          
+          html += `<div class="product-item ${disabledClass} ${posDisabledClass}" ${onclickAttr} data-kode="${p.Kode}" data-harga="${hargaTampil}">
+            ${imgHtml}
+            ${isOutOfStock ? '<div class="badge-out-of-stock">⛔ HABIS</div>' : ''}
+            ${!hasDate ? '<div class="badge-out-of-stock" style="background:#ff9800;">📅 Pilih Tanggal</div>' : ''}
+            ${isResellerPrice && selisih > 0 ? '<div class="badge-out-of-stock" style="background:#9C27B0; font-size:0.55rem;">👥 Reseller</div>' : ''}
+            <div class="name">${p['Nama Produk'] || '-'}</div>
+            ${priceHtml}
+            <div class="stock ${stockClass}">${isOutOfStock ? '⛔ HABIS' : 'Stok: ' + stok + ' ' + (p.Satuan || 'pcs')}</div>
+          </div>`;
+        }
+        
+        container.innerHTML = html;
+        updatePosUI();
+        updateStokGridPOS();
+        
+        console.log('✅ Produk POS berhasil ditampilkan: ' + produkList.length + ' produk');
+      })
+      .catch(function(error) {
+        console.error('❌ Error loadPosProduk:', error);
+        var container = document.getElementById('posProducts');
+        if (container) {
+          container.innerHTML = '<p style="color:red;text-align:center;grid-column:1/-1;">❌ Gagal memuat produk: ' + error.message + '</p>';
+        }
+        showToast('❌ Gagal memuat produk POS: ' + error.message, 'error');
+      });
   });
 }
 
@@ -6741,22 +6268,9 @@ function renderPosProducts(hargaMap, kodeReseller) {
 // Tambahkan panggilan refreshCartPrices() di akhir
 
 // ==================== ADD TO CART (DENGAN HARGA RESELLER) ====================
-// ============================================================
-// 🔥 ADD TO CART (DENGAN CACHE)
-// ============================================================
 function addToCart(kode) {
-  if (!currentUser) { 
-    showToast('Silakan login terlebih dahulu!', 'warning'); 
-    return; 
-  }
+  if (!currentUser) { showToast('Silakan login terlebih dahulu!', 'warning'); return; }
   
-  // 🔥 CEK: Apakah sedang ganti reseller?
-  if (_isChangingReseller) {
-    showToast('⏳ Sedang memuat harga reseller, tunggu sebentar...', 'warning');
-    return;
-  }
-  
-  // 🔥 CARI PRODUK
   var produk = null;
   for (var i = 0; i < produkList.length; i++) { 
     if (produkList[i].Kode === kode) { 
@@ -6766,18 +6280,22 @@ function addToCart(kode) {
   }
   if (!produk) return;
   
-  // 🔥 CEK STOK
+  // 🔥 CEK STOK PRODUK
   var stokProduk = parseInt(produk.Stok) || 0;
+  
+  // 🔥 CEK STOK BATCH
   var stokBatch = 0;
   for (var b = 0; b < batchCache.length; b++) {
     if (batchCache[b].kode === kode) {
       stokBatch += parseInt(batchCache[b].stok) || 0;
     }
   }
+  
+  // 🔥 PAKAI YANG LEBIH KECIL
   var stokEfektif = Math.min(stokProduk, stokBatch);
   
-  var existing = null;
   var qtyDiCart = 0;
+  var existing = null;
   for (var i = 0; i < currentCart.length; i++) { 
     if (currentCart[i].kode === kode) { 
       existing = currentCart[i]; 
@@ -6788,57 +6306,38 @@ function addToCart(kode) {
   
   var stokTersedia = stokEfektif - qtyDiCart;
   if (stokTersedia <= 0) { 
-    showToast('Stok produk habis!', 'error'); 
+    showToast('Stok produk habis! (Batch: ' + stokBatch + ')', 'error'); 
     return; 
   }
   
-  // 🔥 TENTUKAN HARGA
-  var hargaNormal = produk['Harga Jual'] || 0;
+  var harga = produk['Harga Jual'] || 0;
   var selectReseller = document.getElementById('pilihReseller');
   var kodeReseller = selectReseller ? selectReseller.value : '';
   
-  // SKENARIO 1: Tanpa reseller → harga normal
-  if (!kodeReseller) {
-    prosesAddToCart(produk, kode, hargaNormal, existing);
-    return;
-  }
-  
-  // SKENARIO 2: Cache valid → baca dari cache (instan)
-  if (isHargaCacheValid(kodeReseller)) {
-    var harga = getHargaFromCache(kode, hargaNormal);
+  if (kodeReseller) {
+    callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
+      .then(function(result) {
+        if (result && result.success) {
+          var hargaMap = result.data || {};
+          if (hargaMap[kode] && hargaMap[kode].hargaReseller > 0) {
+            harga = hargaMap[kode].hargaReseller;
+          }
+        }
+        prosesAddToCart(produk, kode, harga, existing);
+      })
+      .catch(function(error) {
+        prosesAddToCart(produk, kode, harga, existing);
+      });
+  } else {
     prosesAddToCart(produk, kode, harga, existing);
-    return;
   }
-  
-  // SKENARIO 3: Cache invalid → fetch ulang
-  console.log('⚠️ Cache invalid, fetch ulang...');
-  
-  fetchHargaReseller(kodeReseller, true)
-  .then(function(hargaMap) {
-    var harga = hargaNormal;
-    if (hargaMap[kode] && hargaMap[kode].hargaReseller > 0) {
-      harga = hargaMap[kode].hargaReseller;
-    }
-    prosesAddToCart(produk, kode, harga, existing);
-    
-    // Refresh UI
-    loadPosProduk();
-    refreshCartPrices();
-  })
-  .catch(function(error) {
-    console.error('❌ Error fallback:', error);
-    prosesAddToCart(produk, kode, hargaNormal, existing);
-    showToast('⚠️ Pakai harga normal (gagal muat harga reseller)', 'warning');
-  });
 }
 
-// ============================================================
-// 🔥 PROSES ADD TO CART
-// ============================================================
+// ==================== PROSES ADD TO CART ====================
 function prosesAddToCart(produk, kode, harga, existing) {
   if (existing) {
     existing.qty++;
-    existing.harga = harga;
+    existing.harga = harga; // Update harga jika berubah
     existing.subtotal = harga * existing.qty;
   } else {
     currentCart.push({ 
@@ -6853,9 +6352,8 @@ function prosesAddToCart(produk, kode, harga, existing) {
   
   updateCartDisplay();
   updateStokGridPOS();
-  showToast(produk['Nama Produk'] + ' ditambahkan', 'success');
+  showToast(produk['Nama Produk'] + ' ditambahkan ke keranjang');
 }
-
 
 // ==================== RESET KE HARGA NORMAL ====================
 function resetToNormalPrice() {
@@ -8273,6 +7771,7 @@ function loadTransaksi() {
   try {
     var tbody = document.getElementById('transaksiTable');
     if (!tbody) return;
+    // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
     
     var role = currentUser ? currentUser.role : 'kasir';
@@ -8283,6 +7782,7 @@ function loadTransaksi() {
     var showLaba = document.querySelector('input[name="opsiLaba"]:checked').value === 'dengan';
     
     if (!tanggalMulai || !tanggalSampai) {
+      // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">⚠️ Pilih rentang tanggal</td></tr>';
       document.getElementById('totalTransaksiDisplay').textContent = '📊Trans: 0 | Qty: 0 | Omzet: Rp 0 | Laba: Rp 0 | 💰 0%';
       return;
@@ -8304,20 +7804,16 @@ function loadTransaksi() {
         }
         var data = result.data || [];
         if (!data || data.length === 0) {
+          // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
           tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">📭 Tidak ada transaksi</td></tr>';
           document.getElementById('totalTransaksiDisplay').textContent = '📊Trans: 0 | Qty: 0 | Omzet: Rp 0 | Laba: Rp 0 | 💰 0%';
-          
-          // 🔥 TETAP PANGGIL PIUTANG MESKI KOSONG
-          setTimeout(function() {
-            loadPiutangReseller();
-          }, 500);
           return;
         }
         
-        // RENDER TRANSAKSI
+        // 🔥 RENDER TRANSAKSI (SUDAH MENGGUNAKAN 9 KOLOM)
         renderTransaksi(data);
         
-        // HITUNG TOTAL
+        // 🔥🔥🔥 HITUNG TOTAL 🔥🔥🔥
         var totalTransaksi = data.length;
         var totalQty = 0;
         var totalLaba = 0;
@@ -8329,11 +7825,13 @@ function loadTransaksi() {
           totalPenjualan += data[i].total || 0;
         }
         
+        // 🔥🔥🔥 HITUNG PERSENTASE LABA 🔥🔥🔥
         var persenLaba = 0;
         if (totalPenjualan > 0) {
           persenLaba = (totalLaba / totalPenjualan) * 100;
         }
         
+        // 🔥🔥🔥 TAMPILAN LENGKAP DENGAN TOTAL PENJUALAN 🔥🔥🔥
         var totalText = '📊Trans: ' + totalTransaksi + 
                        ' | Qty: ' + totalQty +
                        ' | Omzet: ' + formatRupiah(totalPenjualan);
@@ -8344,28 +7842,22 @@ function loadTransaksi() {
         
         document.getElementById('totalTransaksiDisplay').textContent = totalText;
         
-        // ============================================================
-        // 🔥🔥🔥 PANGGIL PIUTANG DI SINI 🔥🔥🔥
-        // ============================================================
-        setTimeout(function() {
-          loadPiutangReseller();
-        }, 500);
-        // ============================================================
-        
       } catch (e) {
         console.error('❌ Error processing transaksi:', e);
+        // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;">❌ Error: ' + e.message + '</td></tr>';
       }
     })
     .catch(function(error) {
       console.error('❌ Error loadTransaksi:', error);
+      // 🔥 UBAH COLSPAN DARI 8 MENJADI 9
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;">❌ Error: ' + (error.message || 'Unknown error') + '</td></tr>';
     });
   } catch (e) {
     console.error('❌ Error loadTransaksi:', e);
   }
 }
-// ← TIDAK ADA setTimeout di luar sini!
+  
 
 // ==================== TRANSAKSI - PRINT PREVIEW ====================
 function printTransaksiPreview() {
@@ -8973,32 +8465,7 @@ function checkout() {
     return;
   }
 
-  // ============================================================
-  // 🔥 VALIDASI CACHE RESELLER
-  // ============================================================
-  
-  // Cek sedang ganti reseller
-  if (_isChangingReseller) {
-    showToast('⏳ Sedang memuat harga reseller, tunggu sebentar...', 'warning');
-    return;
-  }
-  
-  // Validasi cache kalau pakai reseller
-  var selectReseller = document.getElementById('pilihReseller');
-  var kodeReseller = selectReseller ? selectReseller.value : '';
-  
-  if (kodeReseller && !isHargaCacheValid(kodeReseller)) {
-    showToast('⚠️ Harga reseller belum siap, mohon tunggu...', 'warning');
-    fetchHargaReseller(kodeReseller, true).then(function() {
-      showToast('✅ Harga reseller siap, silakan coba lagi', 'success');
-    });
-    return;
-  }
-
-  // ============================================================
   // 🔥 VALIDASI STOK BATCH SEBELUM CHECKOUT
-  // ============================================================
-  
   for (var i = 0; i < currentCart.length; i++) {
     var item = currentCart[i];
     var stokBatch = 0;
@@ -9020,6 +8487,8 @@ function checkout() {
   }
   
   // 🔥 CEK RESELLER
+  var selectReseller = document.getElementById('pilihReseller');
+  var kodeReseller = selectReseller ? selectReseller.value : '';
   var isReseller = kodeReseller !== '';
   var namaReseller = '';
   
@@ -11575,14 +11044,11 @@ function getKodeResellerOtomatis() {
 
 
   // ==================== LOAD RESELLER OPTIONS ====================
-// ============================================================
-// 🔥 LOAD RESELLER OPTIONS
-// ============================================================
 function loadResellerOptions() {
   var select = document.getElementById('pilihReseller');
   if (!select) return;
   
-  var previousValue = select.value || '';
+  var previousValue = select.value;
   
   select.innerHTML = '<option value="">-- Tanpa Reseller (Harga Normal) --</option>';
   
@@ -11601,22 +11067,16 @@ function loadResellerOptions() {
       select.appendChild(option);
     }
     
-    // 🔥 RESTORE VALUE SEBELUMNYA (kalau ada)
     if (previousValue) {
       select.value = previousValue;
     }
     
-    // 🔥 SIMPAN VALUE KE DATASET (untuk konfirmasi)
-    select.dataset.previousValue = select.value || '';
-    
+    // 🔥 UPDATE STATUS NAMA PEMBELI
     updateNamaPembeliStatus();
     
-    // 🔥 Kalau ada reseller terpilih, refresh cache
+    // 🔥 JIKA ADA RESELLER TERPILIH, PANGGIL onResellerChange
     if (select.value) {
-      fetchHargaReseller(select.value, true)
-      .then(function() {
-        loadPosProduk();
-      });
+      onResellerChange();
     }
     
     console.log('✅ Reseller options loaded: ' + resellers.length);
@@ -11626,62 +11086,13 @@ function loadResellerOptions() {
   });
 }
 
-// ============================================================
-// 🔥 ON RESELLER CHANGE - REFRESH CACHE + HAPUS KERANJANG
-// ============================================================
+// ==================== ON RESELLER CHANGE ====================
 function onResellerChange() {
-  // 🔥 CEGAH DOUBLE-CLICK
-  if (_isChangingReseller) {
-    console.log('⏳ Sedang proses ganti reseller...');
-    return;
-  }
-  
   var select = document.getElementById('pilihReseller');
-  if (!select) return;
-  
   var kodeReseller = select.value;
   var infoDiv = document.getElementById('resellerInfo');
   var namaPembeliInput = document.getElementById('namaPembeli');
   
-  // 🔥 CEK: Apakah ada keranjang yang isi?
-  var adaKeranjang = currentCart.length > 0;
-  var resellerLama = select.dataset.previousValue || '';
-  
-  // 🔥 KONFIRMASI HAPUS KERANJANG (kalau ganti reseller & ada isi)
-  if (adaKeranjang && kodeReseller !== resellerLama) {
-    var konfirmasi = confirm(
-      '⚠️ Keranjang Anda akan DIHAPUS karena ganti reseller.\n\n' +
-      'Keranjang: ' + currentCart.length + ' item\n' +
-      'Total: ' + formatRupiah(currentCart.reduce(function(s, i) { return s + i.subtotal; }, 0)) + '\n\n' +
-      'Lanjutkan?'
-    );
-    
-    if (!konfirmasi) {
-      // 🔄 KEMBALIKAN DROPDOWN KE NILAI SEMULA
-      select.value = resellerLama;
-      return;
-    }
-  }
-  
-  // 🔥 SET FLAG
-  _isChangingReseller = true;
-  
-  // 🔥 HAPUS KERANJANG (setelah konfirmasi)
-  if (currentCart.length > 0) {
-    currentCart = [];
-    updateCartDisplay();
-    console.log('🗑️ Keranjang dihapus karena ganti reseller');
-  }
-  
-  // 🔥 RESET CACHE (selalu, karena ganti reseller)
-  clearHargaCache();
-  
-  // 🔥 SIMPAN VALUE BARU
-  select.dataset.previousValue = kodeReseller;
-  
-  // ============================================================
-  // SKENARIO 1: Tanpa Reseller
-  // ============================================================
   if (!kodeReseller) {
     infoDiv.style.display = 'none';
     if (namaPembeliInput) {
@@ -11689,54 +11100,34 @@ function onResellerChange() {
       namaPembeliInput.value = '';
       namaPembeliInput.placeholder = 'Masukkan nama pembeli (opsional)';
     }
-    
+    // 🔥 REFRESH PRODUK KE HARGA NORMAL
     loadPosProduk();
-    _isChangingReseller = false;
-    showToast('✅ Mode harga normal', 'info');
+    resetCartPrices();
     return;
   }
-  
-  // ============================================================
-  // SKENARIO 2: Ada Reseller → Refresh Cache
-  // ============================================================
   
   // Cari nama reseller
   var selectedOption = select.options[select.selectedIndex];
   var resellerName = selectedOption.text;
+  var diskon = parseInt(selectedOption.dataset.diskon) || 0;
   
   // Tampilkan info reseller
   infoDiv.style.display = 'block';
   document.getElementById('resellerNamaDisplay').textContent = '👤 ' + resellerName;
-  document.getElementById('resellerDiskonDisplay').textContent = '';
+  document.getElementById('resellerDiskonDisplay').textContent = ''; // Kosongkan diskon
   
-  // Isi nama pembeli otomatis
+  // 🔥 DISABLE NAMA PEMBELI DAN ISI OTOMATIS
   if (namaPembeliInput) {
     namaPembeliInput.disabled = true;
     namaPembeliInput.value = resellerName.replace(/^[^-]+-\s*/, '').trim();
     namaPembeliInput.placeholder = '✅ Nama reseller terisi otomatis';
   }
   
-  // 🔥 FETCH CACHE BARU (force refresh)
-  showToast('⏳ Memuat harga reseller...', 'info');
+  // 🔥 REFRESH PRODUK DENGAN HARGA RESELLER
+  loadPosProduk();
   
-  fetchHargaReseller(kodeReseller, true)  // ← FORCE REFRESH
-  .then(function(hargaMap) {
-    console.log('✅ Cache reseller siap: ' + Object.keys(hargaMap).length + ' produk');
-    
-    // 🔥 Refresh produk dengan harga baru
-    loadPosProduk();
-    
-    var jumlah = Object.keys(hargaMap).length;
-    showToast('✅ Harga reseller siap (' + jumlah + ' produk)', 'success');
-    
-    _isChangingReseller = false;
-  })
-  .catch(function(error) {
-    console.error('❌ Error fetch cache:', error);
-    loadPosProduk();
-    showToast('⚠️ Gagal muat harga reseller', 'warning');
-    _isChangingReseller = false;
-  });
+  // Refresh harga di cart
+  refreshCartPrices();
 }
 
 
@@ -11782,9 +11173,7 @@ function resetCartPrices() {
   updateCartDisplay();
 }
 
-// ============================================================
-// 🔥 REFRESH CART PRICES (dari cache)
-// ============================================================
+// ==================== REFRESH CART PRICES ====================
 function refreshCartPrices() {
   var select = document.getElementById('pilihReseller');
   var kodeReseller = select ? select.value : '';
@@ -11794,43 +11183,47 @@ function refreshCartPrices() {
     return;
   }
   
-  fetchHargaReseller(kodeReseller, false)
-  .then(function(hargaMap) {
-    updateCartPricesFromCache(hargaMap);
+  callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
+  .then(function(result) {
+    if (!result || !result.success) return;
+    
+    var hargaMap = result.data || {};
+    
+    for (var i = 0; i < currentCart.length; i++) {
+      var item = currentCart[i];
+      
+      // Cari harga normal dari produkList
+      var hargaNormal = 0;
+      for (var j = 0; j < produkList.length; j++) {
+        if (produkList[j].Kode === item.kode) {
+          hargaNormal = produkList[j]['Harga Jual'] || 0;
+          break;
+        }
+      }
+      
+      // Cek apakah ada harga khusus untuk produk ini
+      if (hargaMap[item.kode]) {
+        var hargaKhusus = hargaMap[item.kode].hargaReseller || 0;
+        if (hargaKhusus > 0) {
+          item.harga = hargaKhusus;
+        } else {
+          item.harga = hargaNormal;
+        }
+      } else {
+        item.harga = hargaNormal;
+      }
+      
+      item.subtotal = item.harga * item.qty;
+    }
+    
+    updateCartDisplay();
+    
+    // Tampilkan info harga yang digunakan
+    showResellerPriceInfo(hargaMap);
   })
   .catch(function(error) {
     console.error('❌ Error refreshCartPrices:', error);
   });
-}
-
-// ============================================================
-// 🔥 UPDATE CART PRICES DARI CACHE
-// ============================================================
-function updateCartPricesFromCache(hargaMap) {
-  if (!currentCart || currentCart.length === 0) return;
-  
-  for (var i = 0; i < currentCart.length; i++) {
-    var item = currentCart[i];
-    
-    var hargaNormal = 0;
-    for (var j = 0; j < produkList.length; j++) {
-      if (produkList[j].Kode === item.kode) {
-        hargaNormal = produkList[j]['Harga Jual'] || 0;
-        break;
-      }
-    }
-    
-    if (hargaMap[item.kode] && hargaMap[item.kode].hargaReseller > 0) {
-      item.harga = hargaMap[item.kode].hargaReseller;
-    } else {
-      item.harga = hargaNormal;
-    }
-    
-    item.subtotal = item.harga * item.qty;
-  }
-  
-  updateCartDisplay();
-  showResellerPriceInfo(hargaMap);
 }
 
 // ==================== SHOW RESELLER PRICE INFO ====================
@@ -12209,762 +11602,6 @@ function simpanSemuaHargaReseller(kodeReseller) {
   });
 }
 
-  <!-- ============================================================ -->
-<!-- 🔥🔥🔥 SCRIPT AUDIT STOK - WAJIB ADA 🔥🔥🔥 -->
-<!-- ============================================================ -->
-
-// ============================================================
-// 🔥 CEK APAKAH USER ADMIN
-// ============================================================
-function isUserAdmin() {
-  if (!currentUser || !currentUser.role) return false;
-  var role = String(currentUser.role).toUpperCase();
-  return (role === 'ADMIN' || role === 'OWNER');
-}
-
-// ============================================================
-// 🔥 BUKA MODAL AUDIT & JALANKAN
-// ============================================================
-function bukaAuditStok() {
-  // Cek akses
-  if (!isUserAdmin()) {
-    showToast('⛔ Akses ditolak! Hanya Admin yang dapat melakukan audit stok.', 'error');
-    return;
-  }
-  
-  console.log('🔍 Memulai audit stok lengkap...');
-  
-  // Tampilkan modal
-  var modal = document.getElementById('auditStokModal');
-  if (!modal) {
-    showToast('❌ Modal audit tidak ditemukan! Tambahkan HTML modal audit.', 'error');
-    return;
-  }
-  modal.classList.add('active');
-  
-  // Reset tampilan
-  document.getElementById('auditLoading').style.display = 'block';
-  document.getElementById('auditHasil').style.display = 'none';
-  document.getElementById('auditError').style.display = 'none';
-  document.getElementById('auditFooter').style.display = 'none';
-  
-  // Panggil GAS
-  callGAS('auditStokLengkap', {})
-  .then(function(result) {
-    console.log('📥 Hasil audit:', result);
-    
-    document.getElementById('auditLoading').style.display = 'none';
-    
-    if (!result || !result.success) {
-      showAuditError(result ? (result.error || 'Gagal audit') : 'Tidak ada response');
-      return;
-    }
-    
-    renderAuditHasil(result);
-    document.getElementById('auditHasil').style.display = 'block';
-    document.getElementById('auditFooter').style.display = 'flex';
-    window._auditResult = result;
-    
-  })
-  .catch(function(error) {
-    console.error('❌ Error audit:', error);
-    document.getElementById('auditLoading').style.display = 'none';
-    showAuditError(error.message || 'Terjadi kesalahan');
-  });
-}
-
-// ============================================================
-// 🔥 TUTUP MODAL
-// ============================================================
-function closeAuditStokModal() {
-  var modal = document.getElementById('auditStokModal');
-  if (modal) modal.classList.remove('active');
-}
-
-// ============================================================
-// 🔥 TAMPILKAN ERROR
-// ============================================================
-function showAuditError(msg) {
-  var el = document.getElementById('auditErrorMsg');
-  var box = document.getElementById('auditError');
-  if (el) el.textContent = '❌ ' + msg;
-  if (box) box.style.display = 'block';
-}
-
-// ============================================================
-// 🔥 RENDER HASIL AUDIT
-// ============================================================
-function renderAuditHasil(result) {
-  var totalSelisih = result.totalSelisih || 0;
-  var isAkurat = totalSelisih === 0;
-  
-  var html = '';
-  
-  // Banner Status
-  var bannerBg = isAkurat 
-    ? 'linear-gradient(135deg, #4CAF50, #388E3C)' 
-    : 'linear-gradient(135deg, #FF6B6B, #E53935)';
-  var bannerIcon = isAkurat ? '🎉' : '⚠️';
-  var bannerText = isAkurat ? 'STOK 100% AKURAT' : 'ADA ' + totalSelisih + ' SELISIH';
-  var bannerSub = isAkurat 
-    ? 'Semua lapis audit menunjukkan hasil yang sinkron' 
-    : 'Periksa detail di bawah untuk menemukan masalah';
-  
-  html += '<div style="background: ' + bannerBg + '; color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 20px;">';
-  html += '  <div style="font-size: 3rem; margin-bottom: 8px;">' + bannerIcon + '</div>';
-  html += '  <div style="font-size: 1.5rem; font-weight: 800;">' + bannerText + '</div>';
-  html += '  <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 6px;">' + bannerSub + '</div>';
-  html += '</div>';
-  
-  // Ringkasan 3 Lapis
-  var l1 = result.lapis1 || {};
-  var l2 = result.lapis2 || {};
-  var l3 = result.lapis3 || {};
-  
-  html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">';
-  
-  var layers = [
-    { name: 'LAPIS 1', desc: 'Produk vs Batch', data: l1 },
-    { name: 'LAPIS 2', desc: 'Batch vs (Masuk−Jual)', data: l2 },
-    { name: 'LAPIS 3', desc: 'Detail per Batch', data: l3 }
-  ];
-  
-  for (var i = 0; i < layers.length; i++) {
-    var L = layers[i];
-    var ok = L.data.totalSelisih === 0;
-    html += '<div style="background: ' + (ok ? '#e8f5e9' : '#ffebee') + '; border-left: 4px solid ' + (ok ? '#4CAF50' : '#f44336') + '; padding: 15px; border-radius: 8px;">';
-    html += '  <div style="font-size: 0.75rem; font-weight: 700; color: ' + (ok ? '#2e7d32' : '#c62828') + ';">' + L.name + '</div>';
-    html += '  <div style="font-size: 0.85rem; color: #333; margin-top: 4px;">' + L.desc + '</div>';
-    html += '  <div style="font-size: 1.3rem; font-weight: 800; color: ' + (ok ? '#2e7d32' : '#c62828') + '; margin-top: 6px;">' + (ok ? '✅ OK' : '❌ ' + L.data.totalSelisih) + '</div>';
-    html += '</div>';
-  }
-  html += '</div>';
-  
-  // Tabel Lapis 1
-  if (l1.hasil && l1.hasil.length > 0) {
-    html += '<div style="margin-bottom: 20px;">';
-    html += '<h4 style="margin: 0 0 10px 0; font-size: 1rem;">📋 LAPIS 1: Produk vs Batch</h4>';
-    html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px;">';
-    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">';
-    html += '<thead><tr style="background: #f0f4ff;">';
-    html += '<th style="padding: 8px; text-align: left;">Kode</th>';
-    html += '<th style="padding: 8px; text-align: left;">Nama</th>';
-    html += '<th style="padding: 8px; text-align: right;">Produk</th>';
-    html += '<th style="padding: 8px; text-align: right;">Batch</th>';
-    html += '<th style="padding: 8px; text-align: right;">Selisih</th>';
-    html += '<th style="padding: 8px; text-align: center;">Status</th>';
-    html += '</tr></thead><tbody>';
-    
-    for (var i = 0; i < l1.hasil.length; i++) {
-      var r = l1.hasil[i];
-      var beda = r.selisih !== 0;
-      html += '<tr style="background: ' + (beda ? '#fff5f5' : '') + '; border-bottom: 1px solid #f0f0f0;">';
-      html += '<td style="padding: 6px 8px; font-weight: 700;">' + r.kode + '</td>';
-      html += '<td style="padding: 6px 8px;">' + r.nama + '</td>';
-      html += '<td style="padding: 6px 8px; text-align: right;">' + r.produk + '</td>';
-      html += '<td style="padding: 6px 8px; text-align: right;">' + r.batch + '</td>';
-      html += '<td style="padding: 6px 8px; text-align: right; font-weight: 800; color: ' + (beda ? '#c62828' : '#2e7d32') + ';">' + (r.selisih > 0 ? '+' : '') + r.selisih + '</td>';
-      html += '<td style="padding: 6px 8px; text-align: center;">' + (beda ? '❌' : '✅') + '</td>';
-      html += '</tr>';
-    }
-    html += '</tbody></table></div></div>';
-  }
-  
-  // Tabel Lapis 2
-  if (l2.hasil && l2.hasil.length > 0) {
-    html += '<div style="margin-bottom: 20px;">';
-    html += '<h4 style="margin: 0 0 10px 0; font-size: 1rem;">📋 LAPIS 2: Batch vs (Masuk − Jual)</h4>';
-    html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px;">';
-    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">';
-    html += '<thead><tr style="background: #f0f4ff;">';
-    html += '<th style="padding: 6px;">Kode</th>';
-    html += '<th style="padding: 6px;">Nama</th>';
-    html += '<th style="padding: 6px;">Masuk</th>';
-    html += '<th style="padding: 6px;">Jual Non-RS</th>';
-    html += '<th style="padding: 6px;">Jual RS</th>';
-    html += '<th style="padding: 6px;">Total Jual</th>';
-    html += '<th style="padding: 6px;">Seharusnya</th>';
-    html += '<th style="padding: 6px;">Batch</th>';
-    html += '<th style="padding: 6px;">Selisih</th>';
-    html += '<th style="padding: 6px;">Status</th>';
-    html += '</tr></thead><tbody>';
-    
-    for (var i = 0; i < l2.hasil.length; i++) {
-      var r = l2.hasil[i];
-      var beda = r.selisih !== 0;
-      html += '<tr style="background: ' + (beda ? '#fff5f5' : '') + '; border-bottom: 1px solid #f0f0f0;">';
-      html += '<td style="padding: 4px 6px; font-weight: 700;">' + r.kode + '</td>';
-      html += '<td style="padding: 4px 6px;">' + r.nama + '</td>';
-      html += '<td style="padding: 4px 6px; text-align: right;">' + r.masuk + '</td>';
-      html += '<td style="padding: 4px 6px; text-align: right;">' + r.jualNonRS + '</td>';
-      html += '<td style="padding: 4px 6px; text-align: right;">' + r.jualRS + '</td>';
-      html += '<td style="padding: 4px 6px; text-align: right;">' + r.totalJual + '</td>';
-      html += '<td style="padding: 4px 6px; text-align: right; color: #1976D2;">' + r.stokSeharusnya + '</td>';
-      html += '<td style="padding: 4px 6px; text-align: right;">' + r.stokBatch + '</td>';
-      html += '<td style="padding: 4px 6px; text-align: right; font-weight: 800; color: ' + (beda ? '#c62828' : '#2e7d32') + ';">' + (r.selisih > 0 ? '+' : '') + r.selisih + '</td>';
-      html += '<td style="padding: 4px 6px; text-align: center;">' + (beda ? '❌' : '✅') + '</td>';
-      html += '</tr>';
-    }
-    html += '</tbody></table></div></div>';
-  }
-  
-  // Tabel Lapis 3 (hanya yang ada pergerakan)
-  if (l3.hasil && l3.hasil.length > 0) {
-    var filtered = [];
-    for (var i = 0; i < l3.hasil.length; i++) {
-      if (l3.hasil[i].terjual !== 0 || l3.hasil[i].stok !== 0) {
-        filtered.push(l3.hasil[i]);
-      }
-    }
-    if (filtered.length > 0) {
-      html += '<div style="margin-bottom: 20px;">';
-      html += '<h4 style="margin: 0 0 10px 0; font-size: 1rem;">📋 LAPIS 3: Detail per Batch</h4>';
-      html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px; max-height: 350px; overflow-y: auto;">';
-      html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">';
-      html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
-      html += '<th style="padding: 6px;">Kode</th>';
-      html += '<th style="padding: 6px;">Batch</th>';
-      html += '<th style="padding: 6px;">Stok Awal</th>';
-      html += '<th style="padding: 6px;">Stok</th>';
-      html += '<th style="padding: 6px;">Terjual</th>';
-      html += '<th style="padding: 6px;">Tgl Masuk</th>';
-      html += '</tr></thead><tbody>';
-      
-      for (var i = 0; i < filtered.length; i++) {
-        var b = filtered[i];
-        html += '<tr style="border-bottom: 1px solid #f0f0f0;">';
-        html += '<td style="padding: 4px 6px; font-weight: 700;">' + b.kode + '</td>';
-        html += '<td style="padding: 4px 6px; font-size: 0.7rem;">' + b.batch + '</td>';
-        html += '<td style="padding: 4px 6px; text-align: right;">' + b.stokAwal + '</td>';
-        html += '<td style="padding: 4px 6px; text-align: right; font-weight: 600;">' + b.stok + '</td>';
-        html += '<td style="padding: 4px 6px; text-align: right; color: ' + (b.terjual > 0 ? '#c62828' : '#666') + ';">' + b.terjual + '</td>';
-        html += '<td style="padding: 4px 6px; font-size: 0.7rem;">' + (b.tanggalMasuk || '-') + '</td>';
-        html += '</tr>';
-      }
-      html += '</tbody></table></div></div>';
-    }
-  }
-  
-  // Timestamp
-  var now = new Date();
-  var ts = now.getDate() + '/' + (now.getMonth()+1) + '/' + now.getFullYear() + ' ' + 
-           String(now.getHours()).padStart(2,'0') + ':' + 
-           String(now.getMinutes()).padStart(2,'0') + ':' + 
-           String(now.getSeconds()).padStart(2,'0');
-  
-  html += '<div style="text-align: center; color: #999; font-size: 0.75rem; margin-top: 10px;">';
-  html += '🕐 Audit: ' + ts + ' oleh ' + (currentUser ? currentUser.nama : '-');
-  html += '</div>';
-  
-  document.getElementById('auditHasil').innerHTML = html;
-}
-
-// ============================================================
-// 🔥 EXPORT CSV
-// ============================================================
-function exportAuditCSV() {
-  if (!window._auditResult) {
-    showToast('⚠️ Tidak ada data audit!', 'warning');
-    return;
-  }
-  
-  var result = window._auditResult;
-  var rows = [];
-  
-  rows.push(['===== AUDIT STOK LENGKAP =====']);
-  rows.push(['Tanggal', new Date().toLocaleString('id-ID')]);
-  rows.push(['User', currentUser ? currentUser.nama : '-']);
-  rows.push(['Total Selisih', result.totalSelisih]);
-  rows.push(['Kesimpulan', result.kesimpulan]);
-  rows.push([]);
-  
-  if (result.lapis1 && result.lapis1.hasil) {
-    rows.push(['===== LAPIS 1: PRODUK vs BATCH =====']);
-    rows.push(['Kode', 'Nama', 'Produk', 'Batch', 'Selisih', 'Status']);
-    for (var i = 0; i < result.lapis1.hasil.length; i++) {
-      var r = result.lapis1.hasil[i];
-      rows.push([r.kode, r.nama, r.produk, r.batch, r.selisih, r.status]);
-    }
-    rows.push([]);
-  }
-  
-  if (result.lapis2 && result.lapis2.hasil) {
-    rows.push(['===== LAPIS 2: BATCH vs (MASUK - JUAL) =====']);
-    rows.push(['Kode', 'Nama', 'Masuk', 'Jual Non-RS', 'Jual RS', 'Total Jual', 'Seharusnya', 'Batch', 'Selisih', 'Status']);
-    for (var i = 0; i < result.lapis2.hasil.length; i++) {
-      var r = result.lapis2.hasil[i];
-      rows.push([r.kode, r.nama, r.masuk, r.jualNonRS, r.jualRS, r.totalJual, r.stokSeharusnya, r.stokBatch, r.selisih, r.status]);
-    }
-    rows.push([]);
-  }
-  
-  if (result.lapis3 && result.lapis3.hasil) {
-    rows.push(['===== LAPIS 3: DETAIL PER BATCH =====']);
-    rows.push(['Kode', 'Batch', 'Stok Awal', 'Stok', 'Terjual', 'Tanggal Masuk']);
-    for (var i = 0; i < result.lapis3.hasil.length; i++) {
-      var r = result.lapis3.hasil[i];
-      rows.push([r.kode, r.batch, r.stokAwal, r.stok, r.terjual, r.tanggalMasuk]);
-    }
-  }
-  
-  var csvContent = '';
-  for (var i = 0; i < rows.length; i++) {
-    var row = rows[i];
-    var escaped = [];
-    for (var j = 0; j < row.length; j++) {
-      var val = row[j] === undefined || row[j] === null ? '' : String(row[j]);
-      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-        val = '"' + val.replace(/"/g, '""') + '"';
-      }
-      escaped.push(val);
-    }
-    csvContent += escaped.join(',') + '\n';
-  }
-  
-  var filename = 'Audit_Stok_' + getTodayString();
-  var blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-  var link = document.createElement('a');
-  var url = URL.createObjectURL(blob);
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename + '.csv');
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  
-  showToast('✅ File audit diunduh!', 'success');
-}
-
-// ============================================================
-// 🔥 AUTO-SHOW TOMBOL AUDIT - PALING AMPUH
-// ============================================================
-
-function setupAuditButtonVisibility() {
-  var btn = document.getElementById('btnAuditStok');
-  if (!btn) {
-    console.log('⚠️ Tombol audit belum ada di DOM');
-    return;
-  }
-  
-  var isAdmin = false;
-  if (currentUser && currentUser.role) {
-    var role = String(currentUser.role).toUpperCase();
-    isAdmin = (role === 'ADMIN' || role === 'OWNER');
-  }
-  
-  if (isAdmin) {
-    btn.style.display = 'inline-flex';
-    console.log('✅ Tombol Audit Stok MUNCUL');
-  } else {
-    btn.style.display = 'none';
-    console.log('🚫 Tombol Audit Stok tersembunyi');
-  }
-}
-
-// 🔥🔥🔥 OBSERVER 1: Pantau perubahan di .sub-tab-produk
-function startObserverSubTab() {
-  var subTab = document.querySelector('.sub-tab-produk');
-  if (!subTab) {
-    console.log('⚠️ .sub-tab-produk belum ada, coba lagi...');
-    setTimeout(startObserverSubTab, 500);
-    return;
-  }
-  
-  var observer = new MutationObserver(function() {
-    setupAuditButtonVisibility();
-  });
-  
-  observer.observe(subTab, { childList: true, subtree: true });
-  console.log('👀 Observer .sub-tab-produk aktif');
-  
-  // Panggil langsung setelah observer aktif
-  setupAuditButtonVisibility();
-}
-
-// 🔥🔥🔥 OBSERVER 2: Pantau perubahan class di <body>
-function startObserverBody() {
-  if (!document.body) {
-    setTimeout(startObserverBody, 300);
-    return;
-  }
-  
-  var bodyObserver = new MutationObserver(function() {
-    setupAuditButtonVisibility();
-  });
-  
-  bodyObserver.observe(document.body, { 
-    attributes: true, 
-    attributeFilter: ['class', 'style'] 
-  });
-  console.log('👀 Observer body aktif');
-}
-
-// 🔥🔥🔥 OBSERVER 3: Pantau perubahan di #app (saat login/logout)
-function startObserverApp() {
-  var app = document.getElementById('app');
-  if (!app) {
-    setTimeout(startObserverApp, 500);
-    return;
-  }
-  
-  var appObserver = new MutationObserver(function() {
-    setupAuditButtonVisibility();
-  });
-  
-  appObserver.observe(app, { 
-    attributes: true, 
-    attributeFilter: ['style', 'class'] 
-  });
-  console.log('👀 Observer #app aktif');
-}
-
-// Jalankan semua observer
-startObserverSubTab();
-startObserverBody();
-startObserverApp();
-
-// Panggil manual beberapa kali sebagai backup
-setTimeout(setupAuditButtonVisibility, 500);
-setTimeout(setupAuditButtonVisibility, 1500);
-setTimeout(setupAuditButtonVisibility, 3000);
-
-// Panggil tiap 2 detik selama 20 detik sebagai backup terakhir
-var _auditIntervalCount = 0;
-var _auditInterval = setInterval(function() {
-  _auditIntervalCount++;
-  setupAuditButtonVisibility();
-  if (_auditIntervalCount >= 10) {
-    clearInterval(_auditInterval);
-    console.log('✅ Backup interval selesai');
-  }
-}, 2000);
-
-console.log('✅ Script Audit Stok loaded!');
-</script>
-  
-  // ============================================================
-  // 🔥 BANNER STATUS UTAMA
-  // ============================================================
-  var bannerBg, bannerIcon, bannerText, bannerSub;
-  if (isAkurat) {
-    bannerBg = 'linear-gradient(135deg, #4CAF50, #388E3C)';
-    bannerIcon = '🎉';
-    bannerText = 'STOK 100% AKURAT';
-    bannerSub = 'Semua lapis audit menunjukkan hasil yang sinkron';
-  } else {
-    bannerBg = 'linear-gradient(135deg, #FF6B6B, #E53935)';
-    bannerIcon = '⚠️';
-    bannerText = 'ADA ' + totalSelisih + ' SELISIH';
-    bannerSub = 'Periksa detail di bawah untuk menemukan masalah';
-  }
-  
-  html += '<div style="background: ' + bannerBg + '; color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">';
-  html += '  <div style="font-size: 3rem; margin-bottom: 8px;">' + bannerIcon + '</div>';
-  html += '  <div style="font-size: 1.5rem; font-weight: 800; letter-spacing: 1px;">' + bannerText + '</div>';
-  html += '  <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 6px;">' + bannerSub + '</div>';
-  html += '</div>';
-  
-  // ============================================================
-  // 🔥 RINGKASAN 3 LAPIS
-  // ============================================================
-  html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">';
-  
-  // Lapis 1
-  var l1 = result.lapis1 || {};
-  var l1Ok = l1.totalSelisih === 0;
-  html += '<div style="background: ' + (l1Ok ? '#e8f5e9' : '#ffebee') + '; border-left: 4px solid ' + (l1Ok ? '#4CAF50' : '#f44336') + '; padding: 15px; border-radius: 8px;">';
-  html += '  <div style="font-size: 0.75rem; font-weight: 700; color: ' + (l1Ok ? '#2e7d32' : '#c62828') + '; text-transform: uppercase;">LAPIS 1</div>';
-  html += '  <div style="font-size: 0.85rem; color: #333; margin-top: 4px;">Produk vs Batch</div>';
-  html += '  <div style="font-size: 1.3rem; font-weight: 800; color: ' + (l1Ok ? '#2e7d32' : '#c62828') + '; margin-top: 6px;">' + (l1Ok ? '✅ SINKRON' : '❌ ' + l1.totalSelisih) + '</div>';
-  html += '</div>';
-  
-  // Lapis 2
-  var l2 = result.lapis2 || {};
-  var l2Ok = l2.totalSelisih === 0;
-  html += '<div style="background: ' + (l2Ok ? '#e8f5e9' : '#ffebee') + '; border-left: 4px solid ' + (l2Ok ? '#4CAF50' : '#f44336') + '; padding: 15px; border-radius: 8px;">';
-  html += '  <div style="font-size: 0.75rem; font-weight: 700; color: ' + (l2Ok ? '#2e7d32' : '#c62828') + '; text-transform: uppercase;">LAPIS 2</div>';
-  html += '  <div style="font-size: 0.85rem; color: #333; margin-top: 4px;">Batch vs (Masuk−Jual)</div>';
-  html += '  <div style="font-size: 1.3rem; font-weight: 800; color: ' + (l2Ok ? '#2e7d32' : '#c62828') + '; margin-top: 6px;">' + (l2Ok ? '✅ AKURAT' : '❌ ' + l2.totalSelisih) + '</div>';
-  html += '</div>';
-  
-  // Lapis 3
-  var l3 = result.lapis3 || {};
-  var l3Ok = l3.totalSelisih === 0;
-  html += '<div style="background: ' + (l3Ok ? '#e8f5e9' : '#ffebee') + '; border-left: 4px solid ' + (l3Ok ? '#4CAF50' : '#f44336') + '; padding: 15px; border-radius: 8px;">';
-  html += '  <div style="font-size: 0.75rem; font-weight: 700; color: ' + (l3Ok ? '#2e7d32' : '#c62828') + '; text-transform: uppercase;">LAPIS 3</div>';
-  html += '  <div style="font-size: 0.85rem; color: #333; margin-top: 4px;">Detail per Batch</div>';
-  html += '  <div style="font-size: 1.3rem; font-weight: 800; color: ' + (l3Ok ? '#2e7d32' : '#c62828') + '; margin-top: 6px;">' + (l3Ok ? '✅ AKURAT' : '❌ ' + l3.totalSelisih) + '</div>';
-  html += '</div>';
-  
-  html += '</div>';
-  
-  // ============================================================
-  // 🔥 TABEL LAPIS 1
-  // ============================================================
-  if (l1.hasil && l1.hasil.length > 0) {
-    html += '<div style="margin-bottom: 20px;">';
-    html += '<h4 style="color: #1a2332; margin: 0 0 10px 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">';
-    html += '<span style="background: #E53935; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem;">LAPIS 1</span>';
-    html += 'Produk.Stok vs Total Batch.Stok';
-    html += '</h4>';
-    html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px;">';
-    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">';
-    html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
-    html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Kode</th>';
-    html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Nama</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Produk</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Batch</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Selisih</th>';
-    html += '<th style="padding: 8px 10px; text-align: center; font-size: 0.7rem; color: #555;">Status</th>';
-    html += '</tr></thead><tbody>';
-    
-    for (var i = 0; i < l1.hasil.length; i++) {
-      var row = l1.hasil[i];
-      var beda = row.selisih !== 0;
-      var rowBg = beda ? '#fff5f5' : '';
-      html += '<tr style="background: ' + rowBg + '; border-bottom: 1px solid #f0f0f0;">';
-      html += '<td style="padding: 6px 10px; font-weight: 700;">' + escapeHtml(row.kode) + '</td>';
-      html += '<td style="padding: 6px 10px;">' + escapeHtml(row.nama) + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + row.produk + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + row.batch + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 800; color: ' + (beda ? '#c62828' : '#2e7d32') + ';">' + (row.selisih > 0 ? '+' : '') + row.selisih + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: center; font-size: 0.75rem;">' + (beda ? '❌ BEDA' : '✅ SINKRON') + '</td>';
-      html += '</tr>';
-    }
-    
-    html += '</tbody></table></div></div>';
-  }
-  
-  // ============================================================
-  // 🔥 TABEL LAPIS 2
-  // ============================================================
-  if (l2.hasil && l2.hasil.length > 0) {
-    html += '<div style="margin-bottom: 20px;">';
-    html += '<h4 style="color: #1a2332; margin: 0 0 10px 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">';
-    html += '<span style="background: #FF9800; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem;">LAPIS 2</span>';
-    html += 'Batch.Stok vs (Stok Masuk − Penjualan)';
-    html += '</h4>';
-    html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px;">';
-    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">';
-    html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
-    html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Kode</th>';
-    html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Nama</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Masuk</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Jual Non-RS</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Jual RS</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Total Jual</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Seharusnya</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Batch</th>';
-    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Selisih</th>';
-    html += '<th style="padding: 8px 10px; text-align: center; font-size: 0.7rem; color: #555;">Status</th>';
-    html += '</tr></thead><tbody>';
-    
-    for (var i = 0; i < l2.hasil.length; i++) {
-      var row = l2.hasil[i];
-      var beda = row.selisih !== 0;
-      var rowBg = beda ? '#fff5f5' : '';
-      html += '<tr style="background: ' + rowBg + '; border-bottom: 1px solid #f0f0f0;">';
-      html += '<td style="padding: 6px 10px; font-weight: 700;">' + escapeHtml(row.kode) + '</td>';
-      html += '<td style="padding: 6px 10px;">' + escapeHtml(row.nama) + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right;">' + row.masuk + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right;">' + row.jualNonRS + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right;">' + row.jualRS + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + row.totalJual + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600; color: #1976D2;">' + row.stokSeharusnya + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + row.stokBatch + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 800; color: ' + (beda ? '#c62828' : '#2e7d32') + ';">' + (row.selisih > 0 ? '+' : '') + row.selisih + '</td>';
-      html += '<td style="padding: 6px 10px; text-align: center; font-size: 0.75rem;">' + (beda ? '❌ BEDA' : '✅ AKURAT') + '</td>';
-      html += '</tr>';
-    }
-    
-    html += '</tbody></table></div></div>';
-  }
-  
-  // ============================================================
-  // 🔥 TABEL LAPIS 3 - DETAIL BATCH (HANYA YANG ADA MASALAH)
-  // ============================================================
-  if (l3.hasil && l3.hasil.length > 0) {
-    // Filter hanya batch yang terjual != 0 atau stok != 0
-    var l3Filtered = [];
-    for (var i = 0; i < l3.hasil.length; i++) {
-      var b = l3.hasil[i];
-      if (b.terjual !== 0 || b.stok !== 0) {
-        l3Filtered.push(b);
-      }
-    }
-    
-    if (l3Filtered.length > 0) {
-      html += '<div style="margin-bottom: 20px;">';
-      html += '<h4 style="color: #1a2332; margin: 0 0 10px 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">';
-      html += '<span style="background: #9C27B0; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem;">LAPIS 3</span>';
-      html += 'Detail per Batch (Stok Awal, Stok, Terjual)';
-      html += '</h4>';
-      html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px; max-height: 400px; overflow-y: auto;">';
-      html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">';
-      html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
-      html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Kode</th>';
-      html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Batch</th>';
-      html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Stok Awal</th>';
-      html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Stok</th>';
-      html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Terjual</th>';
-      html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Tgl Masuk</th>';
-      html += '</tr></thead><tbody>';
-      
-      for (var i = 0; i < l3Filtered.length; i++) {
-        var b = l3Filtered[i];
-        html += '<tr style="border-bottom: 1px solid #f0f0f0;">';
-        html += '<td style="padding: 6px 10px; font-weight: 700;">' + escapeHtml(b.kode) + '</td>';
-        html += '<td style="padding: 6px 10px; font-size: 0.7rem; color: #666;">' + escapeHtml(b.batch) + '</td>';
-        html += '<td style="padding: 6px 10px; text-align: right;">' + b.stokAwal + '</td>';
-        html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + b.stok + '</td>';
-        html += '<td style="padding: 6px 10px; text-align: right; color: ' + (b.terjual > 0 ? '#c62828' : '#666') + ';">' + b.terjual + '</td>';
-        html += '<td style="padding: 6px 10px; font-size: 0.75rem; color: #666;">' + escapeHtml(b.tanggalMasuk || '-') + '</td>';
-        html += '</tr>';
-      }
-      
-      html += '</tbody></table></div></div>';
-    }
-  }
-  
-  // ============================================================
-  // 🔥 TIMESTAMP
-  // ============================================================
-  var now = new Date();
-  var ts = now.getDate() + '/' + (now.getMonth()+1) + '/' + now.getFullYear() + ' ' + 
-           String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
-  
-  html += '<div style="text-align: center; color: #999; font-size: 0.75rem; margin-top: 10px;">';
-  html += '🕐 Audit dilakukan pada: ' + ts + ' oleh ' + escapeHtml(currentUser ? currentUser.nama : '-');
-  html += '</div>';
-  
-  document.getElementById('auditHasil').innerHTML = html;
-}
-
-/**
- * Tutup Modal Audit
- */
-function closeAuditStokModal() {
-  var modal = document.getElementById('auditStokModal');
-  if (modal) modal.classList.remove('active');
-}
-
-/**
- * Export Hasil Audit ke CSV
- */
-function exportAuditCSV() {
-  if (!window._auditResult) {
-    showToast('⚠️ Tidak ada data audit untuk diekspor', 'warning');
-    return;
-  }
-  
-  var result = window._auditResult;
-  var rows = [];
-  
-  // Header
-  rows.push(['===== AUDIT STOK LENGKAP =====']);
-  rows.push(['Tanggal Audit', new Date().toLocaleString('id-ID')]);
-  rows.push(['User', currentUser ? currentUser.nama : '-']);
-  rows.push(['Total Selisih', result.totalSelisih]);
-  rows.push(['Kesimpulan', result.kesimpulan]);
-  rows.push([]);
-  
-  // Lapis 1
-  if (result.lapis1 && result.lapis1.hasil) {
-    rows.push(['===== LAPIS 1: PRODUK vs BATCH =====']);
-    rows.push(['Kode', 'Nama', 'Produk', 'Batch', 'Selisih', 'Status']);
-    for (var i = 0; i < result.lapis1.hasil.length; i++) {
-      var r = result.lapis1.hasil[i];
-      rows.push([r.kode, r.nama, r.produk, r.batch, r.selisih, r.status]);
-    }
-    rows.push([]);
-  }
-  
-  // Lapis 2
-  if (result.lapis2 && result.lapis2.hasil) {
-    rows.push(['===== LAPIS 2: BATCH vs (MASUK - JUAL) =====']);
-    rows.push(['Kode', 'Nama', 'Masuk', 'Jual Non-RS', 'Jual RS', 'Total Jual', 'Seharusnya', 'Batch', 'Selisih', 'Status']);
-    for (var i = 0; i < result.lapis2.hasil.length; i++) {
-      var r = result.lapis2.hasil[i];
-      rows.push([r.kode, r.nama, r.masuk, r.jualNonRS, r.jualRS, r.totalJual, r.stokSeharusnya, r.stokBatch, r.selisih, r.status]);
-    }
-    rows.push([]);
-  }
-  
-  // Lapis 3
-  if (result.lapis3 && result.lapis3.hasil) {
-    rows.push(['===== LAPIS 3: DETAIL PER BATCH =====']);
-    rows.push(['Kode', 'Batch', 'Stok Awal', 'Stok', 'Terjual', 'Tanggal Masuk']);
-    for (var i = 0; i < result.lapis3.hasil.length; i++) {
-      var r = result.lapis3.hasil[i];
-      rows.push([r.kode, r.batch, r.stokAwal, r.stok, r.terjual, r.tanggalMasuk]);
-    }
-  }
-  
-  // Convert ke CSV
-  var csvContent = '';
-  for (var i = 0; i < rows.length; i++) {
-    var row = rows[i];
-    var escapedRow = [];
-    for (var j = 0; j < row.length; j++) {
-      var val = row[j] === undefined || row[j] === null ? '' : String(row[j]);
-      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-        val = '"' + val.replace(/"/g, '""') + '"';
-      }
-      escapedRow.push(val);
-    }
-    csvContent += escapedRow.join(',') + '\n';
-  }
-  
-  // Download
-  var filename = 'Audit_Stok_' + getTodayString();
-  var blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-  var link = document.createElement('a');
-  var url = URL.createObjectURL(blob);
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename + '.csv');
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  
-  showToast('✅ File audit berhasil diunduh!', 'success');
-}
-
-// ============================================================
-// 🔥 PASTIKAN TOMBOL MUNCUL SAAT MASUK HALAMAN PRODUK
-// ============================================================
-
-// Override showPage untuk setup tombol audit
-(function() {
-  var originalShowPage = window.showPage;
-  if (typeof originalShowPage === 'function') {
-    window.showPage = function(page) {
-      originalShowPage.apply(this, arguments);
-      
-      // Setup tombol audit kalau masuk ke halaman produk
-      if (page === 'produk') {
-        setTimeout(setupAuditButtonVisibility, 100);
-      }
-    };
-  }
-})();
-
-// Setup saat pertama kali login
-(function() {
-  var originalShowAppAfterLogin = window.showAppAfterLogin;
-  if (typeof originalShowAppAfterLogin === 'function') {
-    window.showAppAfterLogin = function() {
-      originalShowAppAfterLogin.apply(this, arguments);
-      
-      // Setup tombol audit
-      setTimeout(setupAuditButtonVisibility, 500);
-    };
-  }
-})();
-
-// Setup saat DOM siap
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(setupAuditButtonVisibility, 100
 
 // ==================== HAPUS HARGA RESELLER ====================
 function hapusHargaReseller(kodeReseller, kodeProduk) {
@@ -12988,693 +11625,7 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
   });
 }
 
-// ============================================================
-// 🔥 MANAJEMEN PIUTANG RESELLER
-// ============================================================
 
-// ============================================================
-// LOAD PIUTANG RESELLER + DASHBOARD
-// ============================================================
-function loadPiutangReseller() {
-  try {
-    var tbody = document.getElementById('piutangResellerTable');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">⏳ Memuat data...</td></tr>';
-    
-    callGAS('getAllPiutangReseller', {})
-    .then(function(result) {
-      if (!result || !result.success) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:red;padding:30px;">❌ Gagal memuat: ' + (result ? result.error : 'Unknown error') + '</td></tr>';
-        return;
-      }
-      
-      var data = result.data || [];
-      
-      // FILTER HANYA YANG PUNYA SISA
-      var belumLunas = [];
-      for (var i = 0; i < data.length; i++) {
-        var item = data[i];
-        var sisa = parseInt(item.sisa) || 0;
-        var total = parseInt(item.total) || 0;
-        var dibayar = parseInt(item.dibayar) || 0;
-        
-        if (sisa <= 0) continue;
-        if (total <= 0) continue;
-        if (dibayar >= total) continue;
-        
-        belumLunas.push({
-          idTransaksi: item.idTransaksi,
-          tanggal: item.tanggal,
-          kodeReseller: item.kodeReseller,
-          namaReseller: item.namaReseller,
-          total: total,
-          dibayar: dibayar,
-          sisa: sisa,
-          status: sisa <= 0 ? 'LUNAS' : (dibayar > 0 ? 'CICILAN' : 'BELUM BAYAR')
-        });
-      }
-      
-      // RENDER DASHBOARD
-      renderDashboardPiutang(belumLunas);
-      
-      // RENDER TABEL
-      renderTabelPiutang(belumLunas);
-      
-      console.log('✅ Piutang dimuat:', belumLunas.length, 'nota');
-    })
-    .catch(function(error) {
-      console.error('❌ Error loadPiutangReseller:', error);
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:red;padding:30px;">❌ Error: ' + error.message + '</td></tr>';
-    });
-  } catch (e) {
-    console.error('❌ Error loadPiutangReseller:', e);
-  }
-}
-
-
-// ============================================================
-// RENDER DASHBOARD PIUTANG
-// ============================================================
-function renderDashboardPiutang(belumLunas) {
-  var totalPiutang = 0;
-  var sudahDiterima = 0;
-  var sisaPiutang = 0;
-  var jumlahNota = belumLunas.length;
-  var jatuhTempo = 0;
-  var cicilanAktif = 0;
-  var belumBayar = 0;
-  var totalUmur = 0;
-  
-  var resellerMap = {};
-  var today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  for (var i = 0; i < belumLunas.length; i++) {
-    var t = belumLunas[i];
-    var total = t.total || 0;
-    var dibayar = t.dibayar || 0;
-    var sisa = t.sisa || 0;
-    
-    totalPiutang += total;
-    sudahDiterima += dibayar;
-    sisaPiutang += sisa;
-    
-    // HITUNG UMUR
-    var umurHari = 0;
-    if (t.tanggal) {
-      try {
-        var tglPiutang = new Date(t.tanggal + 'T00:00:00');
-        var diffMs = today - tglPiutang;
-        umurHari = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (umurHari < 0) umurHari = 0;
-      } catch(e) { umurHari = 0; }
-    }
-    totalUmur += umurHari;
-    
-    if (umurHari > 30) jatuhTempo++;
-    if (dibayar > 0 && sisa > 0) cicilanAktif++;
-    if (dibayar === 0) belumBayar++;
-    
-    // MAP RESELLER
-    var kodeReseller = t.kodeReseller || 'unknown';
-    var namaReseller = t.namaReseller || '-';
-    if (!resellerMap[kodeReseller]) {
-      resellerMap[kodeReseller] = {
-        kode: kodeReseller,
-        nama: namaReseller,
-        totalPiutang: 0,
-        sisaPiutang: 0,
-        jumlahNota: 0
-      };
-    }
-    resellerMap[kodeReseller].totalPiutang += total;
-    resellerMap[kodeReseller].sisaPiutang += sisa;
-    resellerMap[kodeReseller].jumlahNota++;
-  }
-  
-  var rataUmur = jumlahNota > 0 ? Math.round(totalUmur / jumlahNota) : 0;
-  var persenDiterima = totalPiutang > 0 ? Math.round((sudahDiterima / totalPiutang) * 100) : 0;
-  
-  // UPDATE KARTU
-  var el;
-  el = document.getElementById('dashTotalPiutang');
-  if (el) el.textContent = formatRupiah(totalPiutang);
-  
-  el = document.getElementById('dashTotalPiutangSub');
-  if (el) el.textContent = jumlahNota + ' nota';
-  
-  el = document.getElementById('dashSudahDiterima');
-  if (el) el.textContent = formatRupiah(sudahDiterima);
-  
-  el = document.getElementById('dashSudahDiterimaSub');
-  if (el) el.textContent = persenDiterima + '% dari total';
-  
-  el = document.getElementById('dashSisaPiutang');
-  if (el) el.textContent = formatRupiah(sisaPiutang);
-  
-  el = document.getElementById('dashSisaPiutangSub');
-  if (el) el.textContent = jumlahNota + ' nota aktif';
-  
-  el = document.getElementById('dashJumlahNota');
-  if (el) el.textContent = jumlahNota;
-  
-  el = document.getElementById('dashJumlahNotaSub');
-  if (el) el.textContent = 'nota belum lunas';
-  
-  el = document.getElementById('dashJatuhTempo');
-  if (el) el.textContent = jatuhTempo;
-  
-  el = document.getElementById('dashCicilanAktif');
-  if (el) el.textContent = cicilanAktif;
-  
-  el = document.getElementById('dashBelumBayar');
-  if (el) el.textContent = belumBayar;
-  
-  el = document.getElementById('dashRataUmur');
-  if (el) el.textContent = rataUmur + ' hari';
-  
-  el = document.getElementById('badgeJumlahPiutang');
-  if (el) el.textContent = jumlahNota;
-  
-  // PROGRESS BAR
-  el = document.getElementById('dashProgressPersen');
-  if (el) el.textContent = persenDiterima + '%';
-  
-  el = document.getElementById('dashProgressBar');
-  if (el) {
-    el.style.width = Math.min(persenDiterima, 100) + '%';
-    if (persenDiterima >= 75) {
-      el.style.background = 'linear-gradient(90deg,#4CAF50,#388E3C)';
-    } else if (persenDiterima >= 50) {
-      el.style.background = 'linear-gradient(90deg,#FF9800,#F57C00)';
-    } else {
-      el.style.background = 'linear-gradient(90deg,#f44336,#d32f2f)';
-    }
-  }
-  
-  el = document.getElementById('dashProgressDiterima');
-  if (el) el.textContent = 'Diterima: ' + formatRupiah(sudahDiterima);
-  
-  el = document.getElementById('dashProgressSisa');
-  if (el) el.textContent = 'Sisa: ' + formatRupiah(sisaPiutang);
-  
-  // TOP 5 RESELLER
-  renderTopResellerPiutang(resellerMap);
-}
-
-
-// ============================================================
-// TOP 5 RESELLER
-// ============================================================
-function renderTopResellerPiutang(resellerMap) {
-  var container = document.getElementById('dashTopReseller');
-  if (!container) return;
-  
-  var arr = [];
-  for (var kode in resellerMap) {
-    arr.push(resellerMap[kode]);
-  }
-  
-  arr.sort(function(a, b) {
-    return b.sisaPiutang - a.sisaPiutang;
-  });
-  
-  var top5 = arr.slice(0, 5);
-  
-  if (top5.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:#4CAF50;font-size:0.85rem;padding:10px;">✅ Tidak ada piutang reseller</div>';
-    return;
-  }
-  
-  var maxSisa = top5[0].sisaPiutang || 1;
-  var html = '';
-  var medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
-  var colors = ['#FFD700', '#C0C0C0', '#CD7F32', '#6C63FF', '#00897B'];
-  
-  for (var i = 0; i < top5.length; i++) {
-    var r = top5[i];
-    var persen = (r.sisaPiutang / maxSisa) * 100;
-    
-    html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#f8faff;border-radius:8px;border-left:4px solid ' + colors[i] + ';">';
-    html += '  <div style="font-size:1.3rem;flex-shrink:0;">' + medals[i] + '</div>';
-    html += '  <div style="flex:1;min-width:0;">';
-    html += '    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px;">';
-    html += '      <div style="font-weight:700;font-size:0.85rem;color:#1a2332;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(r.nama) + '</div>';
-    html += '      <div style="font-weight:700;font-size:0.85rem;color:#c62828;white-space:nowrap;">' + formatRupiah(r.sisaPiutang) + '</div>';
-    html += '    </div>';
-    html += '    <div style="display:flex;align-items:center;gap:8px;">';
-    html += '      <div style="flex:1;height:5px;background:#e0e0e0;border-radius:3px;overflow:hidden;">';
-    html += '        <div style="width:' + persen + '%;height:100%;background:' + colors[i] + ';border-radius:3px;"></div>';
-    html += '      </div>';
-    html += '      <div style="font-size:0.65rem;color:#666;white-space:nowrap;">' + r.jumlahNota + ' nota</div>';
-    html += '    </div>';
-    html += '  </div>';
-    html += '</div>';
-  }
-  
-  container.innerHTML = html;
-}
-
-
-// ============================================================
-// RENDER TABEL PIUTANG
-// ============================================================
-function renderTabelPiutang(belumLunas) {
-  var tbody = document.getElementById('piutangResellerTable');
-  if (!tbody) return;
-  
-  if (belumLunas.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#4CAF50;padding:30px;font-weight:600;">✅ Semua piutang reseller sudah lunas!<br><span style="font-size:0.8rem;color:#666;font-weight:400;">Reseller yang bayar cash/lunas tidak muncul di sini.</span></td></tr>';
-    return;
-  }
-  
-  // SORT: TERLAMA DULU
-  belumLunas.sort(function(a, b) {
-    return (a.tanggal || '').localeCompare(b.tanggal || '');
-  });
-  
-  var today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  var html = '';
-  for (var i = 0; i < belumLunas.length; i++) {
-    var t = belumLunas[i];
-    var total = t.total || 0;
-    var dibayar = t.dibayar || 0;
-    var sisa = t.sisa || 0;
-    var progress = total > 0 ? Math.round((dibayar / total) * 100) : 0;
-    var statusClass = t.status === 'CICILAN' ? 'badge-warning' : 'badge-danger';
-    var statusText = t.status === 'CICILAN' ? '🔄 Cicilan' : '⚠️ Belum Bayar';
-    
-    // HITUNG UMUR
-    var umurHari = 0;
-    if (t.tanggal) {
-      try {
-        var tglPiutang = new Date(t.tanggal + 'T00:00:00');
-        var diffMs = today - tglPiutang;
-        umurHari = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (umurHari < 0) umurHari = 0;
-      } catch(e) { umurHari = 0; }
-    }
-    
-    var umurColor = '#4CAF50';
-    var umurBg = '#e8f5e9';
-    if (umurHari > 30) {
-      umurColor = '#c62828';
-      umurBg = '#ffebee';
-    } else if (umurHari > 14) {
-      umurColor = '#e65100';
-      umurBg = '#fff3e0';
-    } else if (umurHari > 7) {
-      umurColor = '#f57c00';
-      umurBg = '#fff8e1';
-    }
-    
-    html += '<tr>';
-    html += '<td style="text-align:center;">' + (i + 1) + '</td>';
-    html += '<td style="white-space:nowrap;">' + formatTanggalDisplay(t.tanggal) + '</td>';
-    html += '<td><strong>' + escapeHtml(t.idTransaksi || '-') + '</strong></td>';
-    html += '<td>' + escapeHtml(t.namaReseller || '-') + '</td>';
-    html += '<td style="text-align:right;font-weight:600;">' + formatRupiah(total) + '</td>';
-    html += '<td style="text-align:right;color:#2e7d32;font-weight:600;">' + formatRupiah(dibayar) + '</td>';
-    html += '<td style="text-align:right;color:#c62828;font-weight:700;">' + formatRupiah(sisa) + '</td>';
-    html += '<td style="text-align:center;">';
-    html += '<span style="background:' + umurBg + ';color:' + umurColor + ';padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:700;white-space:nowrap;">' + umurHari + ' hari</span>';
-    html += '</td>';
-    html += '<td style="text-align:center;">';
-    html += '<span class="' + statusClass + '" style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:600;">' + statusText + '</span>';
-    html += '<div style="margin-top:3px;">';
-    html += '<div style="width:60px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto;overflow:hidden;">';
-    html += '<div style="width:' + Math.min(progress, 100) + '%;height:100%;background:' + (progress >= 75 ? '#4CAF50' : progress >= 50 ? '#FF9800' : '#f44336') + ';border-radius:2px;"></div>';
-    html += '</div>';
-    html += '<div style="font-size:0.6rem;color:#666;margin-top:2px;">' + progress + '%</div>';
-    html += '</div>';
-    html += '</td>';
-    html += '<td style="text-align:center;white-space:nowrap;">';
-    html += '<button class="btn btn-success btn-sm" onclick="bukaPopupBayarPiutang(\'' + escapeHtml(t.idTransaksi) + '\',\'' + escapeHtml(t.kodeReseller) + '\',\'' + escapeHtml(t.namaReseller) + '\',' + total + ',' + dibayar + ',' + sisa + ')" style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;box-shadow:0 2px 6px rgba(76,175,80,0.3);margin-right:3px;" title="Terima Bayar">💰 Terima</button>';
-    html += '<button class="btn btn-info btn-sm" onclick="lihatRiwayatPiutang(\'' + escapeHtml(t.idTransaksi) + '\')" style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;box-shadow:0 2px 6px rgba(33,150,243,0.3);" title="Riwayat">📋</button>';
-    html += '</td>';
-    html += '</tr>';
-  }
-  
-  tbody.innerHTML = html;
-}
-
-
-// ============================================================
-// POPUP CICILAN PIUTANG
-// ============================================================
-function bukaPopupBayarPiutang(idTransaksi, kodeReseller, namaReseller, total, dibayar, sisa) {
-  var html = '';
-  
-  // HEADER INFO
-  html += '<div style="background:linear-gradient(135deg,#4CAF50,#388E3C);padding:15px 18px;border-radius:10px;color:white;margin-bottom:18px;box-shadow:0 4px 12px rgba(76,175,80,0.25);">';
-  html += '  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">';
-  html += '    <div>';
-  html += '      <div style="font-size:0.7rem;opacity:0.9;text-transform:uppercase;letter-spacing:0.5px;">💰 Penerimaan Piutang</div>';
-  html += '      <div style="font-size:1.2rem;font-weight:700;margin-top:2px;">' + escapeHtml(namaReseller) + '</div>';
-  html += '      <div style="font-size:0.75rem;opacity:0.9;margin-top:2px;">ID: ' + escapeHtml(idTransaksi) + '</div>';
-  html += '    </div>';
-  html += '    <div style="text-align:right;">';
-  html += '      <div style="font-size:0.7rem;opacity:0.9;">Sisa Piutang</div>';
-  html += '      <div style="font-size:1.6rem;font-weight:800;line-height:1.1;">' + formatRupiah(sisa) + '</div>';
-  html += '    </div>';
-  html += '  </div>';
-  html += '</div>';
-  
-  // DETAIL
-  html += '<div style="background:#f8faff;padding:12px 15px;border-radius:8px;border:1px solid #e8ecf4;margin-bottom:15px;">';
-  html += '  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 15px;font-size:0.85rem;">';
-  html += '    <div style="display:flex;justify-content:space-between;"><span style="color:#666;">Total Piutang:</span><strong>' + formatRupiah(total) + '</strong></div>';
-  html += '    <div style="display:flex;justify-content:space-between;"><span style="color:#666;">Sudah Diterima:</span><strong style="color:#2e7d32;">' + formatRupiah(dibayar) + '</strong></div>';
-  html += '    <div style="display:flex;justify-content:space-between;"><span style="color:#666;">Sisa Piutang:</span><strong style="color:#c62828;">' + formatRupiah(sisa) + '</strong></div>';
-  html += '    <div style="display:flex;justify-content:space-between;"><span style="color:#666;">Progress:</span><strong>' + (total > 0 ? Math.round((dibayar/total)*100) : 0) + '%</strong></div>';
-  html += '  </div>';
-  html += '</div>';
-  
-  // TANGGAL
-  html += '<div class="form-group">';
-  html += '  <label style="font-weight:600;font-size:0.85rem;color:#555;display:block;margin-bottom:4px;">📅 Tanggal Terima</label>';
-  html += '  <input type="date" id="tglTerimaPiutang" value="' + getTodayString() + '" style="width:100%;padding:10px 12px;border:2px solid #dce3f0;border-radius:8px;font-size:0.95rem;background:white;">';
-  html += '</div>';
-  
-  // QUICK NOMINAL
-  html += '<div class="form-group">';
-  html += '  <label style="font-weight:600;font-size:0.85rem;color:#555;display:block;margin-bottom:6px;">💰 Nominal Diterima</label>';
-  html += '  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">';
-  
-  var nominal25 = Math.floor(sisa * 0.25);
-  var nominal50 = Math.floor(sisa * 0.5);
-  var nominal75 = Math.floor(sisa * 0.75);
-  
-  html += '    <button type="button" onclick="setNominalPiutang(' + nominal25 + ')" style="padding:8px 4px;background:#fff3e0;color:#e65100;border:2px solid #ffcc80;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.75rem;">25%<br><span style="font-size:0.65rem;font-weight:500;">' + formatRupiah(nominal25) + '</span></button>';
-  html += '    <button type="button" onclick="setNominalPiutang(' + nominal50 + ')" style="padding:8px 4px;background:#fff3e0;color:#e65100;border:2px solid #ffcc80;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.75rem;">50%<br><span style="font-size:0.65rem;font-weight:500;">' + formatRupiah(nominal50) + '</span></button>';
-  html += '    <button type="button" onclick="setNominalPiutang(' + nominal75 + ')" style="padding:8px 4px;background:#fff3e0;color:#e65100;border:2px solid #ffcc80;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.75rem;">75%<br><span style="font-size:0.65rem;font-weight:500;">' + formatRupiah(nominal75) + '</span></button>';
-  html += '    <button type="button" onclick="setNominalPiutang(' + sisa + ')" style="padding:8px 4px;background:linear-gradient(135deg,#4CAF50,#388E3C);color:white;border:2px solid #4CAF50;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.75rem;box-shadow:0 2px 8px rgba(76,175,80,0.3);">💰 LUNAS<br><span style="font-size:0.65rem;font-weight:500;">' + formatRupiah(sisa) + '</span></button>';
-  
-  html += '  </div>';
-  html += '  <input type="number" id="nominalTerimaPiutang" min="1" max="' + sisa + '" placeholder="Atau ketik nominal bebas..." ';
-  html += '         style="width:100%;padding:12px 14px;border:2px solid #dce3f0;border-radius:8px;font-size:1.1rem;font-weight:700;background:white;text-align:right;" ';
-  html += '         oninput="updatePreviewSisaPiutang(' + sisa + ')">';
-  html += '</div>';
-  
-  // PREVIEW SISA
-  html += '<div id="previewSisaPiutang" style="background:#f0f8ff;padding:12px 15px;border-radius:8px;border-left:4px solid #2196F3;margin-bottom:15px;">';
-  html += '  <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.9rem;">';
-  html += '    <span style="color:#666;">Sisa piutang setelah terima:</span>';
-  html += '    <strong id="sisaSetelahTerima" style="color:#c62828;font-size:1.1rem;">' + formatRupiah(sisa) + '</strong>';
-  html += '  </div>';
-  html += '  <div id="statusSetelahTerima" style="margin-top:6px;font-size:0.8rem;text-align:right;color:#666;">Status: <strong>BELUM BAYAR</strong></div>';
-  html += '</div>';
-  
-  // CATATAN
-  html += '<div class="form-group">';
-  html += '  <label style="font-weight:600;font-size:0.85rem;color:#555;display:block;margin-bottom:4px;">📝 Catatan (opsional)</label>';
-  html += '  <textarea id="catatanTerimaPiutang" placeholder="Contoh: Transfer BCA, cicilan ke-2, dll..." style="width:100%;padding:10px 12px;border:2px solid #dce3f0;border-radius:8px;font-size:0.9rem;min-height:50px;resize:vertical;"></textarea>';
-  html += '</div>';
-  
-  // TOMBOL
-  html += '<div style="display:flex;gap:10px;margin-top:18px;padding-top:15px;border-top:2px solid #eee;">';
-  html += '  <button class="btn btn-success" onclick="prosesTerimaPiutang(\'' + escapeHtml(idTransaksi) + '\',\'' + escapeHtml(kodeReseller) + '\',' + sisa + ')" ';
-  html += '          style="flex:2;padding:14px;font-size:1.05rem;font-weight:700;border-radius:10px;background:linear-gradient(135deg,#4CAF50,#388E3C);color:white;border:none;cursor:pointer;box-shadow:0 4px 15px rgba(76,175,80,0.3);">';
-  html += '    ✅ Proses Penerimaan';
-  html += '  </button>';
-  html += '  <button class="btn btn-danger" onclick="closeModal()" ';
-  html += '          style="flex:1;padding:14px;font-size:1.05rem;font-weight:700;border-radius:10px;background:#f44336;color:white;border:none;cursor:pointer;">';
-  html += '    ✖ Batal';
-  html += '  </button>';
-  html += '</div>';
-  
-  document.getElementById('modalTitle').textContent = '💰 Penerimaan Piutang';
-  document.getElementById('modalContent').classList.add('large');
-  document.getElementById('modalBody').innerHTML = html;
-  document.getElementById('modal').classList.add('active');
-  
-  setTimeout(function() {
-    var input = document.getElementById('nominalTerimaPiutang');
-    if (input) { input.focus(); input.select(); }
-  }, 300);
-}
-
-
-// ============================================================
-// SET NOMINAL PIUTANG
-// ============================================================
-function setNominalPiutang(nominal) {
-  var input = document.getElementById('nominalTerimaPiutang');
-  if (input) {
-    input.value = nominal;
-    var sisa = parseInt(input.getAttribute('max')) || 0;
-    updatePreviewSisaPiutang(sisa);
-  }
-}
-
-
-// ============================================================
-// UPDATE PREVIEW SISA
-// ============================================================
-function updatePreviewSisaPiutang(sisaAwal) {
-  var input = document.getElementById('nominalTerimaPiutang');
-  if (!input) return;
-  
-  var nominal = parseInt(input.value) || 0;
-  var sisaBaru = Math.max(0, sisaAwal - nominal);
-  
-  var elSisa = document.getElementById('sisaSetelahTerima');
-  var elStatus = document.getElementById('statusSetelahTerima');
-  var previewBox = document.getElementById('previewSisaPiutang');
-  
-  if (elSisa) {
-    elSisa.textContent = formatRupiah(sisaBaru);
-    elSisa.style.color = sisaBaru === 0 ? '#2e7d32' : '#c62828';
-  }
-  
-  if (elStatus) {
-    if (sisaBaru === 0) {
-      elStatus.innerHTML = 'Status: <strong style="color:#2e7d32;">✅ LUNAS</strong>';
-    } else if (nominal > 0) {
-      elStatus.innerHTML = 'Status: <strong style="color:#e65100;">🔄 CICILAN</strong>';
-    } else {
-      elStatus.innerHTML = 'Status: <strong style="color:#c62828;">⚠️ BELUM BAYAR</strong>';
-    }
-  }
-  
-  if (previewBox) {
-    previewBox.style.background = sisaBaru === 0 ? '#e8f5e9' : '#f0f8ff';
-    previewBox.style.borderLeftColor = sisaBaru === 0 ? '#4CAF50' : '#2196F3';
-  }
-  
-  if (nominal > sisaAwal) {
-    input.style.borderColor = '#f44336';
-    input.style.background = '#ffebee';
-  } else {
-    input.style.borderColor = '#dce3f0';
-    input.style.background = 'white';
-  }
-}
-
-
-// ============================================================
-// PROSES TERIMA PIUTANG
-// ============================================================
-function prosesTerimaPiutang(idTransaksi, kodeReseller, sisaAwal) {
-  var input = document.getElementById('nominalTerimaPiutang');
-  var nominal = parseInt(input.value) || 0;
-  var tanggal = document.getElementById('tglTerimaPiutang').value;
-  var catatan = document.getElementById('catatanTerimaPiutang').value.trim();
-  
-  if (!tanggal) {
-    showToast('⚠️ Tanggal terima wajib diisi!', 'error');
-    return;
-  }
-  
-  if (nominal <= 0) {
-    showToast('⚠️ Nominal harus lebih dari 0!', 'error');
-    input.focus();
-    return;
-  }
-  
-  if (nominal > sisaAwal) {
-    showToast('⚠️ Nominal melebihi sisa piutang (' + formatRupiah(sisaAwal) + ')!', 'error');
-    input.focus();
-    return;
-  }
-  
-  var sisaBaru = sisaAwal - nominal;
-  var confirmMsg = '💰 Konfirmasi Penerimaan Piutang\n\n' +
-                   'ID Transaksi: ' + idTransaksi + '\n' +
-                   'Nominal Diterima: ' + formatRupiah(nominal) + '\n' +
-                   'Sisa Piutang: ' + formatRupiah(sisaBaru) + '\n' +
-                   'Status: ' + (sisaBaru === 0 ? '✅ LUNAS' : '🔄 CICILAN') + '\n\n' +
-                   'Lanjutkan?';
-  
-  if (!confirm(confirmMsg)) return;
-  
-  var btn = document.querySelector('.modal-content .btn-success');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ Memproses...';
-  }
-  
-  callGAS('bayarHutangReseller', {
-    idTransaksi: idTransaksi,
-    kodeReseller: kodeReseller,
-    nominal: nominal,
-    tanggal: tanggal,
-    catatan: catatan || 'Penerimaan piutang',
-    user: currentUser ? currentUser.nama : 'System'
-  })
-  .then(function(result) {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '✅ Proses Penerimaan';
-    }
-    
-    if (result && result.success) {
-      showToast('✅ Penerimaan berhasil! Sisa: ' + formatRupiah(result.data ? result.data.sisa : sisaBaru), 'success');
-      closeModal();
-      loadPiutangReseller();
-    } else {
-      showToast('❌ ' + (result ? result.error : 'Gagal'), 'error');
-    }
-  })
-  .catch(function(error) {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '✅ Proses Penerimaan';
-    }
-    showToast('❌ Error: ' + error.message, 'error');
-  });
-}
-
-
-// ============================================================
-// LIHAT RIWAYAT PIUTANG
-// ============================================================
-function lihatRiwayatPiutang(idTransaksi) {
-  showToast('⏳ Memuat riwayat...', 'info');
-  
-  callGAS('getRiwayatPembayaranPiutang', { idTransaksi: idTransaksi })
-  .then(function(result) {
-    if (!result || !result.success) {
-      showToast('❌ Gagal memuat riwayat', 'error');
-      return;
-    }
-    
-    var rows = result.data || [];
-    
-    var html = '';
-    html += '<div style="background:#f0f4ff;padding:12px 15px;border-radius:8px;margin-bottom:12px;">';
-    html += '  <div style="font-weight:700;color:#37474f;font-size:0.9rem;">📋 Riwayat Penerimaan - ' + escapeHtml(idTransaksi) + '</div>';
-    html += '  <div style="font-size:0.75rem;color:#666;margin-top:4px;">' + rows.length + ' pembayaran tercatat</div>';
-    html += '</div>';
-    
-    if (rows.length === 0) {
-      html += '<div style="text-align:center;color:#999;padding:30px;border:1px dashed #ddd;border-radius:8px;">📭 Belum ada pembayaran</div>';
-    } else {
-      html += '<div style="max-height:400px;overflow-y:auto;border:1px solid #e8ecf4;border-radius:8px;">';
-      html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
-      html += '<thead><tr style="background:#f0f4ff;position:sticky;top:0;">';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">No</th>';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Tanggal</th>';
-      html += '  <th style="padding:8px 12px;text-align:right;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Nominal</th>';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">User</th>';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Catatan</th>';
-      html += '</tr></thead><tbody>';
-      
-      for (var i = 0; i < rows.length; i++) {
-        var a = rows[i];
-        html += '<tr>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + (i + 1) + '</td>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + formatTanggalDisplay(a.tanggal) + '</td>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;text-align:right;font-weight:600;color:#2e7d32;">' + formatRupiah(a.nominal || 0) + '</td>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + escapeHtml(a.user || '-') + '</td>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;font-size:0.8rem;color:#666;">' + escapeHtml(a.catatan || '-') + '</td>';
-        html += '</tr>';
-      }
-      
-      html += '</tbody></table></div>';
-    }
-    
-    html += '<div style="margin-top:15px;"><button class="btn btn-primary btn-block" onclick="closeModal()" style="padding:12px;border-radius:8px;">Tutup</button></div>';
-    
-    document.getElementById('modalTitle').textContent = '📋 Riwayat Piutang';
-    document.getElementById('modalContent').classList.add('large');
-    document.getElementById('modalBody').innerHTML = html;
-    document.getElementById('modal').classList.add('active');
-  })
-  .catch(function(error) {
-    showToast('❌ Error: ' + error.message, 'error');
-  });
-}
-
-
-// ============================================================
-// EXPORT CSV PIUTANG
-// ============================================================
-function exportPiutangResellerCSV() {
-  showToast('⏳ Memproses ekspor...', 'info');
-  
-  callGAS('getAllPiutangReseller', {})
-  .then(function(result) {
-    if (!result || !result.success) {
-      showToast('❌ Gagal ambil data', 'error');
-      return;
-    }
-    
-    var data = result.data || [];
-    var belumLunas = [];
-    for (var i = 0; i < data.length; i++) {
-      if (parseInt(data[i].sisa) > 0) belumLunas.push(data[i]);
-    }
-    
-    if (belumLunas.length === 0) {
-      showToast('⚠️ Tidak ada piutang', 'warning');
-      return;
-    }
-    
-    var headers = ['No', 'Tanggal', 'ID Transaksi', 'Kode Reseller', 'Nama Reseller', 'Total Piutang', 'Sudah Diterima', 'Sisa Piutang', 'Status', 'Umur (hari)'];
-    var exportData = [];
-    
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    for (var i = 0; i < belumLunas.length; i++) {
-      var t = belumLunas[i];
-      var umur = 0;
-      if (t.tanggal) {
-        try {
-          var tgl = new Date(t.tanggal + 'T00:00:00');
-          umur = Math.floor((today - tgl) / (1000 * 60 * 60 * 24));
-          if (umur < 0) umur = 0;
-        } catch(e) {}
-      }
-      
-      exportData.push({
-        'No': i + 1,
-        'Tanggal': t.tanggal || '',
-        'ID Transaksi': t.idTransaksi || '',
-        'Kode Reseller': t.kodeReseller || '',
-        'Nama Reseller': t.namaReseller || '',
-        'Total Piutang': t.total || 0,
-        'Sudah Diterima': t.dibayar || 0,
-        'Sisa Piutang': t.sisa || 0,
-        'Status': t.status || '',
-        'Umur (hari)': umur
-      });
-    }
-    
-    downloadCSV(exportData, headers, 'Piutang_Reseller_' + getTodayString());
-  });
-}
-
-
-// ============================================================
-// PANGGIL SAAT HALAMAN TRANSAKSI DIBUKA
-// ============================================================
-// Tambahkan di fungsi showPage() bagian:
-// if (page === 'transaksi') { loadTransaksi(); loadLogPembatalan(); loadPiutangReseller(); }
   
 </script>
 
