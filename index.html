@@ -6956,32 +6956,42 @@ function simpanStokMasuk() {
     if (result.success) {
       showToast('✅ Stok Masuk berhasil disimpan!', 'success');
       
-      for (var i = 0; i < detail.length; i++) {
-        var item = detail[i];
-        for (var j = 0; j < produkList.length; j++) {
-          if (produkList[j].Kode === item.kode) {
-            produkList[j].Stok = parseInt(produkList[j].Stok) + item.qty;
-            break;
-          }
-        }
-      }
-      updateStokProductGrid();
-      
+      // ============================================================
+      // 🔥 RESET CART & FORM
+      // ============================================================
       currentStokCart = [];
       updateStokCartDisplay();
-      
       document.getElementById('pemasokStok').value = '';
       generateNoNotaStok();
       
+      // ============================================================
+      // 🔥 TAMPILKAN PREVIEW NOTA
+      // ============================================================
       showPreviewNotaStok(noNota, tanggal, pemasok, detail, total);
       
-      loadProdukWithRetry();
-      loadPosProduk();
-      loadDashboard();
-      loadStokProduk();
-      loadRiwayatStok();
-      loadBatchList();
-      loadBatchUntukDibatalkan();
+      // ============================================================
+      // 🔥🔥🔥 AUTO-REFRESH SEMUA TAMPILAN 🔥🔥🔥
+      // ============================================================
+      console.log('🔄 Auto-refresh setelah stok masuk...');
+      
+      // 1. Refresh DATA dari server (async, tidak butuh urutan)
+      loadProdukWithRetry();   // Refresh produkList
+      loadBatchCache();        // Refresh batchCache (INI YANG HILANG!)
+      loadRiwayatStok();       // Refresh riwayat
+      loadBatchList();         // Refresh batch list
+      loadBatchUntukDibatalkan(); // Refresh batal
+      loadDashboard();         // Refresh dashboard
+      
+      // 2. Refresh TAMPILAN setelah data siap (pakai setTimeout)
+      setTimeout(function() {
+        console.log('🔄 Refresh tampilan...');
+        loadPosProduk();       // Refresh card POS
+        loadStokProduk();      // Refresh card Stok
+        updateStokGridPOS();   // Update stok grid
+        console.log('✅ Semua tampilan sudah di-refresh!');
+      }, 1000);  // Tunggu 1 detik biar data selesai load
+      
+      // ============================================================
       
     } else {
       showToast('❌ Gagal menyimpan: ' + (result.error || 'Terjadi kesalahan'), 'error');
@@ -6995,6 +7005,7 @@ function simpanStokMasuk() {
   });
 }
 
+  
 // ==================== SHOW PREVIEW NOTA STOK ====================
 function showPreviewNotaStok(noNota, tanggal, pemasok, detail, total) {
   var html = '<div class="struk-container" id="strukStokContent">';
@@ -8471,7 +8482,6 @@ function checkout() {
     }
   }
   
-  
   var total = 0;
   for (var i = 0; i < currentCart.length; i++) {
     total += currentCart[i].subtotal;
@@ -8502,7 +8512,7 @@ function checkout() {
   html += '<p style="font-size:0.8rem;color:#666;margin:0;">' + currentCart.length + ' item</p>';
   html += '</div>';
   
-  // 🔥 OPSI RESELLER (HANYA TAMPIL JIKA RESELLER DIPILIH)
+  // 🔥 OPSI RESELLER
   if (isReseller) {
     html += '<div style="background:#f3e5f5;border:2px solid #9C27B0;border-radius:10px;padding:15px;margin-bottom:15px;">';
     html += '  <label style="font-weight:700;color:#9C27B0;display:block;margin-bottom:8px;">👥 Metode Pembayaran Reseller</label>';
@@ -8520,14 +8530,13 @@ function checkout() {
     html += '</div>';
   }
   
-  // 🔥 FORM PEMBAYARAN - TETAP ADA UNTUK SEMUA
+  // 🔥 FORM PEMBAYARAN
   html += '<div class="form-group">';
   html += '<label>💰 Nominal Pembayaran</label>';
   
   // 🔥 TOMBOL QUICK NOMINAL
   html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;" id="quickNominalContainer">';
   
-  // Jika RESELLER, tambahkan tombol "0" (Hutang)
   if (isReseller) {
     html += '<button type="button" class="btn-sm" onclick="setNominalResellerCheckout(0)" style="padding:6px 12px;border:1px solid #FF9800;border-radius:5px;background:#FFF3E0;color:#E65100;cursor:pointer;font-weight:600;font-size:0.8rem;">💰 0 (Hutang)</button>';
   }
@@ -8586,10 +8595,8 @@ function checkout() {
     var input = document.getElementById('fPembayaran');
     if (input) {
       if (isReseller) {
-        // Default: LUNAS → set ke total
         input.value = total;
         hitungKembalianCheckout(total);
-        // Disable input jika LUNAS
         onMetodeResellerChange('LUNAS', total);
       } else {
         input.value = total;
@@ -8773,7 +8780,7 @@ function prosesPembayaran() {
     return;
   }
   
-  // 🔥 PEMBELIAN BIASA → PROSES NORMAL
+  // 🔥 PEMBELIAN BIASA
   if (nominal < total) {
     showToast('⚠️ Pembayaran kurang dari total!', 'error');
     inputPembayaran.focus();
@@ -8865,30 +8872,62 @@ function prosesPembayaran() {
           closeModal();
           showStruk(data, false);
           
+          // ============================================================
+          // 🔥🔥🔥 AUTO-REFRESH SETELAH TRANSAKSI 🔥🔥🔥
+          // ============================================================
+          console.log('🔄 Auto-refresh setelah transaksi...');
+          
+          // 1. Reset cart
           currentCart = [];
           updateCartDisplay();
-          updateStokGridPOS();
-          loadPosProduk();
-          loadDashboard();
+          
+          // 2. Refresh DATA dari server
+          loadBatchCache();          // ← INI YANG PALING PENTING
+          loadProdukWithRetry();     // ← Refresh produkList
+          loadDashboard();           // ← Refresh dashboard
+          
+          // 3. Refresh TAMPILAN setelah data siap
+          setTimeout(function() {
+            console.log('🔄 Refresh tampilan POS...');
+            loadPosProduk();         // ← Refresh card POS
+            updateStokGridPOS();     // ← Update stok grid
+            console.log('✅ Semua tampilan sudah di-refresh!');
+          }, 1000);
+          
+          // ============================================================
           
         } else {
           closeModal();
           showToast('✅ Transaksi berhasil!', 'success');
+          
+          // Refresh walau gagal ambil header
           currentCart = [];
           updateCartDisplay();
-          updateStokGridPOS();
-          loadPosProduk();
-          loadDashboard();
+          loadBatchCache();
+          loadProdukWithRetry();
+          setTimeout(function() {
+            loadPosProduk();
+            updateStokGridPOS();
+            loadDashboard();
+          }, 1000);
         }
       })
       .catch(function(error) {
         console.error('❌ Error getTransaksiById:', error);
         closeModal();
+        
         currentCart = [];
         updateCartDisplay();
-        updateStokGridPOS();
-        loadPosProduk();
-        loadDashboard();
+        
+        // Refresh walau error
+        loadBatchCache();
+        loadProdukWithRetry();
+        setTimeout(function() {
+          loadPosProduk();
+          updateStokGridPOS();
+          loadDashboard();
+        }, 1000);
+        
         showToast('✅ Transaksi berhasil disimpan!', 'success');
       });
     } else {
