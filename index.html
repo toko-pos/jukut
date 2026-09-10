@@ -69,7 +69,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwG7FgC3kva20M5I2CC1LbALZq9Uohjt-ArE4GvQrDAV9iJ4lLNvNH7hkEaLCoeTEqnyQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwwUO7zIHO3ydQeJ7YJhWiSPK_IpITg6y7ns8GwlXjQTF5m11lMEkBFz_nxM1iLBgLAWw/exec';
     // ============================================
   </script>
 
@@ -2747,14 +2747,23 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
       </div>
     </div>
     
-    <!-- ===== PRODUK ===== -->
-    <div id="page-produk" class="page">
-      <div class="card">
-        <h2>📦 Manajemen Produk</h2>
-        <div class="sub-tab-produk">
-          <button class="tab-btn-produk tab-tambah-produk" onclick="showTambahProduk()">➕ Tambah Produk</button>
-          <button class="tab-refresh-produk" onclick="loadProdukWithRetry()">🔄 Refresh</button>
-        </div>
+   <!-- ===== PRODUK ===== -->
+<div id="page-produk" class="page">
+  <div class="card">
+    <h2>📦 Manajemen Produk</h2>
+    
+    <!-- 🔥 SUB-TAB PRODUK - DENGAN TOMBOL AUDIT -->
+    <div class="sub-tab-produk">
+      <button class="tab-btn-produk tab-tambah-produk" onclick="showTambahProduk()">➕ Tambah Produk</button>
+      <button class="tab-refresh-produk" onclick="loadProdukWithRetry()">🔄 Refresh</button>
+      
+      <!-- 🔥🔥🔥 TOMBOL AUDIT STOK - KHUSUS ADMIN 🔥🔥🔥 -->
+      <button id="btnAuditStok" class="tab-btn-produk" onclick="bukaAuditStok()" 
+              style="background: linear-gradient(135deg, #FF6B6B, #E53935); color: white; box-shadow: 0 2px 8px rgba(229,57,53,0.3); display: none;">
+        🔍 Audit Stok
+      </button>
+    </div>
+  
 
 
         <!-- FORM EDIT HARGA JUAL - DROPDOWN & AUTO REFRESH -->
@@ -2815,6 +2824,63 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
           </table>
         </div>
 
+    
+<!-- ============================================================ -->
+<!-- 🔥🔥🔥 MODAL AUDIT STOK LENGKAP - KHUSUS ADMIN 🔥🔥🔥 -->
+<!-- ============================================================ -->
+<div class="modal" id="auditStokModal">
+  <div class="modal-content" style="max-width: 1200px; width: 95%; max-height: 90vh; border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+    
+    <!-- HEADER -->
+    <div style="background: linear-gradient(135deg, #FF6B6B, #E53935); padding: 20px 25px; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="color: white; margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
+        <span>🔍</span> Audit Stok Lengkap
+      </h3>
+      <button onclick="closeAuditStokModal()" style="background: transparent; border: none; color: white; font-size: 1.8rem; cursor: pointer; opacity: 0.8;">×</button>
+    </div>
+    
+    <!-- BODY -->
+    <div style="padding: 20px 25px; overflow-y: auto; max-height: calc(90vh - 80px);">
+      
+      <!-- INFO -->
+      <div style="background: #fff3e0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; color: #e65100;">
+        <strong>⚠️ Peringatan:</strong> Audit ini membandingkan 3 lapis data. Proses mungkin memakan waktu 5-30 detik tergantung jumlah data.
+      </div>
+      
+      <!-- LOADING -->
+      <div id="auditLoading" style="display: none; text-align: center; padding: 60px 20px;">
+        <div style="display: inline-block; width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #E53935; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p style="margin-top: 20px; color: #666; font-weight: 600;">⏳ Sedang menganalisis stok...</p>
+        <p style="margin-top: 8px; color: #999; font-size: 0.85rem;">Mohon tunggu, jangan tutup halaman ini</p>
+      </div>
+      
+      <!-- HASIL -->
+      <div id="auditHasil" style="display: none;">
+        <!-- Akan diisi oleh JavaScript -->
+      </div>
+      
+      <!-- ERROR -->
+      <div id="auditError" style="display: none; text-align: center; padding: 40px 20px;">
+        <div style="font-size: 3rem; margin-bottom: 15px;">❌</div>
+        <p id="auditErrorMsg" style="color: #c62828; font-weight: 600;"></p>
+      </div>
+      
+    </div>
+    
+    <!-- FOOTER -->
+    <div id="auditFooter" style="display: none; padding: 15px 25px; border-top: 2px solid #eee; background: #fafafa; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+      <button onclick="exportAuditCSV()" style="padding: 10px 20px; border: none; border-radius: 8px; background: #217346; color: white; font-weight: 700; cursor: pointer; font-size: 0.9rem;">
+        📊 Export CSV
+      </button>
+      <button onclick="closeAuditStokModal()" style="padding: 10px 20px; border: none; border-radius: 8px; background: #f44336; color: white; font-weight: 700; cursor: pointer; font-size: 0.9rem;">
+        ✖ Tutup
+      </button>
+    </div>
+    
+  </div>
+</div>
+
+    
         <!-- HUTANG VENDOR -->
         <div class="vendor-debt-container">
           <div class="debt-header-actions">
@@ -11899,6 +11965,430 @@ function simpanSemuaHargaReseller(kodeReseller) {
   });
 }
 
+  // ============================================================
+// 🔥🔥🔥 AUDIT STOK LENGKAP - KHUSUS ADMIN 🔥🔥🔥
+// ============================================================
+
+/**
+ * Cek apakah user adalah Admin/Owner
+ */
+function isUserAdmin() {
+  if (!currentUser || !currentUser.role) return false;
+  var role = currentUser.role.toUpperCase();
+  return (role === 'ADMIN' || role === 'OWNER');
+}
+
+/**
+ * Tampilkan/sembunyikan tombol Audit berdasarkan role
+ * Panggil fungsi ini di showAppAfterLogin() atau showPage('produk')
+ */
+function setupAuditButtonVisibility() {
+  var btn = document.getElementById('btnAuditStok');
+  if (!btn) return;
+  
+  if (isUserAdmin()) {
+    btn.style.display = 'inline-flex';
+    console.log('✅ Tombol Audit Stok ditampilkan (Admin)');
+  } else {
+    btn.style.display = 'none';
+    console.log('🚫 Tombol Audit Stok disembunyikan (bukan Admin)');
+  }
+}
+
+/**
+ * Buka Modal Audit & Jalankan Audit
+ */
+function bukaAuditStok() {
+  // 🔥 CEK AKSES - HANYA ADMIN
+  if (!isUserAdmin()) {
+    showToast('⛔ Akses ditolak! Hanya Admin yang dapat melakukan audit stok.', 'error');
+    return;
+  }
+  
+  // Tampilkan modal
+  var modal = document.getElementById('auditStokModal');
+  if (!modal) {
+    showToast('❌ Modal audit tidak ditemukan!', 'error');
+    return;
+  }
+  modal.classList.add('active');
+  
+  // Reset tampilan
+  document.getElementById('auditLoading').style.display = 'block';
+  document.getElementById('auditHasil').style.display = 'none';
+  document.getElementById('auditError').style.display = 'none';
+  document.getElementById('auditFooter').style.display = 'none';
+  
+  console.log('🔍 Memulai audit stok lengkap...');
+  
+  // Panggil GAS
+  callGAS('auditStokLengkap', {})
+  .then(function(result) {
+    console.log('📥 Hasil audit:', result);
+    
+    document.getElementById('auditLoading').style.display = 'none';
+    
+    if (!result || !result.success) {
+      showAuditError(result ? (result.error || 'Gagal audit') : 'Tidak ada response');
+      return;
+    }
+    
+    // Tampilkan hasil
+    renderAuditHasil(result);
+    document.getElementById('auditHasil').style.display = 'block';
+    document.getElementById('auditFooter').style.display = 'flex';
+    
+    // Simpan hasil ke global untuk export
+    window._auditResult = result;
+    
+  })
+  .catch(function(error) {
+    console.error('❌ Error audit:', error);
+    document.getElementById('auditLoading').style.display = 'none';
+    showAuditError(error.message || 'Terjadi kesalahan');
+  });
+}
+
+/**
+ * Tampilkan Error
+ */
+function showAuditError(msg) {
+  document.getElementById('auditErrorMsg').textContent = '❌ ' + msg;
+  document.getElementById('auditError').style.display = 'block';
+}
+
+/**
+ * Render Hasil Audit
+ */
+function renderAuditHasil(result) {
+  var totalSelisih = result.totalSelisih || 0;
+  var isAkurat = totalSelisih === 0;
+  
+  var html = '';
+  
+  // ============================================================
+  // 🔥 BANNER STATUS UTAMA
+  // ============================================================
+  var bannerBg, bannerIcon, bannerText, bannerSub;
+  if (isAkurat) {
+    bannerBg = 'linear-gradient(135deg, #4CAF50, #388E3C)';
+    bannerIcon = '🎉';
+    bannerText = 'STOK 100% AKURAT';
+    bannerSub = 'Semua lapis audit menunjukkan hasil yang sinkron';
+  } else {
+    bannerBg = 'linear-gradient(135deg, #FF6B6B, #E53935)';
+    bannerIcon = '⚠️';
+    bannerText = 'ADA ' + totalSelisih + ' SELISIH';
+    bannerSub = 'Periksa detail di bawah untuk menemukan masalah';
+  }
+  
+  html += '<div style="background: ' + bannerBg + '; color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">';
+  html += '  <div style="font-size: 3rem; margin-bottom: 8px;">' + bannerIcon + '</div>';
+  html += '  <div style="font-size: 1.5rem; font-weight: 800; letter-spacing: 1px;">' + bannerText + '</div>';
+  html += '  <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 6px;">' + bannerSub + '</div>';
+  html += '</div>';
+  
+  // ============================================================
+  // 🔥 RINGKASAN 3 LAPIS
+  // ============================================================
+  html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">';
+  
+  // Lapis 1
+  var l1 = result.lapis1 || {};
+  var l1Ok = l1.totalSelisih === 0;
+  html += '<div style="background: ' + (l1Ok ? '#e8f5e9' : '#ffebee') + '; border-left: 4px solid ' + (l1Ok ? '#4CAF50' : '#f44336') + '; padding: 15px; border-radius: 8px;">';
+  html += '  <div style="font-size: 0.75rem; font-weight: 700; color: ' + (l1Ok ? '#2e7d32' : '#c62828') + '; text-transform: uppercase;">LAPIS 1</div>';
+  html += '  <div style="font-size: 0.85rem; color: #333; margin-top: 4px;">Produk vs Batch</div>';
+  html += '  <div style="font-size: 1.3rem; font-weight: 800; color: ' + (l1Ok ? '#2e7d32' : '#c62828') + '; margin-top: 6px;">' + (l1Ok ? '✅ SINKRON' : '❌ ' + l1.totalSelisih) + '</div>';
+  html += '</div>';
+  
+  // Lapis 2
+  var l2 = result.lapis2 || {};
+  var l2Ok = l2.totalSelisih === 0;
+  html += '<div style="background: ' + (l2Ok ? '#e8f5e9' : '#ffebee') + '; border-left: 4px solid ' + (l2Ok ? '#4CAF50' : '#f44336') + '; padding: 15px; border-radius: 8px;">';
+  html += '  <div style="font-size: 0.75rem; font-weight: 700; color: ' + (l2Ok ? '#2e7d32' : '#c62828') + '; text-transform: uppercase;">LAPIS 2</div>';
+  html += '  <div style="font-size: 0.85rem; color: #333; margin-top: 4px;">Batch vs (Masuk−Jual)</div>';
+  html += '  <div style="font-size: 1.3rem; font-weight: 800; color: ' + (l2Ok ? '#2e7d32' : '#c62828') + '; margin-top: 6px;">' + (l2Ok ? '✅ AKURAT' : '❌ ' + l2.totalSelisih) + '</div>';
+  html += '</div>';
+  
+  // Lapis 3
+  var l3 = result.lapis3 || {};
+  var l3Ok = l3.totalSelisih === 0;
+  html += '<div style="background: ' + (l3Ok ? '#e8f5e9' : '#ffebee') + '; border-left: 4px solid ' + (l3Ok ? '#4CAF50' : '#f44336') + '; padding: 15px; border-radius: 8px;">';
+  html += '  <div style="font-size: 0.75rem; font-weight: 700; color: ' + (l3Ok ? '#2e7d32' : '#c62828') + '; text-transform: uppercase;">LAPIS 3</div>';
+  html += '  <div style="font-size: 0.85rem; color: #333; margin-top: 4px;">Detail per Batch</div>';
+  html += '  <div style="font-size: 1.3rem; font-weight: 800; color: ' + (l3Ok ? '#2e7d32' : '#c62828') + '; margin-top: 6px;">' + (l3Ok ? '✅ AKURAT' : '❌ ' + l3.totalSelisih) + '</div>';
+  html += '</div>';
+  
+  html += '</div>';
+  
+  // ============================================================
+  // 🔥 TABEL LAPIS 1
+  // ============================================================
+  if (l1.hasil && l1.hasil.length > 0) {
+    html += '<div style="margin-bottom: 20px;">';
+    html += '<h4 style="color: #1a2332; margin: 0 0 10px 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">';
+    html += '<span style="background: #E53935; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem;">LAPIS 1</span>';
+    html += 'Produk.Stok vs Total Batch.Stok';
+    html += '</h4>';
+    html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px;">';
+    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">';
+    html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
+    html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Kode</th>';
+    html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Nama</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Produk</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Batch</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Selisih</th>';
+    html += '<th style="padding: 8px 10px; text-align: center; font-size: 0.7rem; color: #555;">Status</th>';
+    html += '</tr></thead><tbody>';
+    
+    for (var i = 0; i < l1.hasil.length; i++) {
+      var row = l1.hasil[i];
+      var beda = row.selisih !== 0;
+      var rowBg = beda ? '#fff5f5' : '';
+      html += '<tr style="background: ' + rowBg + '; border-bottom: 1px solid #f0f0f0;">';
+      html += '<td style="padding: 6px 10px; font-weight: 700;">' + escapeHtml(row.kode) + '</td>';
+      html += '<td style="padding: 6px 10px;">' + escapeHtml(row.nama) + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + row.produk + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + row.batch + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 800; color: ' + (beda ? '#c62828' : '#2e7d32') + ';">' + (row.selisih > 0 ? '+' : '') + row.selisih + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: center; font-size: 0.75rem;">' + (beda ? '❌ BEDA' : '✅ SINKRON') + '</td>';
+      html += '</tr>';
+    }
+    
+    html += '</tbody></table></div></div>';
+  }
+  
+  // ============================================================
+  // 🔥 TABEL LAPIS 2
+  // ============================================================
+  if (l2.hasil && l2.hasil.length > 0) {
+    html += '<div style="margin-bottom: 20px;">';
+    html += '<h4 style="color: #1a2332; margin: 0 0 10px 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">';
+    html += '<span style="background: #FF9800; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem;">LAPIS 2</span>';
+    html += 'Batch.Stok vs (Stok Masuk − Penjualan)';
+    html += '</h4>';
+    html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px;">';
+    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">';
+    html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
+    html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Kode</th>';
+    html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Nama</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Masuk</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Jual Non-RS</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Jual RS</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Total Jual</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Seharusnya</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Batch</th>';
+    html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Selisih</th>';
+    html += '<th style="padding: 8px 10px; text-align: center; font-size: 0.7rem; color: #555;">Status</th>';
+    html += '</tr></thead><tbody>';
+    
+    for (var i = 0; i < l2.hasil.length; i++) {
+      var row = l2.hasil[i];
+      var beda = row.selisih !== 0;
+      var rowBg = beda ? '#fff5f5' : '';
+      html += '<tr style="background: ' + rowBg + '; border-bottom: 1px solid #f0f0f0;">';
+      html += '<td style="padding: 6px 10px; font-weight: 700;">' + escapeHtml(row.kode) + '</td>';
+      html += '<td style="padding: 6px 10px;">' + escapeHtml(row.nama) + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right;">' + row.masuk + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right;">' + row.jualNonRS + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right;">' + row.jualRS + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + row.totalJual + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600; color: #1976D2;">' + row.stokSeharusnya + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + row.stokBatch + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: right; font-weight: 800; color: ' + (beda ? '#c62828' : '#2e7d32') + ';">' + (row.selisih > 0 ? '+' : '') + row.selisih + '</td>';
+      html += '<td style="padding: 6px 10px; text-align: center; font-size: 0.75rem;">' + (beda ? '❌ BEDA' : '✅ AKURAT') + '</td>';
+      html += '</tr>';
+    }
+    
+    html += '</tbody></table></div></div>';
+  }
+  
+  // ============================================================
+  // 🔥 TABEL LAPIS 3 - DETAIL BATCH (HANYA YANG ADA MASALAH)
+  // ============================================================
+  if (l3.hasil && l3.hasil.length > 0) {
+    // Filter hanya batch yang terjual != 0 atau stok != 0
+    var l3Filtered = [];
+    for (var i = 0; i < l3.hasil.length; i++) {
+      var b = l3.hasil[i];
+      if (b.terjual !== 0 || b.stok !== 0) {
+        l3Filtered.push(b);
+      }
+    }
+    
+    if (l3Filtered.length > 0) {
+      html += '<div style="margin-bottom: 20px;">';
+      html += '<h4 style="color: #1a2332; margin: 0 0 10px 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">';
+      html += '<span style="background: #9C27B0; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem;">LAPIS 3</span>';
+      html += 'Detail per Batch (Stok Awal, Stok, Terjual)';
+      html += '</h4>';
+      html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px; max-height: 400px; overflow-y: auto;">';
+      html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">';
+      html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
+      html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Kode</th>';
+      html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Batch</th>';
+      html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Stok Awal</th>';
+      html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Stok</th>';
+      html += '<th style="padding: 8px 10px; text-align: right; font-size: 0.7rem; color: #555;">Terjual</th>';
+      html += '<th style="padding: 8px 10px; text-align: left; font-size: 0.7rem; color: #555;">Tgl Masuk</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (var i = 0; i < l3Filtered.length; i++) {
+        var b = l3Filtered[i];
+        html += '<tr style="border-bottom: 1px solid #f0f0f0;">';
+        html += '<td style="padding: 6px 10px; font-weight: 700;">' + escapeHtml(b.kode) + '</td>';
+        html += '<td style="padding: 6px 10px; font-size: 0.7rem; color: #666;">' + escapeHtml(b.batch) + '</td>';
+        html += '<td style="padding: 6px 10px; text-align: right;">' + b.stokAwal + '</td>';
+        html += '<td style="padding: 6px 10px; text-align: right; font-weight: 600;">' + b.stok + '</td>';
+        html += '<td style="padding: 6px 10px; text-align: right; color: ' + (b.terjual > 0 ? '#c62828' : '#666') + ';">' + b.terjual + '</td>';
+        html += '<td style="padding: 6px 10px; font-size: 0.75rem; color: #666;">' + escapeHtml(b.tanggalMasuk || '-') + '</td>';
+        html += '</tr>';
+      }
+      
+      html += '</tbody></table></div></div>';
+    }
+  }
+  
+  // ============================================================
+  // 🔥 TIMESTAMP
+  // ============================================================
+  var now = new Date();
+  var ts = now.getDate() + '/' + (now.getMonth()+1) + '/' + now.getFullYear() + ' ' + 
+           String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+  
+  html += '<div style="text-align: center; color: #999; font-size: 0.75rem; margin-top: 10px;">';
+  html += '🕐 Audit dilakukan pada: ' + ts + ' oleh ' + escapeHtml(currentUser ? currentUser.nama : '-');
+  html += '</div>';
+  
+  document.getElementById('auditHasil').innerHTML = html;
+}
+
+/**
+ * Tutup Modal Audit
+ */
+function closeAuditStokModal() {
+  var modal = document.getElementById('auditStokModal');
+  if (modal) modal.classList.remove('active');
+}
+
+/**
+ * Export Hasil Audit ke CSV
+ */
+function exportAuditCSV() {
+  if (!window._auditResult) {
+    showToast('⚠️ Tidak ada data audit untuk diekspor', 'warning');
+    return;
+  }
+  
+  var result = window._auditResult;
+  var rows = [];
+  
+  // Header
+  rows.push(['===== AUDIT STOK LENGKAP =====']);
+  rows.push(['Tanggal Audit', new Date().toLocaleString('id-ID')]);
+  rows.push(['User', currentUser ? currentUser.nama : '-']);
+  rows.push(['Total Selisih', result.totalSelisih]);
+  rows.push(['Kesimpulan', result.kesimpulan]);
+  rows.push([]);
+  
+  // Lapis 1
+  if (result.lapis1 && result.lapis1.hasil) {
+    rows.push(['===== LAPIS 1: PRODUK vs BATCH =====']);
+    rows.push(['Kode', 'Nama', 'Produk', 'Batch', 'Selisih', 'Status']);
+    for (var i = 0; i < result.lapis1.hasil.length; i++) {
+      var r = result.lapis1.hasil[i];
+      rows.push([r.kode, r.nama, r.produk, r.batch, r.selisih, r.status]);
+    }
+    rows.push([]);
+  }
+  
+  // Lapis 2
+  if (result.lapis2 && result.lapis2.hasil) {
+    rows.push(['===== LAPIS 2: BATCH vs (MASUK - JUAL) =====']);
+    rows.push(['Kode', 'Nama', 'Masuk', 'Jual Non-RS', 'Jual RS', 'Total Jual', 'Seharusnya', 'Batch', 'Selisih', 'Status']);
+    for (var i = 0; i < result.lapis2.hasil.length; i++) {
+      var r = result.lapis2.hasil[i];
+      rows.push([r.kode, r.nama, r.masuk, r.jualNonRS, r.jualRS, r.totalJual, r.stokSeharusnya, r.stokBatch, r.selisih, r.status]);
+    }
+    rows.push([]);
+  }
+  
+  // Lapis 3
+  if (result.lapis3 && result.lapis3.hasil) {
+    rows.push(['===== LAPIS 3: DETAIL PER BATCH =====']);
+    rows.push(['Kode', 'Batch', 'Stok Awal', 'Stok', 'Terjual', 'Tanggal Masuk']);
+    for (var i = 0; i < result.lapis3.hasil.length; i++) {
+      var r = result.lapis3.hasil[i];
+      rows.push([r.kode, r.batch, r.stokAwal, r.stok, r.terjual, r.tanggalMasuk]);
+    }
+  }
+  
+  // Convert ke CSV
+  var csvContent = '';
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var escapedRow = [];
+    for (var j = 0; j < row.length; j++) {
+      var val = row[j] === undefined || row[j] === null ? '' : String(row[j]);
+      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+        val = '"' + val.replace(/"/g, '""') + '"';
+      }
+      escapedRow.push(val);
+    }
+    csvContent += escapedRow.join(',') + '\n';
+  }
+  
+  // Download
+  var filename = 'Audit_Stok_' + getTodayString();
+  var blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement('a');
+  var url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename + '.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  
+  showToast('✅ File audit berhasil diunduh!', 'success');
+}
+
+// ============================================================
+// 🔥 PASTIKAN TOMBOL MUNCUL SAAT MASUK HALAMAN PRODUK
+// ============================================================
+
+// Override showPage untuk setup tombol audit
+(function() {
+  var originalShowPage = window.showPage;
+  if (typeof originalShowPage === 'function') {
+    window.showPage = function(page) {
+      originalShowPage.apply(this, arguments);
+      
+      // Setup tombol audit kalau masuk ke halaman produk
+      if (page === 'produk') {
+        setTimeout(setupAuditButtonVisibility, 100);
+      }
+    };
+  }
+})();
+
+// Setup saat pertama kali login
+(function() {
+  var originalShowAppAfterLogin = window.showAppAfterLogin;
+  if (typeof originalShowAppAfterLogin === 'function') {
+    window.showAppAfterLogin = function() {
+      originalShowAppAfterLogin.apply(this, arguments);
+      
+      // Setup tombol audit
+      setTimeout(setupAuditButtonVisibility, 500);
+    };
+  }
+})();
+
+// Setup saat DOM siap
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(setupAuditButtonVisibility, 100
 
 // ==================== HAPUS HARGA RESELLER ====================
 function hapusHargaReseller(kodeReseller, kodeProduk) {
