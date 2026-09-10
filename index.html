@@ -9040,15 +9040,34 @@ function prosesJualReseller(nominal, total) {
       showToast('✅ ' + result.message, 'success');
       closeModal();
       
+      // ============================================================
       // 🔥 RESET KERANJANG
+      // ============================================================
       currentCart = [];
       updateCartDisplay();
-      updateStokGridPOS();
       
-      // 🔥 REFRESH DATA
-      loadPosProduk();
-      loadDashboard();
-      loadReseller();
+      // ============================================================
+      // 🔥🔥🔥 AUTO-REFRESH SETELAH JUAL RESELLER 🔥🔥🔥
+      // ============================================================
+      console.log('🔄 Auto-refresh setelah jual reseller...');
+      
+      // 1. Refresh DATA dari server (async)
+      loadBatchCache();          // ← WAJIB: refresh batchCache
+      loadProdukWithRetry();     // ← Refresh produkList
+      loadDashboard();           // ← Refresh dashboard
+      loadReseller();            // ← Refresh data reseller
+      loadBatchList();           // ← Refresh batch list
+      loadRiwayatStok();         // ← Refresh riwayat stok
+      
+      // 2. Refresh TAMPILAN setelah data siap (pakai setTimeout)
+      setTimeout(function() {
+        console.log('🔄 Refresh tampilan POS...');
+        loadPosProduk();         // ← Refresh card POS
+        updateStokGridPOS();     // ← Update stok grid (butuh batchCache + produkList)
+        console.log('✅ Semua tampilan sudah di-refresh!');
+      }, 1000);  // Tunggu 1 detik biar data selesai load
+      
+      // ============================================================
       
       // 🔥 TAMPILKAN NOTA RESELLER
       showStrukReseller(result.data);
