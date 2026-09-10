@@ -4992,44 +4992,6 @@ function showAppAfterLogin() {
     }
   }, 600);
   
-  // ============================================================
-  // 🔥🔥🔥 TAMBAHKAN INI - AUTO SHOW TOMBOL AUDIT STOK 🔥🔥🔥
-  // ============================================================
-  // Panggil berkali-kali untuk memastikan tombol audit muncul
-  // setelah login/logout tanpa perlu hard refresh (Ctrl+Shift+R)
-  // ============================================================
-  if (typeof setupAuditButtonVisibility === 'function') {
-    setTimeout(setupAuditButtonVisibility, 100);
-    setTimeout(setupAuditButtonVisibility, 300);
-    setTimeout(setupAuditButtonVisibility, 600);
-    setTimeout(setupAuditButtonVisibility, 1000);
-    setTimeout(setupAuditButtonVisibility, 1500);
-    console.log('🔍 Setup tombol audit dijadwalkan (5x)');
-  } else {
-    console.warn('⚠️ Fungsi setupAuditButtonVisibility belum ada!');
-  }
-  
-  // 🔥 FALLBACK: Kalau setupAuditButtonVisibility belum ada,
-  // coba langsung tampilkan tombol audit berdasarkan role
-  var btnAudit = document.getElementById('btnAuditStok');
-  if (btnAudit) {
-    var roleUpper = (currentUser.role || '').toUpperCase();
-    var isAdmin = (roleUpper === 'ADMIN' || roleUpper === 'OWNER');
-    
-    setTimeout(function() {
-      if (isAdmin) {
-        btnAudit.style.display = 'inline-flex';
-        console.log('✅ Tombol Audit Stok ditampilkan via fallback');
-      } else {
-        btnAudit.style.display = 'none';
-        console.log('🚫 Tombol Audit Stok disembunyikan via fallback');
-      }
-    }, 800);
-  }
-  // ============================================================
-  // 🔥 AKHIR TAMBAHAN 🔥
-  // ============================================================
-  
   // Setup filter & load data
   if (typeof setupFilters === 'function') setupFilters();
   if (typeof loadAllData === 'function') {
@@ -5900,12 +5862,6 @@ function showPage(page) {
   }
   if (page === 'produk') { 
     loadProdukWithRetry(); 
-// 🔥🔥🔥 TAMBAHKAN INI 🔥🔥🔥
-  if (typeof setupAuditButtonVisibility === 'function') {
-    setTimeout(setupAuditButtonVisibility, 100);
-    setTimeout(setupAuditButtonVisibility, 500);
-  }
-  
   }
   if (page === 'profile') { 
     loadProfile(); 
@@ -10967,7 +10923,9 @@ function closeInstallBanner() {
   var banner = document.getElementById('installBanner');
   if (banner) banner.style.display = 'none';
 }
+</script>
 
+<script>
    // ==================== RESELLER FUNCTIONS ====================
 var resellerList = [];
 var filteredResellerList = [];
@@ -12334,111 +12292,32 @@ function exportAuditCSV() {
 }
 
 // ============================================================
-// 🔥 AUTO-SHOW TOMBOL AUDIT - PALING AMPUH
+// 🔥 SETUP TOMBOL AUDIT (auto show)
 // ============================================================
-
 function setupAuditButtonVisibility() {
   var btn = document.getElementById('btnAuditStok');
-  if (!btn) {
-    console.log('⚠️ Tombol audit belum ada di DOM');
-    return;
-  }
+  if (!btn) return;
   
-  var isAdmin = false;
-  if (currentUser && currentUser.role) {
-    var role = String(currentUser.role).toUpperCase();
-    isAdmin = (role === 'ADMIN' || role === 'OWNER');
-  }
+  var isAdmin = isUserAdmin();
   
   if (isAdmin) {
     btn.style.display = 'inline-flex';
-    console.log('✅ Tombol Audit Stok MUNCUL');
   } else {
     btn.style.display = 'none';
-    console.log('🚫 Tombol Audit Stok tersembunyi');
   }
 }
 
-// 🔥🔥🔥 OBSERVER 1: Pantau perubahan di .sub-tab-produk
-function startObserverSubTab() {
-  var subTab = document.querySelector('.sub-tab-produk');
-  if (!subTab) {
-    console.log('⚠️ .sub-tab-produk belum ada, coba lagi...');
-    setTimeout(startObserverSubTab, 500);
-    return;
-  }
-  
-  var observer = new MutationObserver(function() {
-    setupAuditButtonVisibility();
-  });
-  
-  observer.observe(subTab, { childList: true, subtree: true });
-  console.log('👀 Observer .sub-tab-produk aktif');
-  
-  // Panggil langsung setelah observer aktif
-  setupAuditButtonVisibility();
-}
-
-// 🔥🔥🔥 OBSERVER 2: Pantau perubahan class di <body>
-function startObserverBody() {
-  if (!document.body) {
-    setTimeout(startObserverBody, 300);
-    return;
-  }
-  
-  var bodyObserver = new MutationObserver(function() {
-    setupAuditButtonVisibility();
-  });
-  
-  bodyObserver.observe(document.body, { 
-    attributes: true, 
-    attributeFilter: ['class', 'style'] 
-  });
-  console.log('👀 Observer body aktif');
-}
-
-// 🔥🔥🔥 OBSERVER 3: Pantau perubahan di #app (saat login/logout)
-function startObserverApp() {
-  var app = document.getElementById('app');
-  if (!app) {
-    setTimeout(startObserverApp, 500);
-    return;
-  }
-  
-  var appObserver = new MutationObserver(function() {
-    setupAuditButtonVisibility();
-  });
-  
-  appObserver.observe(app, { 
-    attributes: true, 
-    attributeFilter: ['style', 'class'] 
-  });
-  console.log('👀 Observer #app aktif');
-}
-
-// Jalankan semua observer
-startObserverSubTab();
-startObserverBody();
-startObserverApp();
-
-// Panggil manual beberapa kali sebagai backup
+// Panggil berkali-kali
 setTimeout(setupAuditButtonVisibility, 500);
 setTimeout(setupAuditButtonVisibility, 1500);
 setTimeout(setupAuditButtonVisibility, 3000);
-
-// Panggil tiap 2 detik selama 20 detik sebagai backup terakhir
-var _auditIntervalCount = 0;
-var _auditInterval = setInterval(function() {
-  _auditIntervalCount++;
-  setupAuditButtonVisibility();
-  if (_auditIntervalCount >= 10) {
-    clearInterval(_auditInterval);
-    console.log('✅ Backup interval selesai');
-  }
-}, 2000);
+window.addEventListener('load', function() {
+  setTimeout(setupAuditButtonVisibility, 1000);
+});
 
 console.log('✅ Script Audit Stok loaded!');
-
+</script>
+  
   // ============================================================
   // 🔥 BANNER STATUS UTAMA
   // ============================================================
@@ -12623,30 +12502,19 @@ console.log('✅ Script Audit Stok loaded!');
     }
   }
   
-
-
-
-// ============================================================
-// 🔥 TIMESTAMP
-// ============================================================
-try {
+  // ============================================================
+  // 🔥 TIMESTAMP
+  // ============================================================
   var now = new Date();
   var ts = now.getDate() + '/' + (now.getMonth()+1) + '/' + now.getFullYear() + ' ' + 
-           String(now.getHours()).padStart(2,'0') + ':' + 
-           String(now.getMinutes()).padStart(2,'0') + ':' + 
-           String(now.getSeconds()).padStart(2,'0');
+           String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
   
-  var namaUser = (currentUser && currentUser.nama) ? currentUser.nama : '-';
-  
-  html += '<div style="text-align: center; color: #999; font-size: 0.75rem; margin-top: 10px; padding: 10px; border-top: 1px dashed #ddd;">';
-  html += '🕐 Audit dilakukan pada: <strong>' + ts + '</strong>';
-  html += ' &nbsp;|&nbsp; ';
-  html += '👤 Oleh: <strong>' + escapeHtml(namaUser) + '</strong>';
+  html += '<div style="text-align: center; color: #999; font-size: 0.75rem; margin-top: 10px;">';
+  html += '🕐 Audit dilakukan pada: ' + ts + ' oleh ' + escapeHtml(currentUser ? currentUser.nama : '-');
   html += '</div>';
-} catch (e) {
-  console.warn('⚠️ Error render timestamp:', e);
-}
   
+  document.getElementById('auditHasil').innerHTML = html;
+}
 
 /**
  * Tutup Modal Audit
@@ -12798,7 +12666,10 @@ function hapusHargaReseller(kodeReseller, kodeProduk) {
 
 
   
+</script>
 
+
+<script>
 // ============================================================
 // NONAKTIFKAN GOOGLE TRANSLATE
 // ============================================================
