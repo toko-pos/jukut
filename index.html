@@ -6617,54 +6617,6 @@ function updateStokGridPOS() {
     console.error('❌ Error updateStokGridPOS:', e);
   }
 }
-      
-      // ============================================================
-      // ⭐ LOGIKA DISABLE UNTUK TAB POS
-      // ============================================================
-      
-      // CEK 1: Jika BELUM pilih tanggal -> DISABLED (prioritas utama)
-      if (!hasDate) {
-        var dateBadge = document.createElement('div');
-        dateBadge.className = 'badge-out-of-stock';
-        dateBadge.textContent = '📅 Pilih Tanggal';
-        dateBadge.style.background = '#ff9800';
-        item.appendChild(dateBadge);
-        
-        item.classList.add('pos-disabled');
-        item.style.pointerEvents = 'none';
-        item.style.cursor = 'not-allowed';
-        item.classList.remove('disabled');
-      } 
-      // CEK 2: Jika stok habis (dan sudah pilih tanggal) -> DISABLED
-      else if (stokTampil <= 0) {
-        var newBadge = document.createElement('div');
-        newBadge.className = 'badge-out-of-stock';
-        newBadge.textContent = '⛔ HABIS';
-        item.appendChild(newBadge);
-        
-        item.classList.add('disabled');
-        item.classList.add('pos-disabled');
-        item.style.pointerEvents = 'none';
-        item.style.cursor = 'not-allowed';
-      } 
-      // CEK 3: Stok > 0 DAN sudah pilih tanggal -> AKTIF
-      else {
-        item.classList.remove('disabled');
-        item.classList.remove('pos-disabled');
-        item.style.pointerEvents = '';
-        item.style.cursor = '';
-        // Pastikan onclick tersambung
-        if (!item.getAttribute('onclick')) {
-          item.setAttribute('onclick', "addToCart('" + kode + "')");
-        }
-      }
-    }
-    
-    console.log('✅ updateStokGridPOS() selesai');
-  } catch (e) {
-    console.error('❌ Error updateStokGridPOS:', e);
-  }
-}
 
 // ==================== STOK CART FUNCTIONS ====================
 function loadStokProduk() {
