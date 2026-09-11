@@ -4520,42 +4520,53 @@ async function cetakViaCleanter(idTransaksi) {
 
     content.push({ type: 'divider' });
 
-    // ---------- INFO TRANSAKSI ----------
+    // ---------- HELPER: Format label kiri + titik dua sejajar ----------
+// Lebar label = 8 karakter (cukup untuk "Pembeli:")
+function formatLabel(label) {
+  // Label di-pad ke kanan sepanjang 8 karakter
+  // "ID" → "ID      : "
+  // "Tgl" → "Tgl     : "
+  // "Kasir" → "Kasir   : "
+  // "Pembeli" → "Pembeli : "
+  return label.padEnd(8, ' ') + ': ';
+}
+
+// ---------- INFO TRANSAKSI ----------
+content.push({
+  type: 'text',
+  text: formatLabel('ID') + String(idTransaksi)
+});
+
+const tgl = String(header.Tanggal || header.tanggal || '-');
+const waktu = String(header.Waktu || header.waktu || '');
+content.push({
+  type: 'text',
+  text: formatLabel('Tgl') + tgl + ' ' + waktu
+});
+
+const kasir = String(header.Kasir || header.kasir || '-');
+content.push({
+  type: 'text',
+  text: formatLabel('Kasir') + kasir
+});
+
+// ---------- NAMA PEMBELI / RESELLER ----------
+const namaPembeli = String(header['Nama Pembeli'] || header.namaPembeli || '-');
+if (namaPembeli && namaPembeli !== '-') {
+  content.push({
+    type: 'text',
+    text: formatLabel('Pembeli') + namaPembeli
+  });
+
+  if (header.isReseller || header.IsReseller) {
     content.push({
       type: 'text',
-      text: makeRow('ID', ': ' + String(idTransaksi))
+      text: 'RESELLER',
+      align: 'center',
+      bold: true
     });
-
-    const tgl = String(header.Tanggal || header.tanggal || '-');
-    const waktu = String(header.Waktu || header.waktu || '');
-    content.push({
-      type: 'text',
-      text: makeRow('Tgl', ': ' + tgl + ' ' + waktu)
-    });
-
-    const kasir = String(header.Kasir || header.kasir || '-');
-    content.push({
-      type: 'text',
-      text: makeRow('Kasir', ': ' + kasir)
-    });
-
-    // ---------- NAMA PEMBELI / RESELLER ----------
-    const namaPembeli = String(header['Nama Pembeli'] || header.namaPembeli || '-');
-    if (namaPembeli && namaPembeli !== '-') {
-      content.push({
-        type: 'text',
-        text: makeRow('Pembeli', ': ' + namaPembeli)
-      });
-
-      if (header.isReseller || header.IsReseller) {
-        content.push({
-          type: 'text',
-          text: 'RESELLER',
-          align: 'center',
-          bold: true
-        });
-      }
-    }
+  }
+}
 
     content.push({ type: 'divider' });
 
@@ -4641,8 +4652,7 @@ async function cetakViaCleanter(idTransaksi) {
       align: 'center'
     });
 
-    // Feed (jarak sebelum potong)
-    content.push({ type: 'feed', lines: 0 });
+  
 
     // ============================================================
     // 4. KIRIM KE CLEANTER
@@ -10022,7 +10032,7 @@ async function cetakNotaReseller(data) {
     if (infoToko.noHp) {
   content.push({
     type: 'text',
-    text: '📞 ' + String(infoToko.noHp),
+    text: '☎ ' + String(infoToko.noHp),
     align: 'center'
   });
 }
