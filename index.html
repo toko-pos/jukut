@@ -8657,7 +8657,7 @@ function cetakThermalBluetooth(idTransaksi) {
   var URL_PRINT = DOMAIN + '/print-nota.php?id=' + encodeURIComponent(idTransaksi);
   var SCHEME_URL = 'my.bluetoothprint.scheme://' + URL_PRINT;
 
-  alert('🖨️ URL:\n\n' + SCHEME_URL);
+  console.log('🖨️ Cetak thermal:', SCHEME_URL);
 
   // 🔥 Deteksi apakah di Android
   var isAndroid = /android/i.test(navigator.userAgent);
