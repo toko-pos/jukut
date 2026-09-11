@@ -2785,25 +2785,36 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
         </div>
          </div>
         <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Tanggal</th>
-                <th>ID Transaksi</th>
-                <th>Nama Pembeli</th>  
-                <th>Kasir</th>
-                <th>Total</th>
-                <th id="thLaba" style="display:none;">Laba</th>
-                <th>Status</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="transaksiTable">
-              <tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>
-            </tbody>
-          </table>
-        </div>
+  <table id="transaksiMainTable" style="table-layout: fixed; width: 100%; min-width: 950px;">
+    <colgroup>
+      <col style="width: 45px;">
+      <col style="width: 135px;">
+      <col style="width: 165px;">
+      <col style="width: 110px;">
+      <col style="width: 90px;">
+      <col style="width: 105px;">
+      <col style="width: 95px;">
+      <col style="width: 115px;">
+      <col style="width: 105px;">
+    </colgroup>
+    <thead>
+      <tr>
+        <th style="text-align:center;">No</th>
+        <th>Tanggal</th>
+        <th>ID Transaksi</th>
+        <th>Nama Pembeli</th>  
+        <th>Kasir</th>
+        <th style="text-align:right;">Total</th>
+        <th id="thLaba" style="text-align:right;">Laba</th>
+        <th style="text-align:center;">Status</th>
+        <th style="text-align:center;">Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="transaksiTable">
+      <tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">⏳ Memuat data...</td></tr>
+    </tbody>
+  </table>
+</div>
         
         <hr style="margin:20px 0;">
         
@@ -4290,84 +4301,107 @@ function getUniqueNotaCount(data) {
 }
 
 // ============================================================
-// 🔥 RENDER TABEL TRANSAKSI - DENGAN EXPAND & TOMBOL AKSI
+// 🔥 RENDER TABEL TRANSAKSI - 9 KOLOM (STATUS WAJIB ADA)
 // ============================================================
-
 function renderTransaksi(data) {
     var tbody = document.getElementById('transaksiTable');
     if (!tbody) return;
     
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">📭 Tidak ada transaksi</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">📭 Tidak ada transaksi</td></tr>';
         return;
     }
+    
+    // Cek mode Laba
+    var showLabaMode = false;
+    try {
+        showLabaMode = document.querySelector('input[name="opsiLaba"]:checked').value === 'dengan';
+    } catch(e) {}
     
     var html = '';
     for (var i = 0; i < data.length; i++) {
         var t = data[i];
         var id = t.id || t.ID || '';
         
-        // Cek apakah user boleh membatalkan transaksi
-        // 🔥 PERBAIKI: Cek role dengan case-insensitive & support "administrator"
-var roleLower = (currentUser && currentUser.role) ? currentUser.role.toLowerCase() : '';
-var isAdmin = (roleLower === 'admin' || roleLower === 'owner' || roleLower === 'administrator');
-var isOwnerOfTrx = (t.kasir && currentUser && currentUser.nama && 
-                    t.kasir.toLowerCase().trim() === currentUser.nama.toLowerCase().trim());
-var showCancel = isAdmin || isOwnerOfTrx;
+        // Cek akses hapus (case-insensitive + support administrator)
+        var roleLower = (currentUser && currentUser.role) ? String(currentUser.role).toLowerCase() : '';
+        var isAdmin = (roleLower === 'admin' || roleLower === 'owner' || roleLower === 'administrator');
+        var isOwnerOfTrx = (t.kasir && currentUser && currentUser.nama &&
+                            String(t.kasir).toLowerCase().trim() === String(currentUser.nama).toLowerCase().trim());
+        var showCancel = isAdmin || isOwnerOfTrx;
         
         html += '<tr data-id="' + id + '" class="parent-row">';
-        html += '<td style="white-space:nowrap; text-align:center;">' + (i + 1) + '</td>';
-        html += '<td style="white-space:nowrap;">' + (t.tanggal || '-') + ' ' + (t.waktu || '') + '</td>';
         
-        // 🔥 ID TRANSAKSI JADI LINK EXPAND
-        html += '<td style="white-space:nowrap; min-width:150px;">';
-        html += '<a href="javascript:void(0)" ';
-        html += 'class="link-transaksi" ';
+        // ═══════ 1. NO ═══════
+        html += '<td style="text-align:center;">' + (i + 1) + '</td>';
+        
+        // ═══════ 2. TANGGAL ═══════
+        html += '<td>' + (t.tanggal || '-') + ' ' + (t.waktu || '') + '</td>';
+        
+        // ═══════ 3. ID TRANSAKSI ═══════
+        html += '<td style="min-width:150px;">';
+        html += '<a href="javascript:void(0)" class="link-transaksi" ';
         html += 'onclick="toggleDetailTransaksi(\'' + id + '\')" ';
         html += 'title="Klik untuk lihat detail">';
         html += '<span class="icon-expand">▶</span> ' + id;
         html += '</a>';
         html += '</td>';
         
-        // KOLOM NAMA PEMBELI
+        // ═══════ 4. NAMA PEMBELI ═══════
         var namaPembeli = t.namaPembeli || t['Nama Pembeli'] || '-';
         if (namaPembeli && namaPembeli !== '-' && t.isReseller) {
             namaPembeli = namaPembeli + ' <span class="badge-reseller" style="background:#9C27B0;color:white;padding:2px 8px;border-radius:12px;font-size:0.55rem;font-weight:bold;">👥</span>';
         }
-        html += '<td style="white-space:nowrap; font-weight:500; color:#1a2332;">' + namaPembeli + '</td>';
+        html += '<td style="font-weight:500; color:#1a2332;">' + namaPembeli + '</td>';
         
-        // KOLOM KASIR
-        html += '<td style="white-space:nowrap;">' + (t.kasir || '-') + '</td>';
+        // ═══════ 5. KASIR ═══════
+        html += '<td>' + (t.kasir || '-') + '</td>';
         
-        html += '<td style="white-space:nowrap; text-align:right; font-weight:600;">Rp ' + formatRupiah(t.total || 0) + '</td>';
-        // 🔥 Tampilkan Laba hanya jika showLaba true
-var showLabaMode = document.querySelector('input[name="opsiLaba"]:checked').value === 'dengan';
-if (showLabaMode) {
-  html += '<td style="white-space:nowrap; text-align:right; color:' + (t.laba >= 0 ? '#4CAF50' : '#dc3545') + '; font-weight:600;">Rp ' + formatRupiah(t.laba || 0) + '</td>';
-} else {
-  html += '<td style="white-space:nowrap; text-align:center; color:#999;">-</td>';
-}
+        // ═══════ 6. TOTAL ═══════
+        html += '<td style="text-align:right; font-weight:600;">Rp ' + formatRupiah(t.total || 0) + '</td>';
         
-// ============================================================
-// 🔥 KOLOM AKSI - 2 TOMBOL HORIZONTAL (BESAR & MUDAH DIPENCET)
-// ============================================================
-html += '<td style="white-space:nowrap; text-align:center; padding:6px 4px;">';
-html += '<div style="display:inline-flex;gap:5px;align-items:center;justify-content:center;">';
-
-// Tombol 1: Print
-html += '<button onclick="cetakStrukFromHistory(\'' + id + '\')" ' +
-        'style="width:42px;height:38px;border:none;border-radius:8px;background:#2196F3;color:white;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(33,150,243,0.3);" ' +
-        'title="Cetak Struk">🖨️</button>';
-
-// Tombol 2: Hapus (jika boleh)
-if (showCancel) {
-    html += '<button onclick="konfirmasiBatalTransaksi(\'' + id + '\')" ' +
-            'style="width:42px;height:38px;border:none;border-radius:8px;background:#f44336;color:white;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(244,67,54,0.3);" ' +
-            'title="Batalkan Transaksi">🗑️</button>';
-}
-
-html += '</div>';
-html += '</td>';
+        // ═══════ 7. LABA ═══════
+        if (showLabaMode) {
+            var labaVal = t.laba || 0;
+            var labaColor = labaVal >= 0 ? '#4CAF50' : '#dc3545';
+            html += '<td style="text-align:right; color:' + labaColor + '; font-weight:600;">Rp ' + formatRupiah(labaVal) + '</td>';
+        } else {
+            html += '<td style="text-align:center; color:#999;">-</td>';
+        }
+        
+        // ═══════ 8. STATUS ═══════ 
+        // 🔥 BARIS INI YANG HILANG DI KODE ANDA SEBELUMNYA
+        var statusText = t.status || 'Selesai';
+        var statusColor = '#4CAF50';
+        if (statusText === 'BELUM BAYAR') statusColor = '#f44336';
+        else if (statusText === 'CICILAN') statusColor = '#FF9800';
+        else if (statusText === 'LUNAS') statusColor = '#4CAF50';
+        else if (statusText === 'Selesai') statusColor = '#4CAF50';
+        
+        html += '<td style="text-align:center;">';
+        html += '<span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:700; background:' + statusColor + '; color:white; white-space:nowrap;">' + statusText + '</span>';
+        html += '</td>';
+        
+        // ═══════ 9. AKSI ═══════
+        html += '<td style="text-align:center; padding:6px 4px;">';
+        html += '<div style="display:inline-flex;gap:5px;align-items:center;justify-content:center;">';
+        
+        // Tombol Print
+        html += '<button onclick="cetakStrukFromHistory(\'' + id + '\')" ' +
+                'style="width:42px;height:38px;border:none;border-radius:8px;background:#2196F3;color:white;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(33,150,243,0.3);" ' +
+                'title="Cetak Struk">🖨️</button>';
+        
+        // Tombol Hapus
+        if (showCancel) {
+            html += '<button onclick="konfirmasiBatalTransaksi(\'' + id + '\')" ' +
+                    'style="width:42px;height:38px;border:none;border-radius:8px;background:#f44336;color:white;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(244,67,54,0.3);" ' +
+                    'title="Batalkan Transaksi">🗑️</button>';
+        }
+        
+        html += '</div>';
+        html += '</td>';
+        
+        html += '</tr>';
     }
     
     tbody.innerHTML = html;
