@@ -11067,6 +11067,7 @@ function loadReseller() {
     filteredResellerList = resellerList;
     renderResellerTable(resellerList);
     updateResellerFilterInfo(resellerList.length);
+    loadHargaCountForResellers();
     console.log('✅ Reseller berhasil dimuat: ' + resellerList.length + ' reseller');
   })
   .catch(function(error) {
