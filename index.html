@@ -4337,17 +4337,19 @@ async function cetakViaCleanter(idTransaksi) {
     return;
   }
 
-  // 🔥 CEK CLEANTER AKTIF DULU
-  showToast('⏳ Memeriksa koneksi printer...', 'info');
-  const bridgeReady = await isCleanterAvailable();
-  if (!bridgeReady) {
-    showToast('❌ Cleanter belum aktif. Silakan buka aplikasi Cleanter.', 'error');
+  // 🔥 Cegah klik ganda
+  if (window._isPrintingThermal) {
+    showToast('⏳ Sedang mencetak, tunggu sebentar...', 'warning');
     return;
   }
-
-  showToast('⏳ Menyiapkan data...', 'info');
+  window._isPrintingThermal = true;
 
   try {
+    // ... semua kode cetak ...
+  } finally {
+    window._isPrintingThermal = false;
+  }
+}
     // ===== 1. AMBIL DATA DARI GAS =====
     const headerResult = await callGAS('getTransaksiById', { idTransaksi: idTransaksi });
     if (!headerResult || !headerResult.success) {
@@ -4394,33 +4396,48 @@ async function cetakViaCleanter(idTransaksi) {
     const kasir = header.Kasir || header.kasir || '-';
     content.push({ type: 'text', text: 'Kasir  : ' + kasir });
 
+  
+/ ===== NAMA PEMBELI ATAU RESELLER  =====
     const namaPembeli = header['Nama Pembeli'] || header.namaPembeli || '-';
-    if (namaPembeli && namaPembeli !== '-') {
-      content.push({ type: 'text', text: 'Pembeli: ' + namaPembeli });
+if (namaPembeli && namaPembeli !== '-') {
+  content.push({ type: 'text', text: 'Pembeli: ' + namaPembeli });
+  
+  // 🔥 Cek apakah reseller
+  if (header.isReseller || header.IsReseller) {
+    content.push({ 
+      type: 'text', 
+      text: '👥 RESELLER', 
+      align: 'center', 
+      bold: true 
+    });
+  }
+}
+    
+    // ===== DETAIL ITEM =====
+let grandTotal = 0;
+if (detail && detail.length > 0) {
+  for (let idx = 0; idx < detail.length; idx++) {
+    const item = detail[idx];
+    let nama = item['Nama Produk'] || item.namaProduk || 'Produk';
+    const qty = parseInt(item.Qty || item.qty || 0);
+    const harga = parseInt(item.Harga || item.harga || 0);
+    const subtotal = harga * qty;
+    grandTotal += subtotal;
+
+    // 🔥 Batasi nama produk max 18 karakter
+    if (nama.length > 18) {
+      nama = nama.substring(0, 17) + '.';
     }
 
-    content.push({ type: 'divider' });
+    const hargaFmt = new Intl.NumberFormat('id-ID').format(subtotal);
 
-    // ===== DETAIL ITEM (pakai type "row") =====
-    let grandTotal = 0;
-    if (detail && detail.length > 0) {
-      for (let idx = 0; idx < detail.length; idx++) {
-        const item = detail[idx];
-        const nama = item['Nama Produk'] || item.namaProduk || 'Produk';
-        const qty = parseInt(item.Qty || item.qty || 0);
-        const harga = parseInt(item.Harga || item.harga || 0);
-        const subtotal = harga * qty;
-        grandTotal += subtotal;
-
-        const hargaFmt = new Intl.NumberFormat('id-ID').format(subtotal);
-
-        content.push({
-          type: 'row',
-          left: nama + ' x' + qty,
-          right: hargaFmt
-        });
-      }
-    }
+    content.push({
+      type: 'row',
+      left: nama + ' x' + qty,
+      right: hargaFmt
+    });
+  }
+}
 
     content.push({ type: 'divider' });
 
@@ -10000,14 +10017,25 @@ function showStruk(data, isFromHistory) {
   refreshInfoTokoCache();
   
   var html = generateStrukHTML(data);
+
+
+html += '<div class="struk-actions">';
+html += '<button class="btn btn-success" onclick="printStruk()">🖨️ Cetak</button>';
+
+// 🔥 TOMBOL CETAK THERMAL CLEANTER
+if (data.id) {
+  html += '<button class="btn" onclick="cetakViaCleanter(\'' + data.id + '\')" ' +
+          'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
+          '📱 Cetak Thermal</button>';
+}
+
+if (!isFromHistory) {
+  html += '<button class="btn btn-info" onclick="downloadStrukPDF()">📄 Download PDF</button>';
+}
+html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
+html += '</div>';
+
   
-  html += '<div class="struk-actions">';
-  html += '<button class="btn btn-success" onclick="printStruk()">🖨️ Cetak</button>';
-  if (!isFromHistory) {
-    html += '<button class="btn btn-info" onclick="downloadStrukPDF()">📄 Download PDF</button>';
-  }
-  html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
-  html += '</div>';
   
   document.getElementById('modalTitle').textContent = '🧾 Struk Transaksi - ' + data.id;
   document.getElementById('modalContent').classList.add('large');
