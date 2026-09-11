@@ -11078,46 +11078,6 @@ function loadReseller() {
   });
 }
 
-function renderResellerTable(data) {
-  var tbody = document.getElementById('resellerTable');
-  if (!tbody) return;
-  
-  if (!data || data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">📭 Belum ada reseller</td></tr>';
-    return;
-  }
-  
-  var html = '';
-  for (var i = 0; i < data.length; i++) {
-    var r = data[i];
-    
-    html += '<tr>' +
-      '<td><strong>' + escapeHtml(r.kode || '-') + '</strong></td>' +
-      '<td>' + escapeHtml(r.nama || '-') + '</td>' +
-      '<td>' + escapeHtml(r.kontak || '-') + '</td>' +
-      '<td>' + escapeHtml(r.alamat || '-') + '</td>' +
-      '<td style="text-align:center;">' +
-        '<button class="btn-atuharga" onclick="aturHargaReseller(\'' + escapeHtml(r.kode) + '\')" ' +
-                'style="padding:6px 14px;font-size:0.75rem;border-radius:8px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);color:white;border:none;cursor:pointer;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(156,39,176,0.3);transition:all 0.3s;">' +
-          '💲 Atur Harga' +
-        '</button>' +
-        '<div style="font-size:0.6rem;color:#999;margin-top:2px;">' +
-          '<span id="hargaCount_' + escapeHtml(r.kode) + '">0 produk</span>' +
-        '</div>' +
-      '</td>' +
-      '<td style="text-align:center;font-size:1.2rem;">' + (r.active ? '🟢' : '🔴') + '</td>' +
-      '<td style="white-space:nowrap;">' +
-        '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Edit">✏️</button>' +
-        '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Toggle Status">' + (r.active ? '🔇' : '🔊') + '</button>' +
-        '<button class="btn btn-danger btn-sm" onclick="hapusReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Hapus">🗑️</button>' +
-      '</td>' +
-      '</tr>';
-  }
-  tbody.innerHTML = html;
-}  // <-- FUNGSI SELESAI DI SINI
-
-
-
 
 // ============================================================
 // 🔥 HITUNG HARGA KHUSUS PER RESELLER
@@ -11269,7 +11229,48 @@ function hitungHargaKhususPerReseller() {
     console.log('✅ ========== SELESAI ==========');
   });
 }
+
+
+
   
+function renderResellerTable(data) {
+  var tbody = document.getElementById('resellerTable');
+  if (!tbody) return;
+  
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">📭 Belum ada reseller</td></tr>';
+    return;
+  }
+  
+  var html = '';
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    
+    html += '<tr>' +
+      '<td><strong>' + escapeHtml(r.kode || '-') + '</strong></td>' +
+      '<td>' + escapeHtml(r.nama || '-') + '</td>' +
+      '<td>' + escapeHtml(r.kontak || '-') + '</td>' +
+      '<td>' + escapeHtml(r.alamat || '-') + '</td>' +
+      '<td style="text-align:center;">' +
+        '<button class="btn-atuharga" onclick="aturHargaReseller(\'' + escapeHtml(r.kode) + '\')" ' +
+                'style="padding:6px 14px;font-size:0.75rem;border-radius:8px;background:linear-gradient(135deg,#9C27B0,#7B1FA2);color:white;border:none;cursor:pointer;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(156,39,176,0.3);transition:all 0.3s;">' +
+          '💲 Atur Harga' +
+        '</button>' +
+        '<div style="font-size:0.6rem;color:#999;margin-top:2px;">' +
+          '<span id="hargaCount_' + escapeHtml(r.kode) + '">0 produk</span>' +
+        '</div>' +
+      '</td>' +
+      '<td style="text-align:center;font-size:1.2rem;">' + (r.active ? '🟢' : '🔴') + '</td>' +
+      '<td style="white-space:nowrap;">' +
+        '<button class="btn btn-info btn-sm" onclick="editReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Edit">✏️</button>' +
+        '<button class="btn ' + (r.active ? 'btn-warning' : 'btn-success') + ' btn-sm" onclick="toggleResellerStatus(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:3px;" title="Toggle Status">' + (r.active ? '🔇' : '🔊') + '</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="hapusReseller(\'' + escapeHtml(r.kode) + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Hapus">🗑️</button>' +
+      '</td>' +
+      '</tr>';
+  }
+  tbody.innerHTML = html;
+} 
+
 
 
 
