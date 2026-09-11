@@ -11067,7 +11067,8 @@ function loadReseller() {
     filteredResellerList = resellerList;
     renderResellerTable(resellerList);
     updateResellerFilterInfo(resellerList.length);
-    loadHargaCountForResellers();
+    // 🔥 HITUNG HARGA KHUSUS PER RESELLER         ← ⚡ BARIS BARU
+    hitungHargaKhususPerReseller();              ← ⚡ BARIS BARU
     console.log('✅ Reseller berhasil dimuat: ' + resellerList.length + ' reseller');
   })
   .catch(function(error) {
@@ -11117,30 +11118,137 @@ function renderResellerTable(data) {
 
 
 
-  // ==================== LOAD JUMLAH HARGA PER RESELLER ====================
-function loadHargaCountForResellers() {
-  callGAS('getHargaReseller', {})
-  .then(function(result) {
-    if (!result || !result.success) return;
+
+// ============================================================
+// 🔥 HITUNG HARGA KHUSUS PER RESELLER
+// Setiap reseller dihitung terpisah
+// Hanya hitung produk yang harganya BEDA dari HARGA NORMAL
+// ============================================================
+function hitungHargaKhususPerReseller() {
+  console.log('🔢 ========== MULAI HITUNG HARGA KHUSUS PER RESELLER ==========');
+  
+  if (!resellerList || resellerList.length === 0) {
+    console.log('ℹ️ Belum ada reseller');
+    return;
+  }
+  
+  // Pastikan produkList siap dulu
+  if (!produkList || produkList.length === 0) {
+    console.log('⚠️ produkList belum siap, ambil produk dulu...');
     
-    var allHarga = result.data || [];
-    var countMap = {};
+    callGAS('getProduk', {})
+    .then(function(result) {
+      if (result && result.success) {
+        produkList = result.data || [];
+        console.log('✅ produkList dimuat:', produkList.length, 'produk');
+        hitungHargaKhususPerReseller();
+      } else {
+        console.error('❌ Gagal ambil produk');
+      }
+    })
+    .catch(function(error) {
+      console.error('❌ Error ambil produk:', error);
+    });
+    return;
+  }
+  
+  // Buat peta harga normal: { kodeProduk: hargaJual }
+  var hargaNormalMap = {};
+  for (var i = 0; i < produkList.length; i++) {
+    var p = produkList[i];
+    hargaNormalMap[p.Kode] = parseInt(p['Harga Jual']) || 0;
+  }
+  console.log('📊 Harga normal map siap:', Object.keys(hargaNormalMap).length, 'produk');
+  
+  // Loop SETIAP reseller → hitung sendiri-sendiri
+  var promises = [];
+  
+  for (var r = 0; r < resellerList.length; r++) {
+    (function(reseller) {
+      var kodeReseller = reseller.kode;
+      var namaReseller = reseller.nama;
+      
+      console.log('🔍 Proses reseller:', kodeReseller, '-', namaReseller);
+      
+      var p = callGAS('getHargaResellerByKode', { kodeReseller: kodeReseller })
+      .then(function(result) {
+        var hargaMap = (result && result.success) ? result.data : {};
+        var jumlahBeda = 0;
+        var detail = [];
+        
+        // Hitung yang harganya BEDA dari normal
+        for (var kodeProduk in hargaMap) {
+          var item = hargaMap[kodeProduk];
+          var hargaReseller = parseInt(item.hargaReseller) || 0;
+          var hargaNormal = hargaNormalMap[kodeProduk] || 0;
+          
+          // 🔥 HANYA DIHITUNG JIKA:
+          // 1. Harga khusus diisi (> 0)
+          // 2. BEDA dengan harga normal
+          if (hargaReseller > 0 && hargaReseller !== hargaNormal) {
+            jumlahBeda++;
+            detail.push({
+              kode: kodeProduk,
+              hargaNormal: hargaNormal,
+              hargaReseller: hargaReseller,
+              selisih: hargaNormal - hargaReseller
+            });
+          }
+        }
+        
+        console.log('  └─ Hasil untuk ' + kodeReseller + ': ' + jumlahBeda + ' produk (beda dari normal)');
+        
+        return {
+          kodeReseller: kodeReseller,
+          namaReseller: namaReseller,
+          jumlah: jumlahBeda,
+          detail: detail
+        };
+      })
+      .catch(function(error) {
+        console.warn('⚠️ Error untuk ' + kodeReseller + ':', error);
+        return {
+          kodeReseller: kodeReseller,
+          namaReseller: namaReseller,
+          jumlah: 0,
+          detail: []
+        };
+      });
+      
+      promises.push(p);
+    })(resellerList[r]);
+  }
+  
+  // Tunggu semua selesai
+  Promise.all(promises)
+  .then(function(hasilList) {
+    console.log('📊 ========== HASIL AKHIR ==========');
     
-    for (var i = 0; i < allHarga.length; i++) {
-      var kodeReseller = allHarga[i].kodeReseller;
-      if (!countMap[kodeReseller]) countMap[kodeReseller] = 0;
-      countMap[kodeReseller]++;
-    }
-    
-    for (var kode in countMap) {
-      var el = document.getElementById('hargaCount_' + kode);
+    for (var i = 0; i < hasilList.length; i++) {
+      var hasil = hasilList[i];
+      var el = document.getElementById('hargaCount_' + hasil.kodeReseller);
+      
       if (el) {
-        el.textContent = countMap[kode] + ' produk';
+        if (hasil.jumlah > 0) {
+          el.textContent = hasil.jumlah + ' produk';
+          el.style.color = '#9C27B0';
+          el.style.fontWeight = 'bold';
+          console.log('  ✅ ' + hasil.kodeReseller + ' (' + hasil.namaReseller + '): ' + hasil.jumlah + ' produk');
+        } else {
+          el.textContent = '0 produk';
+          el.style.color = '#999';
+          el.style.fontWeight = 'normal';
+          console.log('  ⚪ ' + hasil.kodeReseller + ' (' + hasil.namaReseller + '): 0 produk');
+        }
+      } else {
+        console.warn('  ⚠️ Element tidak ditemukan: hargaCount_' + hasil.kodeReseller);
       }
     }
+    
+    console.log('✅ ========== SELESAI ==========');
   })
   .catch(function(error) {
-    console.error('❌ Error loadHargaCount:', error);
+    console.error('❌ Error hitung harga khusus:', error);
   });
 }
   
