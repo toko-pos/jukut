@@ -4329,7 +4329,10 @@ function renderTransaksi(data) {
 
 // ============================================================
 // 🔥 CETAK VIA CLEANTER (Local API Port 9100)
-// Font diperkecil 1 tingkat dari versi sebelumnya
+// - Font huruf & angka sama (pakai text + padding manual)
+// - Nama toko bold + size large
+// - Alamat & telepon muncul
+// - Harga satuan ditampilkan
 // ============================================================
 async function cetakViaCleanter(idTransaksi) {
   // ===== VALIDASI AWAL =====
@@ -4378,61 +4381,89 @@ async function cetakViaCleanter(idTransaksi) {
     const infoToko = getInfoTokoSync();
 
     // ============================================================
+    // HELPER: Buat baris kiri-kanan dengan padding
+    // Lebar 58mm = 32 karakter
+    // ============================================================
+    const WIDTH = 32;
+
+    function makeRow(left, right) {
+      left = String(left);
+      right = String(right);
+      const spaceCount = WIDTH - left.length - right.length;
+      if (spaceCount > 0) {
+        return left + ' '.repeat(spaceCount) + right;
+      }
+      // Kalau kepanjangan, potong sisi kiri
+      const maxLeft = WIDTH - right.length - 1;
+      if (maxLeft > 0) {
+        return left.substring(0, maxLeft) + ' ' + right;
+      }
+      return left + ' ' + right;
+    }
+
+    // ============================================================
     // 3. SUSUN CONTENT UNTUK CLEANTER
     // ============================================================
     const content = [];
 
     // ---------- HEADER TOKO ----------
-content.push({
-  type: 'text',
-  text: infoToko.namaToko || 'POS SYSTEM',
-  align: 'center',
-  bold: true
-});
+    // Nama toko: BOLD + size large (besar sedikit)
+    content.push({
+      type: 'text',
+      text: infoToko.namaToko || 'POS SYSTEM',
+      align: 'center',
+      bold: true,
+      size: 'large'
+    });
 
-// 🔥 TAMBAHKAN INI: spacer 1 baris kosong
-content.push({ type: 'text', text: ' ' });
+    // Jeda 1 baris
+    content.push({ type: 'text', text: ' ' });
 
-if (infoToko.alamat) {
-  content.push({
-    type: 'text',
-    text: infoToko.alamat,
-    align: 'center',
-    size: 'small'
-  });
-}
+    // Alamat
+    if (infoToko.alamat) {
+      content.push({
+        type: 'text',
+        text: String(infoToko.alamat),
+        align: 'center'
+      });
+    }
+
+    // Telepon (WAJIB MUNCUL)
+    if (infoToko.noHp) {
+      content.push({
+        type: 'text',
+        text: 'Telp: ' + String(infoToko.noHp),
+        align: 'center'
+      });
+    }
 
     content.push({ type: 'divider' });
 
-    // ---------- INFO TRANSAKSI (diperkecil) ----------
+    // ---------- INFO TRANSAKSI ----------
     content.push({
       type: 'text',
-      text: 'ID     : ' + idTransaksi,
-      size: 'small'
+      text: makeRow('ID', ': ' + String(idTransaksi))
     });
 
-    const tgl = header.Tanggal || header.tanggal || '-';
-    const waktu = header.Waktu || header.waktu || '';
+    const tgl = String(header.Tanggal || header.tanggal || '-');
+    const waktu = String(header.Waktu || header.waktu || '');
     content.push({
       type: 'text',
-      text: 'Tgl    : ' + tgl + ' ' + waktu,
-      size: 'small'
+      text: makeRow('Tgl', ': ' + tgl + ' ' + waktu)
     });
 
-    const kasir = header.Kasir || header.kasir || '-';
+    const kasir = String(header.Kasir || header.kasir || '-');
     content.push({
       type: 'text',
-      text: 'Kasir  : ' + kasir,
-      size: 'small'
+      text: makeRow('Kasir', ': ' + kasir)
     });
 
     // ---------- NAMA PEMBELI / RESELLER ----------
-    const namaPembeli = header['Nama Pembeli'] || header.namaPembeli || '-';
+    const namaPembeli = String(header['Nama Pembeli'] || header.namaPembeli || '-');
     if (namaPembeli && namaPembeli !== '-') {
       content.push({
         type: 'text',
-        text: 'Pembeli: ' + namaPembeli,
-        size: 'small'
+        text: makeRow('Pembeli', ': ' + namaPembeli)
       });
 
       if (header.isReseller || header.IsReseller) {
@@ -4440,8 +4471,7 @@ if (infoToko.alamat) {
           type: 'text',
           text: 'RESELLER',
           align: 'center',
-          bold: true,
-          size: 'small'
+          bold: true
         });
       }
     }
@@ -4449,21 +4479,21 @@ if (infoToko.alamat) {
     content.push({ type: 'divider' });
 
     // ============================================================
-    // 🔥 DETAIL ITEM DENGAN HARGA SATUAN (diperkecil)
+    // DETAIL ITEM DENGAN HARGA SATUAN
     // ============================================================
     let grandTotal = 0;
     if (detail && detail.length > 0) {
       for (let idx = 0; idx < detail.length; idx++) {
         const item = detail[idx];
-        let nama = item['Nama Produk'] || item.namaProduk || 'Produk';
+        let nama = String(item['Nama Produk'] || item.namaProduk || 'Produk');
         const qty = parseInt(item.Qty || item.qty || 0);
         const harga = parseInt(item.Harga || item.harga || 0);
         const subtotal = harga * qty;
         grandTotal += subtotal;
 
-        // Batasi nama produk max 18 karakter (bisa lebih panjang karena font kecil)
-        if (nama.length > 20) {
-          nama = nama.substring(0, 19) + '.';
+        // Batasi nama produk max 18 karakter
+        if (nama.length > 18) {
+          nama = nama.substring(0, 17) + '.';
         }
 
         const hargaFmt = new Intl.NumberFormat('id-ID').format(harga);
@@ -4472,51 +4502,46 @@ if (infoToko.alamat) {
         // BARIS 1: Nama produk + Qty
         content.push({
           type: 'text',
-          text: nama + ' x' + qty,
-          size: 'small'
+          text: nama + ' x' + qty
         });
 
-        // BARIS 2: Harga satuan @ + Subtotal
+        // BARIS 2: @ harga satuan + subtotal (pakai padding)
         content.push({
-          type: 'row',
-          left: '  @ ' + hargaFmt,
-          right: subtotalFmt,
-          size: 'small'
+          type: 'text',
+          text: makeRow('  @ ' + hargaFmt, subtotalFmt)
         });
       }
     }
 
     content.push({ type: 'divider' });
 
-    // ---------- TOTAL (tetap normal biar menonjol) ----------
+    // ---------- TOTAL ----------
     const total = parseInt(header.Total || header.total || grandTotal);
+    const totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+
     content.push({
-      type: 'row',
-      left: 'TOTAL',
-      right: 'Rp ' + new Intl.NumberFormat('id-ID').format(total),
+      type: 'text',
+      text: makeRow('TOTAL', totalFmt),
       bold: true
-      // tanpa size = normal, biar tetap menonjol
     });
 
-    // Pembayaran (diperkecil)
+    // Pembayaran
     const bayar = parseInt(header.Pembayaran || header.pembayaran || 0);
     if (bayar > 0) {
+      const bayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(bayar);
       content.push({
-        type: 'row',
-        left: 'Bayar',
-        right: 'Rp ' + new Intl.NumberFormat('id-ID').format(bayar),
-        size: 'small'
+        type: 'text',
+        text: makeRow('Bayar', bayarFmt)
       });
     }
 
-    // Kembalian (diperkecil)
+    // Kembalian
     const kembali = parseInt(header.Kembalian || header.kembalian || 0);
     if (kembali > 0) {
+      const kembaliFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(kembali);
       content.push({
-        type: 'row',
-        left: 'Kembali',
-        right: 'Rp ' + new Intl.NumberFormat('id-ID').format(kembali),
-        size: 'small'
+        type: 'text',
+        text: makeRow('Kembali', kembaliFmt)
       });
     }
 
@@ -4528,13 +4553,11 @@ if (infoToko.alamat) {
       text: 'TERIMA KASIH',
       align: 'center',
       bold: true
-      // tanpa size = normal
     });
     content.push({
       type: 'text',
       text: 'Barang tidak dapat ditukar',
-      align: 'center',
-      size: 'small'
+      align: 'center'
     });
 
     // Feed (jarak sebelum potong)
