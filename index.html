@@ -4286,40 +4286,39 @@ function renderTransaksi(data) {
         html += '</a>';
         html += '</td>';
         
-        // ============================================================
-        // 🔥🔥🔥 TAMBAHKAN KOLOM "NAMA PEMBELI" DI SINI 🔥🔥🔥
-        // ============================================================
+        // KOLOM NAMA PEMBELI
         var namaPembeli = t.namaPembeli || t['Nama Pembeli'] || '-';
         if (namaPembeli && namaPembeli !== '-' && t.isReseller) {
-            // Tambahkan badge Reseller jika transaksi reseller
             namaPembeli = namaPembeli + ' <span class="badge-reseller" style="background:#9C27B0;color:white;padding:2px 8px;border-radius:12px;font-size:0.55rem;font-weight:bold;">👥</span>';
         }
         html += '<td style="white-space:nowrap; font-weight:500; color:#1a2332;">' + namaPembeli + '</td>';
         
-        // 🔥 KOLOM KASIR (tetap dipertahankan)
+        // KOLOM KASIR
         html += '<td style="white-space:nowrap;">' + (t.kasir || '-') + '</td>';
         
         html += '<td style="white-space:nowrap; text-align:right; font-weight:600;">Rp ' + formatRupiah(t.total || 0) + '</td>';
         html += '<td style="white-space:nowrap; text-align:right; color:' + (t.laba >= 0 ? '#4CAF50' : '#dc3545') + '; font-weight:600;">Rp ' + formatRupiah(t.laba || 0) + '</td>';
         html += '<td style="white-space:nowrap; text-align:center;"><span class="badge-status">' + (t.status || 'Selesai') + '</span></td>';
         
-        // 🔥 KOLOM AKSI - DENGAN TOMBOL CETAK THERMAL
-html += '<td style="white-space:nowrap; text-align:center; min-width:130px;">';
-html += '<div style="display:inline-flex;gap:4px;align-items:center;justify-content:center;">';
-
-// Tombol 1: Cetak Struk Biasa (browser print)
-html += '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Preview Struk">🖨️</button>';
-
-// Tombol 2: Cetak Thermal Bluetooth
-html += '<button class="btn btn-sm" onclick="cetakThermalBluetooth(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;background:linear-gradient(135deg,#FF6B6B,#E53935);color:white;border:none;border-radius:4px;cursor:pointer;" title="Cetak Thermal Bluetooth">📱</button>';
-
-// Tombol 3: Batalkan (jika boleh)
-if (showCancel) {
-    html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Batalkan Transaksi">🗑️</button>';
-}
-
-html += '</div>';
-html += '</td>';
+        // ============================================================
+        // 🔥 KOLOM AKSI - DENGAN TOMBOL CETAK CLEANTER
+        // ============================================================
+        html += '<td style="white-space:nowrap; text-align:center; min-width:130px;">';
+        html += '<div style="display:inline-flex;gap:4px;align-items:center;justify-content:center;">';
+        
+        // Tombol 1: Preview Struk (browser print)
+        html += '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Preview Struk">🖨️</button>';
+        
+        // Tombol 2: Cetak via Cleanter (Local API port 9100)
+        html += '<button class="btn btn-sm" onclick="cetakViaCleanter(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:4px;cursor:pointer;" title="Cetak Thermal (Cleanter)">📱</button>';
+        
+        // Tombol 3: Batalkan (jika boleh)
+        if (showCancel) {
+            html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Batalkan Transaksi">🗑️</button>';
+        }
+        
+        html += '</div>';
+        html += '</td>';
         
         html += '</tr>';
     }
@@ -4327,6 +4326,182 @@ html += '</td>';
     tbody.innerHTML = html;
 }
 
+
+// ============================================================
+// 🔥 CETAK VIA CLEANTER (Local API Port 9100)
+// Format sesuai dokumentasi resmi Cleanter
+// ============================================================
+async function cetakViaCleanter(idTransaksi) {
+  if (!idTransaksi) {
+    showToast('⚠️ ID Transaksi tidak valid!', 'error');
+    return;
+  }
+
+  // 🔥 CEK CLEANTER AKTIF DULU
+  showToast('⏳ Memeriksa koneksi printer...', 'info');
+  const bridgeReady = await isCleanterAvailable();
+  if (!bridgeReady) {
+    showToast('❌ Cleanter belum aktif. Silakan buka aplikasi Cleanter.', 'error');
+    return;
+  }
+
+  showToast('⏳ Menyiapkan data...', 'info');
+
+  try {
+    // ===== 1. AMBIL DATA DARI GAS =====
+    const headerResult = await callGAS('getTransaksiById', { idTransaksi: idTransaksi });
+    if (!headerResult || !headerResult.success) {
+      throw new Error('Gagal mengambil data transaksi');
+    }
+    const header = headerResult.data && headerResult.data.data ? headerResult.data.data : headerResult.data;
+
+    const detailResult = await callGAS('getDetailTransaksi', { idTransaksi: idTransaksi });
+    const detail = (detailResult && detailResult.success)
+      ? (detailResult.data && detailResult.data.data ? detailResult.data.data : detailResult.data)
+      : [];
+
+    // ===== 2. AMBIL INFO TOKO =====
+    const infoToko = getInfoTokoSync();
+
+    // ===== 3. SUSUN CONTENT UNTUK CLEANTER =====
+    const content = [];
+
+    // Header: Nama Toko (large, bold, center)
+    content.push({
+      type: 'text',
+      text: infoToko.namaToko || 'POS SYSTEM',
+      align: 'center',
+      bold: true,
+      size: 'large'
+    });
+
+    if (infoToko.alamat) {
+      content.push({ type: 'text', text: infoToko.alamat, align: 'center' });
+    }
+    if (infoToko.noHp) {
+      content.push({ type: 'text', text: 'Telp: ' + infoToko.noHp, align: 'center' });
+    }
+
+    content.push({ type: 'divider' });
+
+    // Info Transaksi
+    content.push({ type: 'text', text: 'ID     : ' + idTransaksi });
+
+    const tgl = header.Tanggal || header.tanggal || '-';
+    const waktu = header.Waktu || header.waktu || '';
+    content.push({ type: 'text', text: 'Tgl    : ' + tgl + ' ' + waktu });
+
+    const kasir = header.Kasir || header.kasir || '-';
+    content.push({ type: 'text', text: 'Kasir  : ' + kasir });
+
+    const namaPembeli = header['Nama Pembeli'] || header.namaPembeli || '-';
+    if (namaPembeli && namaPembeli !== '-') {
+      content.push({ type: 'text', text: 'Pembeli: ' + namaPembeli });
+    }
+
+    content.push({ type: 'divider' });
+
+    // ===== DETAIL ITEM (pakai type "row") =====
+    let grandTotal = 0;
+    if (detail && detail.length > 0) {
+      for (let idx = 0; idx < detail.length; idx++) {
+        const item = detail[idx];
+        const nama = item['Nama Produk'] || item.namaProduk || 'Produk';
+        const qty = parseInt(item.Qty || item.qty || 0);
+        const harga = parseInt(item.Harga || item.harga || 0);
+        const subtotal = harga * qty;
+        grandTotal += subtotal;
+
+        const hargaFmt = new Intl.NumberFormat('id-ID').format(subtotal);
+
+        content.push({
+          type: 'row',
+          left: nama + ' x' + qty,
+          right: hargaFmt
+        });
+      }
+    }
+
+    content.push({ type: 'divider' });
+
+    // ===== TOTAL =====
+    const total = parseInt(header.Total || header.total || grandTotal);
+    content.push({
+      type: 'row',
+      left: 'TOTAL',
+      right: 'Rp ' + new Intl.NumberFormat('id-ID').format(total),
+      bold: true
+    });
+
+    // Pembayaran
+    const bayar = parseInt(header.Pembayaran || header.pembayaran || 0);
+    if (bayar > 0) {
+      content.push({
+        type: 'row',
+        left: 'Bayar',
+        right: 'Rp ' + new Intl.NumberFormat('id-ID').format(bayar)
+      });
+    }
+
+    const kembali = parseInt(header.Kembalian || header.kembalian || 0);
+    if (kembali > 0) {
+      content.push({
+        type: 'row',
+        left: 'Kembali',
+        right: 'Rp ' + new Intl.NumberFormat('id-ID').format(kembali)
+      });
+    }
+
+    content.push({ type: 'divider' });
+
+    // Footer
+    content.push({ type: 'text', text: 'TERIMA KASIH', align: 'center', bold: true });
+    content.push({ type: 'text', text: 'Barang tidak dapat ditukar', align: 'center' });
+
+    // Feed (kasih jarak sebelum potong)
+    content.push({ type: 'feed', lines: 3 });
+
+    // ===== 4. KIRIM KE CLEANTER =====
+    const payload = {
+      cut: true,
+      content: content
+    };
+
+    console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
+
+    const response = await fetch('http://localhost:9100/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status);
+    }
+
+    showToast('✅ Struk terkirim ke printer!', 'success');
+
+  } catch (error) {
+    console.error('❌ Error cetak Cleanter:', error);
+    showToast('❌ Gagal cetak: ' + error.message, 'error');
+  }
+}
+
+  // ============================================================
+// 🔥 CEK APAKAH CLEANTER AKTIF
+// ============================================================
+async function isCleanterAvailable() {
+  try {
+    const res = await fetch('http://localhost:9100/health', {
+      signal: AbortSignal.timeout(1500)
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('Cleanter health check gagal:', e.message);
+    return false;
+  }
+}
+  
 // ============================================================
 // 🔥 EXPANDABLE TRANSAKSI - FUNGSI PENDUKUNG
 // ============================================================
