@@ -11081,27 +11081,24 @@ function loadReseller() {
 
 // ============================================================
 // 🔥 HITUNG HARGA KHUSUS PER RESELLER
-// - ✅ Untung: Harga Normal > Harga Beli
-// - ⚖️ Impas: Harga Khusus = Harga Beli
-// - ❌ Rugi: Harga Khusus < Harga Beli
+// ✅ Untung = Harga Khusus > Harga Beli
+// ⚖️ Impas = Harga Khusus = Harga Beli
+// ❌ Rugi = Harga Khusus < Harga Beli
 // ============================================================
 function hitungHargaKhususPerReseller() {
-  console.log('🔢 ========== MULAI HITUNG HARGA KHUSUS PER RESELLER ==========');
+  console.log('🔢 ========== HITUNG HARGA KHUSUS ==========');
   
   if (!resellerList || resellerList.length === 0) {
     console.log('ℹ️ Belum ada reseller');
     return;
   }
   
-  // Pastikan produkList siap
   if (!produkList || produkList.length === 0) {
-    console.log('⚠️ produkList belum siap, ambil produk dulu...');
-    
+    console.log('⚠️ produkList belum siap, ambil dulu...');
     callGAS('getProduk', {})
     .then(function(result) {
       if (result && result.success) {
         produkList = result.data || [];
-        console.log('✅ produkList dimuat:', produkList.length, 'produk');
         hitungHargaKhususPerReseller();
       }
     })
@@ -11111,15 +11108,13 @@ function hitungHargaKhususPerReseller() {
     return;
   }
   
-  // Peta harga beli & harga normal
+  // Peta harga beli
   var hargaBeliMap = {};
-  var hargaNormalMap = {};
   for (var i = 0; i < produkList.length; i++) {
     var p = produkList[i];
     hargaBeliMap[p.Kode] = parseInt(p['Harga Beli']) || 0;
-    hargaNormalMap[p.Kode] = parseInt(p['Harga Jual']) || 0;
   }
-  console.log('📊 Peta harga siap:', Object.keys(hargaBeliMap).length, 'produk');
+  console.log('📊 Peta harga beli siap:', Object.keys(hargaBeliMap).length, 'produk');
   
   var promises = [];
   
@@ -11139,20 +11134,14 @@ function hitungHargaKhususPerReseller() {
           var item = hargaMap[kodeProduk];
           var hargaReseller = parseInt(item.hargaReseller) || 0;
           var hargaBeli = hargaBeliMap[kodeProduk] || 0;
-          var hargaNormal = hargaNormalMap[kodeProduk] || 0;
           
           if (hargaReseller > 0 && hargaBeli > 0) {
-            // ✅ UNTUNG = Harga Normal > Harga Beli
-            if (hargaNormal > hargaBeli) {
+            // 🔥 HITUNG PAKAI HARGA KHUSUS vs HARGA BELI
+            if (hargaReseller > hargaBeli) {
               jumlahUntung++;
-            }
-            
-            // ⚖️ IMPAS = Harga Khusus = Harga Beli
-            if (hargaReseller === hargaBeli) {
+            } else if (hargaReseller === hargaBeli) {
               jumlahImpas++;
-            }
-            // ❌ RUGI = Harga Khusus < Harga Beli
-            else if (hargaReseller < hargaBeli) {
+            } else if (hargaReseller < hargaBeli) {
               jumlahRugi++;
             }
           }
@@ -11168,6 +11157,7 @@ function hitungHargaKhususPerReseller() {
         };
       })
       .catch(function(error) {
+        console.error('❌ Error ' + kodeReseller + ':', error);
         return {
           kodeReseller: kodeReseller,
           namaReseller: namaReseller,
@@ -11192,7 +11182,6 @@ function hitungHargaKhususPerReseller() {
       
       if (el) {
         if (hasil.total > 0) {
-          // 🔥 OPSI C: BADGE WARNA
           var badges = '';
           
           if (hasil.jumlahUntung > 0) {
@@ -11207,21 +11196,21 @@ function hitungHargaKhususPerReseller() {
           
           el.innerHTML = badges;
           el.style.fontWeight = 'normal';
-          el.title = hasil.total + ' produk: ' + hasil.jumlahUntung + ' untung, ' + hasil.jumlahImpas + ' impas, ' + hasil.jumlahRugi + ' rugi';
+          el.title = hasil.total + ' produk: ' + 
+                     hasil.jumlahUntung + ' untung, ' + 
+                     hasil.jumlahImpas + ' impas, ' + 
+                     hasil.jumlahRugi + ' rugi';
           el.style.cursor = 'help';
           
-          console.log('  ✅ ' + hasil.kodeReseller + ' (' + hasil.namaReseller + '): ' + 
-                      hasil.total + ' produk (' + 
-                      hasil.jumlahUntung + ' untung, ' + 
-                      hasil.jumlahImpas + ' impas, ' + 
-                      hasil.jumlahRugi + ' rugi)');
+          console.log('  ✅ ' + hasil.kodeReseller + ' (' + hasil.namaReseller + '): ✅' + 
+                      hasil.jumlahUntung + ' ⚖️' + hasil.jumlahImpas + ' ❌' + hasil.jumlahRugi);
         } else {
           el.innerHTML = '0 produk';
           el.style.color = '#999';
           el.style.fontWeight = 'normal';
           el.style.cursor = 'default';
           el.title = '';
-          console.log('  ⚪ ' + hasil.kodeReseller + ' (' + hasil.namaReseller + '): 0 produk');
+          console.log('  ⚪ ' + hasil.kodeReseller + ': 0 produk');
         }
       }
     }
@@ -11229,7 +11218,6 @@ function hitungHargaKhususPerReseller() {
     console.log('✅ ========== SELESAI ==========');
   });
 }
-
 
 
   
