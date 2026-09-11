@@ -69,7 +69,7 @@
     // ============================================
     // 🔥🔥🔥 URL DEPLOY GAS - GANTI DI SINI! 🔥🔥🔥
     // ============================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwwUO7zIHO3ydQeJ7YJhWiSPK_IpITg6y7ns8GwlXjQTF5m11lMEkBFz_nxM1iLBgLAWw/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycby2tGD-k_mDeqNh-Fgf4-oOoIpWGg7DDWYmzOIZQtTwXpDts0ywbA0FEEBtMrRujQxZMg/exec';
     // ============================================
   </script>
 
@@ -9114,8 +9114,32 @@ function prosesBatalTransaksi(idTransaksi) {
     if (result.success) {
       showToast('✅ ' + result.message, 'success');
       closeModal();
-      loadTransaksi(); loadDashboard(); loadPosProduk();
+      
+      // ============================================================
+      // 🔥🔥🔥 PERBAIKAN: REFRESH SEMUA CACHE 🔥🔥🔥
+      // ============================================================
+      console.log('🔄 Auto-refresh setelah batal transaksi...');
+      
+      // 1. Refresh DATA dari server (WAJIB!)
+      loadBatchCache();          // ← INI YANG HILANG!
+      loadProdukWithRetry();     // ← INI YANG HILANG!
+      loadBatchList();           // ← INI YANG HILANG!
+      
+      // 2. Refresh tampilan
+      loadTransaksi();
+      loadDashboard();
       loadBatchUntukDibatalkan();
+      loadRiwayatStok();
+      
+      // 3. Refresh tampilan POS setelah data siap
+      setTimeout(function() {
+        console.log('🔄 Refresh tampilan POS...');
+        loadPosProduk();
+        loadStokProduk();
+        updateStokGridPOS();
+        console.log('✅ Semua tampilan sudah di-refresh!');
+      }, 1000);
+      
     } else {
       showToast('❌ Gagal membatalkan transaksi: ' + (result.error || ''), 'error');
     }
