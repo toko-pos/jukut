@@ -9656,7 +9656,8 @@ function prosesPembayaran() {
           };
           
           closeModal();
-          showStruk(data, false);
+          // 🔥 LANGSUNG CETAK KE PRINTER THERMAL (tanpa preview)
+          cetakViaCleanter(idTransaksi);
           
           // ============================================================
           // 🔥🔥🔥 AUTO-REFRESH SETELAH TRANSAKSI 🔥🔥🔥
@@ -9856,7 +9857,7 @@ function prosesJualReseller(nominal, total) {
       // ============================================================
       
       // 🔥 TAMPILKAN NOTA RESELLER
-      showStrukReseller(result.data);
+      cetakNotaReseller(result.data);
       
     } else {
       showToast('❌ ' + (result ? result.error : 'Gagal memproses!'), 'error');
@@ -9872,6 +9873,227 @@ function prosesJualReseller(nominal, total) {
   });
 }
 
+
+// ============================================================
+// 🔥 CETAK NOTA RESELLER VIA CLEANTER
+// Langsung cetak tanpa preview
+// ============================================================
+async function cetakNotaReseller(data) {
+  // ===== VALIDASI =====
+  if (!data || !data.idTransaksi) {
+    showToast('⚠️ Data reseller tidak valid!', 'error');
+    return;
+  }
+
+  if (window._isPrintingThermal) {
+    showToast('⏳ Sedang mencetak, tunggu sebentar...', 'warning');
+    return;
+  }
+  window._isPrintingThermal = true;
+
+  try {
+    // ===== CEK CLEANTER AKTIF =====
+    showToast('⏳ Menyiapkan nota reseller...', 'info');
+    const bridgeReady = await isCleanterAvailable();
+    if (!bridgeReady) {
+      showToast('❌ Cleanter belum aktif. Buka aplikasi Cleanter dulu.', 'error');
+      return;
+    }
+
+    const infoToko = getInfoTokoSync();
+
+    // ===== HELPER PADDING =====
+    const WIDTH = 32;
+    function makeRow(left, right) {
+      left = String(left);
+      right = String(right);
+      const spaceCount = WIDTH - left.length - right.length;
+      if (spaceCount > 0) {
+        return left + ' '.repeat(spaceCount) + right;
+      }
+      const maxLeft = WIDTH - right.length - 1;
+      if (maxLeft > 0) {
+        return left.substring(0, maxLeft) + ' ' + right;
+      }
+      return left + ' ' + right;
+    }
+
+    // ===== SUSUN CONTENT =====
+    const content = [];
+
+    // Header toko
+    content.push({
+      type: 'text',
+      text: infoToko.namaToko || 'POS SYSTEM',
+      align: 'center',
+      bold: true,
+      size: 'large'
+    });
+    content.push({ type: 'text', text: ' ' });
+
+    if (infoToko.alamat) {
+      content.push({
+        type: 'text',
+        text: String(infoToko.alamat),
+        align: 'center'
+      });
+    }
+    if (infoToko.noHp) {
+      content.push({
+        type: 'text',
+        text: 'Telp: ' + String(infoToko.noHp),
+        align: 'center'
+      });
+    }
+
+    content.push({ type: 'divider' });
+
+    // Judul nota
+    content.push({
+      type: 'text',
+      text: 'NOTA RESELLER',
+      align: 'center',
+      bold: true
+    });
+
+    content.push({ type: 'divider' });
+
+    // Info transaksi
+    content.push({
+      type: 'text',
+      text: makeRow('ID', ': ' + String(data.idTransaksi))
+    });
+
+    content.push({
+      type: 'text',
+      text: makeRow('Tanggal', ': ' + formatTanggalDisplay(new Date()))
+    });
+
+    content.push({
+      type: 'text',
+      text: makeRow('Status', ': ' + String(data.status || 'HUTANG'))
+    });
+
+    // Nama reseller
+    if (data.namaReseller) {
+      content.push({
+        type: 'text',
+        text: makeRow('Reseller', ': ' + String(data.namaReseller))
+      });
+    }
+
+    content.push({ type: 'divider' });
+
+    // ===== DETAIL ITEM =====
+    let grandTotal = 0;
+    if (data.detail && data.detail.length > 0) {
+      for (let idx = 0; idx < data.detail.length; idx++) {
+        const item = data.detail[idx];
+        let nama = String(item.namaProduk || 'Produk');
+        const qty = parseInt(item.qty || 0);
+        const harga = parseInt(item.hargaJual || 0);
+        const subtotal = parseInt(item.subtotal || (harga * qty));
+        grandTotal += subtotal;
+
+        if (nama.length > 18) {
+          nama = nama.substring(0, 17) + '.';
+        }
+
+        const hargaFmt = new Intl.NumberFormat('id-ID').format(harga);
+        const subtotalFmt = new Intl.NumberFormat('id-ID').format(subtotal);
+
+        content.push({
+          type: 'text',
+          text: nama + ' x' + qty
+        });
+
+        content.push({
+          type: 'text',
+          text: makeRow('  @ ' + hargaFmt, subtotalFmt)
+        });
+      }
+    }
+
+    content.push({ type: 'divider' });
+
+    // Total
+    const total = parseInt(data.total || grandTotal);
+    const totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+
+    content.push({
+      type: 'text',
+      text: makeRow('TOTAL', totalFmt),
+      bold: true
+    });
+
+    // Dibayar
+    const dibayar = parseInt(data.dibayar || 0);
+    if (dibayar > 0) {
+      const dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
+      content.push({
+        type: 'text',
+        text: makeRow('Dibayar', dibayarFmt)
+      });
+    }
+
+    // Sisa hutang
+    const sisa = parseInt(data.sisa || 0);
+    if (sisa > 0) {
+      const sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisa);
+      content.push({
+        type: 'text',
+        text: makeRow('Sisa Hutang', sisaFmt),
+        bold: true
+      });
+    }
+
+    content.push({ type: 'divider' });
+
+    // Footer
+    content.push({
+      type: 'text',
+      text: 'TERIMA KASIH',
+      align: 'center',
+      bold: true
+    });
+    content.push({
+      type: 'text',
+      text: 'Barang tidak dapat ditukar',
+      align: 'center'
+    });
+
+    content.push({ type: 'feed', lines: 3 });
+
+    // ===== KIRIM KE CLEANTER =====
+    const payload = {
+      cut: true,
+      content: content
+    };
+
+    console.log('🖨️ Payload Nota Reseller:', JSON.stringify(payload, null, 2));
+
+    const response = await fetch('http://localhost:9100/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error('HTTP ' + response.status + ': ' + errText);
+    }
+
+    showToast('✅ Nota reseller terkirim ke printer!', 'success');
+
+  } catch (error) {
+    console.error('❌ Error cetak nota reseller:', error);
+    showToast('❌ Gagal cetak: ' + error.message, 'error');
+  } finally {
+    window._isPrintingThermal = false;
+  }
+}
+
+  
 // ==================== NOTA RESELLER ====================
 
 function showStrukReseller(data) {
