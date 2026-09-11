@@ -2353,6 +2353,36 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     font-size: 0.55rem !important;
   }
 }
+
+    /* ===== PERBAIKI LEBAR KOLOM TABEL TRANSAKSI ===== */
+#page-transaksi .table-wrapper table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+#page-transaksi .table-wrapper thead th {
+    padding: 10px 8px;
+    font-size: 0.75rem;
+    text-align: left;
+    vertical-align: middle;
+}
+
+#page-transaksi .table-wrapper thead th:nth-child(1) { width: 50px;  text-align: center; }  /* No */
+#page-transaksi .table-wrapper thead th:nth-child(2) { width: 130px; }  /* Tanggal */
+#page-transaksi .table-wrapper thead th:nth-child(3) { width: 170px; }  /* ID Transaksi */
+#page-transaksi .table-wrapper thead th:nth-child(4) { width: 120px; }  /* Nama Pembeli */
+#page-transaksi .table-wrapper thead th:nth-child(5) { width: 100px; }  /* Kasir */
+#page-transaksi .table-wrapper thead th:nth-child(6) { width: 110px; text-align: right; }  /* Total */
+#page-transaksi .table-wrapper thead th:nth-child(7) { width: 100px; text-align: right; }  /* Laba */
+#page-transaksi .table-wrapper thead th:nth-child(8) { width: 100px; text-align: center; } /* Status */
+#page-transaksi .table-wrapper thead th:nth-child(9) { width: 90px;  text-align: center; } /* Aksi */
+
+/* Pastikan tbody selaras dengan header */
+#page-transaksi .table-wrapper tbody td {
+    padding: 10px 8px;
+    font-size: 0.8rem;
+    vertical-align: middle;
+}
                                                                                                                                         
   </style>
 </head>
@@ -4269,8 +4299,12 @@ function renderTransaksi(data) {
         var id = t.id || t.ID || '';
         
         // Cek apakah user boleh membatalkan transaksi
-        var showCancel = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'owner' || 
-                           t.kasir && t.kasir.toLowerCase() === (currentUser.nama || '').toLowerCase()));
+        // 🔥 PERBAIKI: Cek role dengan case-insensitive & support "administrator"
+var roleLower = (currentUser && currentUser.role) ? currentUser.role.toLowerCase() : '';
+var isAdmin = (roleLower === 'admin' || roleLower === 'owner' || roleLower === 'administrator');
+var isOwnerOfTrx = (t.kasir && currentUser && currentUser.nama && 
+                    t.kasir.toLowerCase().trim() === currentUser.nama.toLowerCase().trim());
+var showCancel = isAdmin || isOwnerOfTrx;
         
         html += '<tr data-id="' + id + '" class="parent-row">';
         html += '<td style="white-space:nowrap; text-align:center;">' + (i + 1) + '</td>';
@@ -4297,8 +4331,13 @@ function renderTransaksi(data) {
         html += '<td style="white-space:nowrap;">' + (t.kasir || '-') + '</td>';
         
         html += '<td style="white-space:nowrap; text-align:right; font-weight:600;">Rp ' + formatRupiah(t.total || 0) + '</td>';
-        html += '<td style="white-space:nowrap; text-align:right; color:' + (t.laba >= 0 ? '#4CAF50' : '#dc3545') + '; font-weight:600;">Rp ' + formatRupiah(t.laba || 0) + '</td>';
-        html += '<td style="white-space:nowrap; text-align:center;"><span class="badge-status">' + (t.status || 'Selesai') + '</span></td>';
+        // 🔥 Tampilkan Laba hanya jika showLaba true
+var showLabaMode = document.querySelector('input[name="opsiLaba"]:checked').value === 'dengan';
+if (showLabaMode) {
+  html += '<td style="white-space:nowrap; text-align:right; color:' + (t.laba >= 0 ? '#4CAF50' : '#dc3545') + '; font-weight:600;">Rp ' + formatRupiah(t.laba || 0) + '</td>';
+} else {
+  html += '<td style="white-space:nowrap; text-align:center; color:#999;">-</td>';
+}
         
         // ============================================================
         // 🔥 KOLOM AKSI - DENGAN TOMBOL CETAK CLEANTER
@@ -8512,7 +8551,7 @@ function loadTransaksi() {
       return;
     }
     
-    document.getElementById('thLaba').style.display = showLaba ? '' : 'none';
+   document.getElementById('thLaba').style.display = ''; // 🔥 SELALU TAMPIL
     
     callGAS('getTransaksiFilteredWithLaba', {
       tanggalMulai: tanggalMulai,
