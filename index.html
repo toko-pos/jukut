@@ -4303,13 +4303,23 @@ function renderTransaksi(data) {
         html += '<td style="white-space:nowrap; text-align:right; color:' + (t.laba >= 0 ? '#4CAF50' : '#dc3545') + '; font-weight:600;">Rp ' + formatRupiah(t.laba || 0) + '</td>';
         html += '<td style="white-space:nowrap; text-align:center;"><span class="badge-status">' + (t.status || 'Selesai') + '</span></td>';
         
-        // 🔥 KOLOM AKSI - TETAP ADA DENGAN TOMBOL
-        html += '<td style="white-space:nowrap; text-align:center; min-width:80px;">';
-        html += '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;margin-right:2px;" title="Cetak Struk">🖨️</button>';
-        if (showCancel) {
-            html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Batalkan Transaksi">🗑️</button>';
-        }
-        html += '</td>';
+        // 🔥 KOLOM AKSI - DENGAN TOMBOL CETAK THERMAL
+html += '<td style="white-space:nowrap; text-align:center; min-width:130px;">';
+html += '<div style="display:inline-flex;gap:4px;align-items:center;justify-content:center;">';
+
+// Tombol 1: Cetak Struk Biasa (browser print)
+html += '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Preview Struk">🖨️</button>';
+
+// Tombol 2: Cetak Thermal Bluetooth
+html += '<button class="btn btn-sm" onclick="cetakThermalBluetooth(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;background:linear-gradient(135deg,#FF6B6B,#E53935);color:white;border:none;border-radius:4px;cursor:pointer;" title="Cetak Thermal Bluetooth">📱</button>';
+
+// Tombol 3: Batalkan (jika boleh)
+if (showCancel) {
+    html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Batalkan Transaksi">🗑️</button>';
+}
+
+html += '</div>';
+html += '</td>';
         
         html += '</tr>';
     }
@@ -8631,6 +8641,56 @@ function cetakStrukFromHistory(id) {
     showToast('❌ Gagal mengambil data transaksi: ' + error.message, 'error');
   });
 }
+
+  
+// ============================================================
+// 🔥 CETAK THERMAL VIA BLUETOOTH PRINT APP
+// ============================================================
+function cetakThermalBluetooth(idTransaksi) {
+  if (!idTransaksi) {
+    showToast('⚠️ ID Transaksi tidak valid!', 'error');
+    return;
+  }
+
+  // 🔥 Konfigurasi
+  var DOMAIN = window.location.origin; // misal: https://domain-anda.com
+  var URL_PRINT = DOMAIN + '/print-nota.php?id=' + encodeURIComponent(idTransaksi);
+  var SCHEME_URL = 'my.bluetoothprint.scheme://' + URL_PRINT;
+
+  console.log('🖨️ Cetak thermal:', SCHEME_URL);
+
+  // 🔥 Deteksi apakah di Android
+  var isAndroid = /android/i.test(navigator.userAgent);
+
+  if (!isAndroid) {
+    showToast('⚠️ Fitur cetak thermal hanya tersedia di Android!', 'warning');
+    return;
+  }
+
+  // 🔥 Tampilkan konfirmasi (opsional — hapus jika tidak perlu)
+  var konfirmasi = confirm(
+    '🖨️ Cetak Thermal Bluetooth\n\n' +
+    'ID Transaksi: ' + idTransaksi + '\n\n' +
+    'Pastikan:\n' +
+    '1. Aplikasi "Bluetooth Print" sudah terinstall\n' +
+    '2. Printer sudah ter-pair di Bluetooth HP\n' +
+    '3. Browser Print sudah diaktifkan di aplikasi\n\n' +
+    'Lanjutkan?'
+  );
+
+  if (!konfirmasi) return;
+
+  // 🔥 Buka aplikasi Bluetooth Print via deep link
+  try {
+    window.location.href = SCHEME_URL;
+    showToast('📱 Membuka aplikasi Bluetooth Print...', 'info');
+  } catch (e) {
+    console.error('❌ Error buka scheme:', e);
+    showToast('❌ Gagal membuka aplikasi Bluetooth Print', 'error');
+  }
+}
+
+  
 
 // ==================== KONFIRMASI BATAL TRANSAKSI ====================
 function konfirmasiBatalTransaksi(idTransaksi) {
