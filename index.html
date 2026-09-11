@@ -4363,8 +4363,8 @@ async function cetakViaCleanter(idTransaksi) {
     if (!headerResult || !headerResult.success) {
       throw new Error('Gagal mengambil data transaksi');
     }
-    const header = headerResult.data && headerResult.data.data 
-      ? headerResult.data.data 
+    const header = headerResult.data && headerResult.data.data
+      ? headerResult.data.data
       : headerResult.data;
 
     const detailResult = await callGAS('getDetailTransaksi', { idTransaksi: idTransaksi });
@@ -4521,13 +4521,13 @@ async function cetakViaCleanter(idTransaksi) {
     console.error('❌ Error cetak Cleanter:', error);
     showToast('❌ Gagal cetak: ' + error.message, 'error');
   } finally {
-    // ===== SELALU RESET FLAG, APAPUN YANG TERJADI =====
+    // ===== SELALU RESET FLAG =====
     window._isPrintingThermal = false;
   }
 }
 
 // ============================================================
-// 🔥 CEK APAKAH CLEANTER AKTIF
+// 🔥 CEK APAKAH CLEANTER AKTIF (HANYA SATU KALI!)
 // ============================================================
 async function isCleanterAvailable() {
   try {
