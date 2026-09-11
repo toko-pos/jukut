@@ -2114,6 +2114,18 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     overflow: visible;
     text-overflow: clip;
 }
+
+/* ===== TOMBOL AKSI RIWAYAT STOK MASUK (SAMAKAN DENGAN TRANSAKSI) ===== */
+@media (max-width: 480px) {
+  #riwayatStokTable td:last-child button {
+    width: 38px !important;
+    height: 34px !important;
+    font-size: 0.95rem !important;
+    border-radius: 7px !important;
+  }
+}
+
+           
   </style>
 </head>
 
@@ -4446,10 +4458,14 @@ function renderRiwayatStokGrouped(data) {
     html += '<td style="text-align:center;">';
     if (!isLegacy && nota.noNota && nota.noNota !== '-') {
       var cleanNoNota = String(nota.noNota).trim().replace(/\s/g, '');
-      html += '<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
-      html += '<button class="btn btn-info btn-sm" onclick="event.stopPropagation();showDetailStokMasuk(\'' + cleanNoNota + '\')" title="Detail Nota" style="padding:4px 8px;font-size:0.65rem;">📄</button>';
-      html += '<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();konfirmasiBatalStokMasuk(\'' + cleanNoNota + '\')" title="Batalkan Nota" style="padding:4px 8px;font-size:0.65rem;">🗑️</button>';
-      html += '</div>';
+      html += '<div style="display:inline-flex;gap:5px;align-items:center;justify-content:center;">';
+html += '<button onclick="event.stopPropagation();showDetailStokMasuk(\'' + cleanNoNota + '\')" ' +
+        'style="width:42px;height:38px;border:none;border-radius:8px;background:#2196F3;color:white;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(33,150,243,0.3);" ' +
+        'title="Detail Nota">📄</button>';
+html += '<button onclick="event.stopPropagation();konfirmasiBatalStokMasuk(\'' + cleanNoNota + '\')" ' +
+        'style="width:42px;height:38px;border:none;border-radius:8px;background:#f44336;color:white;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(244,67,54,0.3);" ' +
+        'title="Batalkan Nota">🗑️</button>';
+html += '</div>';
     } else {
       html += '-';
     }
