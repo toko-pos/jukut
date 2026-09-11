@@ -2125,6 +2125,51 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   }
 }
 
+   /* ===== TOMBOL AKSI HUTANG VENDOR (DENGAN TEKS) ===== */
+#hutangVendorTable .debt-actions {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+#hutangVendorTable .debt-actions .btn {
+  height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+#hutangVendorTable .debt-actions .btn-bayar {
+  background: #4CAF50;
+  color: white;
+  box-shadow: 0 2px 5px rgba(76,175,80,0.3);
+}
+
+#hutangVendorTable .debt-actions .btn-riwayat {
+  background: #2196F3;
+  color: white;
+  box-shadow: 0 2px 5px rgba(33,150,243,0.3);
+}
+
+@media (max-width: 480px) {
+  #hutangVendorTable .debt-actions .btn {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 0.75rem;
+    border-radius: 7px;
+  }
+}
            
   </style>
 </head>
@@ -9818,14 +9863,14 @@ function loadHutangVendor() {
               '</td>' +
               '<td style="text-align:center;"><span class="debt-badge ' + statusClass + '">' + x.status + '</span></td>' +
               '<td style="text-align:center;">' +
-                  '<div class="debt-actions">' +
-                      (sisaHutang > 0 ? 
-                          '<button class="btn btn-bayar" onclick="bukaPembayaranVendor(\'' + noNotaEscaped + '\')">💰 Bayar</button>' : 
-                          '<button class="btn btn-bayar" disabled style="opacity:0.4;background:#999;">✅ Lunas</button>'
-                      ) +
-                      '<button class="btn btn-riwayat" onclick="lihatRiwayatPembayaranVendor(\'' + noNotaEscaped + '\')">📋 Riwayat</button>' +
-                  '</div>' +
-              '</td>' +
+    '<div class="debt-actions">' +
+        (sisaHutang > 0 ? 
+            '<button class="btn btn-bayar" onclick="bukaPembayaranVendor(\'' + noNotaEscaped + '\')" title="Bayar">💰</button>' : 
+            '<button class="btn btn-bayar" disabled title="Lunas">✅</button>'
+        ) +
+        '<button class="btn btn-riwayat" onclick="lihatRiwayatPembayaranVendor(\'' + noNotaEscaped + '\')" title="Riwayat">📋</button>' +
+    '</div>' +
+'</td>' +
               '</tr>';
         }
         tbody.innerHTML = html;
