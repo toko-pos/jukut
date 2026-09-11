@@ -4943,6 +4943,59 @@ var _isProcessingPayment = false;
 var _isProcessingStok = false;
 var allRiwayatStokData = [];  // 🔥 TAMBAHKAN INI
 
+
+    // ============================================================
+// 🔥 DETEKSI PLATFORM — UNTUK KONDISIONAL TOMBOL CETAK THERMAL
+// ============================================================
+function isMobileDevice() {
+  // Cek user agent
+  var ua = navigator.userAgent || navigator.vendor || window.opera;
+  
+  // Deteksi Android, iOS, atau mobile
+  var isAndroid = /android/i.test(ua);
+  var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  var isMobile = /Mobile|Tablet|Opera Mini|IEMobile|WPDesktop/i.test(ua);
+  
+  // Cek layar sentuh + ukuran kecil (backup)
+  var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  var isSmallScreen = window.innerWidth <= 768;
+  
+  // ✅ Mobile jika: Android/iOS ATAU (mobile UA) ATAU (touch + layar kecil)
+  return isAndroid || isIOS || isMobile || (isTouchDevice && isSmallScreen);
+}
+
+function isWindowsDesktop() {
+  var ua = navigator.userAgent || '';
+  return /Windows/i.test(ua) && !isMobileDevice();
+}
+
+function isMacDesktop() {
+  var ua = navigator.userAgent || '';
+  return /Macintosh|Mac OS X/i.test(ua) && !isMobileDevice();
+}
+
+// 🔥 CEK APAKAH TOMBOL THERMAL HARUS MUNCUL
+// Hanya muncul kalau: (a) mobile device, ATAU (b) user pernah pakai Cleanter
+function shouldShowThermalButton() {
+  // 1. Cek device mobile
+  if (isMobileDevice()) {
+    return true;
+  }
+  
+  // 2. Cek preferensi user (kalau pernah pakai di desktop)
+  try {
+    var pref = localStorage.getItem('pos_show_thermal_desktop');
+    if (pref === 'true') return true;
+  } catch(e) {}
+  
+  // 3. Default: desktop → tidak muncul
+  return false;
+}
+
+
+
+
+  
 // ============================================================
 // 🔥 CACHE HARGA RESELLER - DENGAN METADATA LENGKAP
 // ============================================================
@@ -9971,8 +10024,9 @@ function prosesJualReseller(nominal, total) {
       
       // ============================================================
       
-      // 🔥 TAMPILKAN NOTA RESELLER
-      cetakNotaReseller(result.data);
+   
+      // 🔥 TAMPILKAN PREVIEW DULU (bukan langsung cetak)
+      showStrukReseller(result.data);
       
     } else {
       showToast('❌ ' + (result ? result.error : 'Gagal memproses!'), 'error');
@@ -10270,12 +10324,13 @@ function showStrukReseller(data) {
   html += '<div class="struk-actions">';
   html += '<button class="btn btn-success" onclick="printStrukReseller()">🖨️ Cetak</button>';
 
-        // 🔥 TAMBAHKAN TOMBOL CETAK THERMAL UNTUK RESELLER
-  if (data.idTransaksi) {
-    html += '<button class="btn" onclick="cetakNotaReseller({\'' + data.idTransaksi + '\'})" ' +
+          // 🔥 TOMBOL CETAK THERMAL — HANYA MUNCUL DI HP
+          if (data.idTransaksi && shouldShowThermalButton()) {
+            window._lastResellerData = data;
+            html += '<button class="btn" onclick="cetakNotaResellerTerakhir()" ' +
             'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
             '📱 Cetak Thermal</button>';
-  }
+          }
   
   html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
   html += '</div>';
@@ -10286,6 +10341,15 @@ function showStrukReseller(data) {
   document.getElementById('modal').classList.add('active');
 }
 
+function cetakNotaResellerTerakhir() {
+  if (window._lastResellerData) {
+    cetakNotaReseller(window._lastResellerData);
+  } else {
+    showToast('⚠️ Data reseller tidak ditemukan!', 'error');
+  }
+}
+
+  
 function printStrukReseller() {
   var content = document.getElementById('strukReseller');
   if (!content) { showToast('Nota tidak ditemukan!', 'error'); return; }
@@ -10459,8 +10523,8 @@ function showStruk(data, isFromHistory) {
 html += '<div class="struk-actions">';
 html += '<button class="btn btn-success" onclick="printStruk()">🖨️ Cetak</button>';
 
-// 🔥 TOMBOL CETAK THERMAL CLEANTER
-if (data.id) {
+// 🔥 TOMBOL CETAK THERMAL CLEANTER — HANYA MUNCUL DI HP
+if (data.id && shouldShowThermalButton()) {
   html += '<button class="btn" onclick="cetakViaCleanter(\'' + data.id + '\')" ' +
           'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
           '📱 Cetak Thermal</button>';
