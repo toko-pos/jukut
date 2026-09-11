@@ -8657,7 +8657,9 @@ function cetakThermalBluetooth(idTransaksi) {
   var URL_PRINT = DOMAIN + '/print-nota.php?id=' + encodeURIComponent(idTransaksi);
   var SCHEME_URL = 'my.bluetoothprint.scheme://' + URL_PRINT;
 
-  console.log('🖨️ Cetak thermal:', SCHEME_URL);
+  🖨️ URL:
+
+my.bluetoothprint.scheme://https://domain-anda.com/print-nota.php?id=TRX-001
 
   // 🔥 Deteksi apakah di Android
   var isAndroid = /android/i.test(navigator.userAgent);
