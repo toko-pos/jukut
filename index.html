@@ -8652,41 +8652,24 @@ function cetakThermalBluetooth(idTransaksi) {
     return;
   }
 
-  // 🔥 Konfigurasi
-  var DOMAIN = window.location.origin; // misal: https://domain-anda.com
+  var DOMAIN = window.location.origin;
   var URL_PRINT = DOMAIN + '/print-nota.php?id=' + encodeURIComponent(idTransaksi);
   var SCHEME_URL = 'my.bluetoothprint.scheme://' + URL_PRINT;
 
-  console.log('🖨️ Cetak thermal:', SCHEME_URL);
+  // 🔥 TAMBAHKAN BARIS INI UNTUK DEBUG
+  alert('URL Deep Link:\n\n' + SCHEME_URL + '\n\nOrigin: ' + DOMAIN);
 
-  // 🔥 Deteksi apakah di Android
   var isAndroid = /android/i.test(navigator.userAgent);
-
   if (!isAndroid) {
     showToast('⚠️ Fitur cetak thermal hanya tersedia di Android!', 'warning');
     return;
   }
 
-  // 🔥 Tampilkan konfirmasi (opsional — hapus jika tidak perlu)
-  var konfirmasi = confirm(
-    '🖨️ Cetak Thermal Bluetooth\n\n' +
-    'ID Transaksi: ' + idTransaksi + '\n\n' +
-    'Pastikan:\n' +
-    '1. Aplikasi "Bluetooth Print" sudah terinstall\n' +
-    '2. Printer sudah ter-pair di Bluetooth HP\n' +
-    '3. Browser Print sudah diaktifkan di aplikasi\n\n' +
-    'Lanjutkan?'
-  );
-
-  if (!konfirmasi) return;
-
-  // 🔥 Buka aplikasi Bluetooth Print via deep link
   try {
     window.location.href = SCHEME_URL;
     showToast('📱 Membuka aplikasi Bluetooth Print...', 'info');
   } catch (e) {
-    console.error('❌ Error buka scheme:', e);
-    showToast('❌ Gagal membuka aplikasi Bluetooth Print', 'error');
+    alert('ERROR: ' + e.message);
   }
 }
 
