@@ -9340,32 +9340,54 @@ async function cetakNotaReseller(data) {
     content.push({ type: 'divider' });
 
     var total = parseInt(data.total || grandTotal);
-    var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+var dibayar = parseInt(data.dibayar || 0);
+var sisa = parseInt(data.sisa || 0);
+var hutangAwal = total - dibayar;
 
-    content.push({
-      type: 'text',
-      text: makeRow('TOTAL', totalFmt),
-      bold: true
-    });
+var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+content.push({
+  type: 'text',
+  text: makeRow('TOTAL', totalFmt),
+  bold: true
+});
 
-    var dibayar = parseInt(data.dibayar || 0);
-    if (dibayar > 0) {
-      var dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
-      content.push({
-        type: 'text',
-        text: makeRow('Dibayar', dibayarFmt)
-      });
-    }
+// Baris "Hutang Awal" untuk CICILAN
+if (dibayar > 0 && sisa > 0) {
+  var hutangAwalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(hutangAwal);
+  content.push({
+    type: 'text',
+    text: makeRow('Hutang Awal', hutangAwalFmt)
+  });
+}
 
-    var sisa = parseInt(data.sisa || 0);
-    if (sisa > 0) {
-      var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisa);
-      content.push({
-        type: 'text',
-        text: makeRow('Sisa Hutang', sisaFmt),
-        bold: true
-      });
-    }
+if (dibayar > 0) {
+  var dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
+  content.push({
+    type: 'text',
+    text: makeRow('Dibayar', dibayarFmt)
+  });
+}
+
+if (sisa > 0) {
+  var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisa);
+  content.push({
+    type: 'text',
+    text: makeRow('Sisa Hutang', sisaFmt),
+    bold: true
+  });
+}
+
+// Status
+var statusText = '';
+if (sisa <= 0) statusText = 'LUNAS';
+else if (dibayar > 0) statusText = 'CICILAN';
+else statusText = 'HUTANG';
+
+content.push({
+  type: 'text',
+  text: makeRow('Status', statusText),
+  bold: true
+});
 
     content.push({ type: 'divider' });
 
@@ -9424,13 +9446,54 @@ function showStrukReseller(data) {
   html += '<div style="border-top:1px dashed #999;margin:5px 0;"></div>';
   html += '<div class="info"><b>ID:</b> ' + data.idTransaksi + '</div>';
   html += '<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(new Date()) + '</div>';
-  html += '<div class="info"><b>Status:</b> <span style="color:' + (data.status === 'LUNAS' ? '#4CAF50' : '#FF9800') + ';font-weight:bold;">' + data.status + '</span></div>';
-  if (data.status !== 'LUNAS') {
-    html += '<div class="info"><b>Sisa Hutang:</b> <span style="color:#e65100;font-weight:bold;">' + formatRupiah(data.sisa) + '</span></div>';
+  
+  // ===== Tentukan status & label =====
+  var total   = parseInt(data.total   || 0);
+  var dibayar = parseInt(data.dibayar || 0);
+  var sisa    = parseInt(data.sisa    || 0);
+  var hutangAwal = total - dibayar;
+
+  var statusLabel, statusColor, statusIcon;
+  if (sisa <= 0) {
+    statusLabel = 'LUNAS';
+    statusColor = '#4CAF50';
+    statusIcon  = '✅';
+  } else if (dibayar > 0 && sisa > 0) {
+    statusLabel = 'CICILAN';
+    statusColor = '#FF9800';
+    statusIcon  = '🔄';
+  } else {
+    statusLabel = 'HUTANG';
+    statusColor = '#f44336';
+    statusIcon  = '⚠️';
   }
-  if (data.dibayar > 0) {
-    html += '<div class="info"><b>Dibayar:</b> ' + formatRupiah(data.dibayar) + '</div>';
+
+  html += '<div class="info"><b>Status:</b> <span style="color:' + statusColor + ';font-weight:bold;">' + statusIcon + ' ' + statusLabel + '</span></div>';
+
+  // Selalu tampilkan Total & Hutang Awal
+  html += '<div class="info"><b>Total Belanja:</b> ' + formatRupiah(total) + '</div>';
+
+  // Kasus CICILAN → tampilkan Hutang Awal + Dibayar
+  if (statusLabel === 'CICILAN') {
+    html += '<div class="info" style="background:#FFF3E0;padding:3px 6px;border-radius:4px;margin-top:3px;">';
+    html += '<b>📋 Hutang Awal:</b> <span style="color:#e65100;font-weight:bold;">' + formatRupiah(hutangAwal) + '</span>';
+    html += '</div>';
+    html += '<div class="info"><b>💵 Dibayar:</b> <span style="color:#2e7d32;font-weight:bold;">' + formatRupiah(dibayar) + '</span></div>';
+    html += '<div class="info"><b>⚠️ Sisa Hutang:</b> <span style="color:#c62828;font-weight:bold;">' + formatRupiah(sisa) + '</span></div>';
   }
+
+  // Kasus HUTANG penuh → tampilkan nominal hutang
+  if (statusLabel === 'HUTANG') {
+    html += '<div class="info" style="background:#FFEBEE;padding:3px 6px;border-radius:4px;margin-top:3px;">';
+    html += '<b>⚠️ Hutang:</b> <span style="color:#c62828;font-weight:bold;">' + formatRupiah(sisa) + '</span>';
+    html += '</div>';
+  }
+
+  // Kasus LUNAS → cukup tampilkan dibayar
+  if (statusLabel === 'LUNAS') {
+    html += '<div class="info"><b>💵 Dibayar:</b> <span style="color:#2e7d32;font-weight:bold;">' + formatRupiah(dibayar) + '</span></div>';
+  }
+
   html += '</div>';
   
   html += '<div class="items-struk">';
@@ -9447,18 +9510,45 @@ function showStrukReseller(data) {
     html += '</div>';
   }
   html += '</div>';
-  
+
+  // ===== BLOK TOTAL (SUDAH DIPERBAIKI) =====
   html += '<div class="total-struk">';
-  html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(data.total) + '</span></div>';
-  if (data.status === 'LUNAS') {
-    html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#4CAF50;font-weight:bold;padding:3px 0;"><span>Status</span><span>✅ LUNAS</span></div>';
-  } else {
-    html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#FF9800;padding:3px 0;"><span>Sisa Hutang</span><span>' + formatRupiahPlain(data.sisa) + '</span></div>';
+  html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(total) + '</span></div>';
+
+  if (statusLabel === 'CICILAN') {
+    html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#e65100;padding:3px 0;">';
+    html += '<span>📋 Hutang Awal</span><span>' + formatRupiahPlain(hutangAwal) + '</span>';
+    html += '</div>';
   }
+
+  if (dibayar > 0) {
+    html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#2e7d32;padding:3px 0;">';
+    html += '<span>💵 Dibayar</span><span>' + formatRupiahPlain(dibayar) + '</span>';
+    html += '</div>';
+  }
+
+  if (sisa > 0) {
+    html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:#c62828;font-weight:bold;padding:3px 0;border-top:1px dashed #999;margin-top:3px;">';
+    html += '<span>⚠️ Sisa Hutang</span><span>' + formatRupiahPlain(sisa) + '</span>';
+    html += '</div>';
+  }
+
+  html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:' + statusColor + ';font-weight:bold;padding:3px 0;">';
+  html += '<span>Status</span><span>' + statusIcon + ' ' + statusLabel + '</span>';
   html += '</div>';
-  
+
+  html += '</div>';
+
+  // ===== BLOK FOOTER (SUDAH DIPERBAIKI) =====
   html += '<div class="footer-struk">';
   html += '<div class="divider"></div>';
+
+  if (statusLabel === 'HUTANG' || statusLabel === 'CICILAN') {
+    html += '<div style="font-size:9px;color:#c62828;font-weight:bold;margin-bottom:4px;">';
+    html += '⚠️ Nota ini memiliki sisa hutang sebesar ' + formatRupiah(sisa);
+    html += '</div>';
+  }
+
   html += '<div class="thanks">TERIMA KASIH</div>';
   if (infoToko.noHp) {
     html += '<div style="font-size:9px;color:#999;">📞 ' + infoToko.noHp + '</div>';
