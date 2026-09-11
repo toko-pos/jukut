@@ -9772,7 +9772,7 @@ function prosesPembayaran() {
           
           closeModal();
           // 🔥 LANGSUNG CETAK KE PRINTER THERMAL (tanpa preview)
-          cetakViaCleanter(idTransaksi);
+          showStruk(data, false);
           
           // ============================================================
           // 🔥🔥🔥 AUTO-REFRESH SETELAH TRANSAKSI 🔥🔥🔥
@@ -10269,6 +10269,14 @@ function showStrukReseller(data) {
   
   html += '<div class="struk-actions">';
   html += '<button class="btn btn-success" onclick="printStrukReseller()">🖨️ Cetak</button>';
+
+        // 🔥 TAMBAHKAN TOMBOL CETAK THERMAL UNTUK RESELLER
+  if (data.idTransaksi) {
+    html += '<button class="btn" onclick="cetakNotaReseller({\'' + data.idTransaksi + '\'})" ' +
+            'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
+            '📱 Cetak Thermal</button>';
+  }
+  
   html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
   html += '</div>';
   
