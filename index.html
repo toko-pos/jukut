@@ -2354,34 +2354,43 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   }
 }
 
-    /* ===== PERBAIKI LEBAR KOLOM TABEL TRANSAKSI ===== */
+   /* ===== TABEL TRANSAKSI - LEBAR KOLOM PAS ===== */
 #page-transaksi .table-wrapper table {
     table-layout: fixed;
     width: 100%;
-    min-width: 800px;
+    min-width: 870px;
 }
 
-#page-transaksi .table-wrapper thead th,
+#page-transaksi .table-wrapper thead th {
+    padding: 10px 6px;
+    font-size: 0.7rem;
+    text-align: left;
+    vertical-align: middle;
+    background: #f0f4ff;
+}
+
 #page-transaksi .table-wrapper tbody td {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 10px 8px;
+    padding: 10px 6px;
+    font-size: 0.8rem;
+    vertical-align: middle;
 }
 
-/* Lebar kolom spesifik */
+/* Lebar kolom presisi */
 #page-transaksi .table-wrapper th:nth-child(1) { width: 45px;  text-align: center; }  /* No */
-#page-transaksi .table-wrapper th:nth-child(2) { width: 130px; }                        /* Tanggal */
-#page-transaksi .table-wrapper th:nth-child(3) { width: 160px; }                        /* ID Transaksi */
+#page-transaksi .table-wrapper th:nth-child(2) { width: 135px; }                        /* Tanggal */
+#page-transaksi .table-wrapper th:nth-child(3) { width: 165px; }                        /* ID Transaksi */
 #page-transaksi .table-wrapper th:nth-child(4) { width: 110px; }                        /* Nama Pembeli */
 #page-transaksi .table-wrapper th:nth-child(5) { width: 90px;  }                        /* Kasir */
-#page-transaksi .table-wrapper th:nth-child(6) { width: 110px; text-align: right; }     /* Total */
-#page-transaksi .table-wrapper th:nth-child(7) { width: 100px; text-align: right; }     /* Laba */
-#page-transaksi .table-wrapper th:nth-child(8) { width: 95px;  text-align: center; }    /* Status */
-#page-transaksi .table-wrapper th:nth-child(9) { width: 100px; text-align: center; }    /* Aksi */
+#page-transaksi .table-wrapper th:nth-child(6) { width: 105px; text-align: right; }     /* Total */
+#page-transaksi .table-wrapper th:nth-child(7) { width: 95px;  text-align: right; }     /* Laba */
+#page-transaksi .table-wrapper th:nth-child(8) { width: 110px; text-align: center; }    /* Status */
+#page-transaksi .table-wrapper th:nth-child(9) { width: 105px; text-align: center; }    /* Aksi */
 
-/* Pastikan tombol di Aksi tetap rapi */
-#page-transaksi .table-wrapper td:last-child {
-    padding: 8px 6px;
+/* Kolom Status dan Aksi tidak boleh overflow */
+#page-transaksi .table-wrapper tbody td:nth-child(8),
+#page-transaksi .table-wrapper tbody td:nth-child(9) {
+    overflow: visible;
+    text-overflow: clip;
 }
                                                                                                                                         
   </style>
@@ -4339,18 +4348,22 @@ if (showLabaMode) {
   html += '<td style="white-space:nowrap; text-align:center; color:#999;">-</td>';
 }
         
-        // ============================================================
-// 🔥 KOLOM AKSI - 2 TOMBOL: PRINT & HAPUS
 // ============================================================
-html += '<td style="white-space:nowrap; text-align:center; min-width:100px; width:100px;">';
-html += '<div style="display:inline-flex;gap:6px;align-items:center;justify-content:center;">';
+// 🔥 KOLOM AKSI - 2 TOMBOL HORIZONTAL (BESAR & MUDAH DIPENCET)
+// ============================================================
+html += '<td style="white-space:nowrap; text-align:center; padding:6px 4px;">';
+html += '<div style="display:inline-flex;gap:5px;align-items:center;justify-content:center;">';
 
-// Tombol 1: Print (buka preview modal yang ada tombol cetak thermal)
-html += '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + id + '\')" style="padding:5px 10px;font-size:0.75rem;border-radius:6px;" title="Cetak Struk">🖨️</button>';
+// Tombol 1: Print
+html += '<button onclick="cetakStrukFromHistory(\'' + id + '\')" ' +
+        'style="width:42px;height:38px;border:none;border-radius:8px;background:#2196F3;color:white;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(33,150,243,0.3);" ' +
+        'title="Cetak Struk">🖨️</button>';
 
 // Tombol 2: Hapus (jika boleh)
 if (showCancel) {
-    html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + id + '\')" style="padding:5px 10px;font-size:0.75rem;border-radius:6px;" title="Batalkan Transaksi">🗑️</button>';
+    html += '<button onclick="konfirmasiBatalTransaksi(\'' + id + '\')" ' +
+            'style="width:42px;height:38px;border:none;border-radius:8px;background:#f44336;color:white;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(244,67,54,0.3);" ' +
+            'title="Batalkan Transaksi">🗑️</button>';
 }
 
 html += '</div>';
