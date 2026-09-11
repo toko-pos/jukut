@@ -4513,7 +4513,7 @@ async function cetakViaCleanter(idTransaksi) {
     if (infoToko.noHp) {
       content.push({
         type: 'text',
-        text: 'Telp: ' + String(infoToko.noHp),
+        text: '📞 ' + String(infoToko.noHp),
         align: 'center'
       });
     }
@@ -4642,7 +4642,7 @@ async function cetakViaCleanter(idTransaksi) {
     });
 
     // Feed (jarak sebelum potong)
-    content.push({ type: 'feed', lines: 1 });
+    content.push({ type: 'feed', lines: 0 });
 
     // ============================================================
     // 4. KIRIM KE CLEANTER
