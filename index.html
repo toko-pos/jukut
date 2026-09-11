@@ -4186,8 +4186,6 @@ function exportRiwayatStokCSV(type) {
 }
 
 // ==================== FILTER RIWAYAT STOK ====================
-var allRiwayatStokData = [];
-
 function filterRiwayatStok() {
   try {
     var keyword = document.getElementById('cariNota').value.toLowerCase().trim();
@@ -4558,6 +4556,7 @@ var batchUntukDibatalkan = [];
 var chartColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
 var _isProcessingPayment = false;
 var _isProcessingStok = false;
+var allRiwayatStokData = [];  // 🔥 TAMBAHKAN INI
 
 // ============================================================
 // 🔥 CACHE HARGA RESELLER - DENGAN METADATA LENGKAP
@@ -4773,16 +4772,7 @@ function setupNavObserver() {
   console.log('✅ MutationObserver untuk navigasi aktif');
 }
 
-// 🔥 PANGGIL setupNavObserver() setelah login
-// Tambahkan di dalam showAppAfterLogin():
-function showAppAfterLogin() {
-  // ... kode existing ...
-  
-  // 🔥 AKTIFKAN MUTATION OBSERVER
-  setupNavObserver();
-  
-  // ... kode existing ...
-}
+
 
   
 // ==================== CEK TANGGAL ====================
@@ -5183,16 +5173,19 @@ function showAppAfterLogin() {
   }
   // ============================================================
   // 🔥 AKHIR TAMBAHAN 🔥
-  // ============================================================
-  
+  // ============================================================  
   // Setup filter & load data
   if (typeof setupFilters === 'function') setupFilters();
   if (typeof loadAllData === 'function') {
     setTimeout(loadAllData, 500);
   }
   updateHeaderInfo();
+  
+  // 🔥 AKTIFKAN OBSERVER NAVIGASI (TAMBAHKAN BLOK INI)
+  if (typeof setupNavObserver === 'function') {
+    setTimeout(setupNavObserver, 200);
+  }
 }
-
 
   
 // ==================== LOGOUT ====================
@@ -5826,62 +5819,57 @@ function saveInfoToko(username, namaToko, alamat, noHp) {
 }
 
 // ============================================================
-// 🔥 GET INFO TOKO
+// 🔥 GET INFO TOKO (FIXED - PAKAI callGAS)
 // ============================================================
 function getInfoToko(username) {
-    var data = {
-        action: 'getInfoToko',
-        data: {
-            username: username
-        }
-    };
-    
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(function(response) {
-        return response.json();
-    })
+    callGAS('getInfoToko', { username: username })
     .then(function(result) {
-        if (result.success) {
-            console.log('✅ Data Toko:', result.data);
+        if (result && result.success) {
+            var data = result.data;
+            if (data && data.data) data = data.data;
+            
+            console.log('✅ Data Toko:', data);
+            
             // Isi form dengan data
-            document.getElementById('namaToko').value = result.data.namaToko || '';
-            document.getElementById('alamat').value = result.data.alamat || '';
-            document.getElementById('noHp').value = result.data.noHp || '';
+            var fn = document.getElementById('fNamaToko');
+            var fa = document.getElementById('fAlamatToko');
+            var fh = document.getElementById('fNoHp');
+            
+            if (fn) fn.value = data.namaToko || '';
+            if (fa) fa.value = data.alamat || '';
+            if (fh) fh.value = data.noHp || '';
         } else {
-            console.error('❌ Error:', result.error);
+            console.error('❌ Error:', result ? result.error : 'Unknown');
         }
     })
     .catch(function(error) {
-        console.error('Error:', error);
+        console.error('Error getInfoToko:', error);
     });
 }
 
   
 // ==================== UPDATE HEADER INFO ====================
 function updateHeaderInfo() {
-   // 🔥 Refresh cache info toko
+  // 🔥 Refresh cache info toko
   refreshInfoTokoCache();
   console.log('🔄 updateHeaderInfo() dipanggil');
   
-  // 🔥 PERBAIKAN: Kirim username
+  // 🔥 CEK KEAMANAN
+  if (!currentUser || !currentUser.username) {
+    console.warn('⚠️ updateHeaderInfo: currentUser tidak valid');
+    return;
+  }
+  
   callGAS('getInfoToko', { 
-    username: currentUser ? currentUser.username : '' 
+    username: currentUser.username 
   })
   .then(function(result) {
     console.log('📥 Result updateHeaderInfo:', result);
     
     if (result && result.success) {
-      // 🔥 AMBIL DARI result.data
       var data = result.data;
       
-      // Jika data masih punya property 'data', ambil dari situ
+      // Handle nested data
       if (data && data.data) {
         data = data.data;
       }
@@ -5898,7 +5886,7 @@ function updateHeaderInfo() {
           loginTitle.textContent = '🛒 ' + data.namaToko;
         }
         
-        // 🔥 UPDATE FORM DI PROFILE (jika sudah terbuka)
+        // Update form profile jika ada
         var fn = document.getElementById('fNamaToko');
         var fa = document.getElementById('fAlamatToko');
         var fh = document.getElementById('fNoHp');
@@ -8415,7 +8403,6 @@ function lihatDetailLog(idTransaksi) {
 // ==================== PRODUK ====================
 function loadProdukWithRetry() {
   loadAttempts = 0;
-  // Hapus panggilan hideDebug()
   loadProduk();
 }
 
@@ -12504,28 +12491,15 @@ function startObserverApp() {
   console.log('👀 Observer #app aktif');
 }
 
-// Jalankan semua observer
-startObserverSubTab();
-startObserverBody();
-startObserverApp();
-
-// Panggil manual beberapa kali sebagai backup
-setTimeout(setupAuditButtonVisibility, 500);
-setTimeout(setupAuditButtonVisibility, 1500);
-setTimeout(setupAuditButtonVisibility, 3000);
-
-// Panggil tiap 2 detik selama 20 detik sebagai backup terakhir
-var _auditIntervalCount = 0;
-var _auditInterval = setInterval(function() {
-  _auditIntervalCount++;
+  
+// 🔥 Jalankan observer HANYA SEKALI
+setTimeout(function() {
+  startObserverSubTab();
+  startObserverBody();
+  startObserverApp();
   setupAuditButtonVisibility();
-  if (_auditIntervalCount >= 10) {
-    clearInterval(_auditInterval);
-    console.log('✅ Backup interval selesai');
-  }
-}, 2000);
-
-console.log('✅ Script Audit Stok loaded!');
+  console.log('✅ Script Audit Stok loaded!');
+}, 1000);
 
   
 
