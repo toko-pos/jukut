@@ -2358,30 +2358,30 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 #page-transaksi .table-wrapper table {
     table-layout: fixed;
     width: 100%;
+    min-width: 800px;
 }
 
-#page-transaksi .table-wrapper thead th {
-    padding: 10px 8px;
-    font-size: 0.75rem;
-    text-align: left;
-    vertical-align: middle;
-}
-
-#page-transaksi .table-wrapper thead th:nth-child(1) { width: 50px;  text-align: center; }  /* No */
-#page-transaksi .table-wrapper thead th:nth-child(2) { width: 130px; }  /* Tanggal */
-#page-transaksi .table-wrapper thead th:nth-child(3) { width: 170px; }  /* ID Transaksi */
-#page-transaksi .table-wrapper thead th:nth-child(4) { width: 120px; }  /* Nama Pembeli */
-#page-transaksi .table-wrapper thead th:nth-child(5) { width: 100px; }  /* Kasir */
-#page-transaksi .table-wrapper thead th:nth-child(6) { width: 110px; text-align: right; }  /* Total */
-#page-transaksi .table-wrapper thead th:nth-child(7) { width: 100px; text-align: right; }  /* Laba */
-#page-transaksi .table-wrapper thead th:nth-child(8) { width: 100px; text-align: center; } /* Status */
-#page-transaksi .table-wrapper thead th:nth-child(9) { width: 90px;  text-align: center; } /* Aksi */
-
-/* Pastikan tbody selaras dengan header */
+#page-transaksi .table-wrapper thead th,
 #page-transaksi .table-wrapper tbody td {
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 10px 8px;
-    font-size: 0.8rem;
-    vertical-align: middle;
+}
+
+/* Lebar kolom spesifik */
+#page-transaksi .table-wrapper th:nth-child(1) { width: 45px;  text-align: center; }  /* No */
+#page-transaksi .table-wrapper th:nth-child(2) { width: 130px; }                        /* Tanggal */
+#page-transaksi .table-wrapper th:nth-child(3) { width: 160px; }                        /* ID Transaksi */
+#page-transaksi .table-wrapper th:nth-child(4) { width: 110px; }                        /* Nama Pembeli */
+#page-transaksi .table-wrapper th:nth-child(5) { width: 90px;  }                        /* Kasir */
+#page-transaksi .table-wrapper th:nth-child(6) { width: 110px; text-align: right; }     /* Total */
+#page-transaksi .table-wrapper th:nth-child(7) { width: 100px; text-align: right; }     /* Laba */
+#page-transaksi .table-wrapper th:nth-child(8) { width: 95px;  text-align: center; }    /* Status */
+#page-transaksi .table-wrapper th:nth-child(9) { width: 100px; text-align: center; }    /* Aksi */
+
+/* Pastikan tombol di Aksi tetap rapi */
+#page-transaksi .table-wrapper td:last-child {
+    padding: 8px 6px;
 }
                                                                                                                                         
   </style>
@@ -4340,26 +4340,21 @@ if (showLabaMode) {
 }
         
         // ============================================================
-        // 🔥 KOLOM AKSI - DENGAN TOMBOL CETAK CLEANTER
-        // ============================================================
-        html += '<td style="white-space:nowrap; text-align:center; min-width:130px;">';
-        html += '<div style="display:inline-flex;gap:4px;align-items:center;justify-content:center;">';
-        
-        // Tombol 1: Preview Struk (browser print)
-        html += '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Preview Struk">🖨️</button>';
-        
-        // Tombol 2: Cetak via Cleanter (Local API port 9100)
-        html += '<button class="btn btn-sm" onclick="cetakViaCleanter(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:4px;cursor:pointer;" title="Cetak Thermal (Cleanter)">📱</button>';
-        
-        // Tombol 3: Batalkan (jika boleh)
-        if (showCancel) {
-            html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + id + '\')" style="padding:4px 8px;font-size:0.65rem;" title="Batalkan Transaksi">🗑️</button>';
-        }
-        
-        html += '</div>';
-        html += '</td>';
-        
-        html += '</tr>';
+// 🔥 KOLOM AKSI - 2 TOMBOL: PRINT & HAPUS
+// ============================================================
+html += '<td style="white-space:nowrap; text-align:center; min-width:100px; width:100px;">';
+html += '<div style="display:inline-flex;gap:6px;align-items:center;justify-content:center;">';
+
+// Tombol 1: Print (buka preview modal yang ada tombol cetak thermal)
+html += '<button class="btn btn-info btn-sm" onclick="cetakStrukFromHistory(\'' + id + '\')" style="padding:5px 10px;font-size:0.75rem;border-radius:6px;" title="Cetak Struk">🖨️</button>';
+
+// Tombol 2: Hapus (jika boleh)
+if (showCancel) {
+    html += '<button class="btn btn-danger btn-sm" onclick="konfirmasiBatalTransaksi(\'' + id + '\')" style="padding:5px 10px;font-size:0.75rem;border-radius:6px;" title="Batalkan Transaksi">🗑️</button>';
+}
+
+html += '</div>';
+html += '</td>';
     }
     
     tbody.innerHTML = html;
