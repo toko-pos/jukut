@@ -7406,10 +7406,17 @@ function cetakStokMasukFromHistory(noNota) {
     html += '</div>';
     
     html += '<div class="struk-actions">';
-    html += '<button class="btn btn-success" onclick="printStokHistory()">🖨️ Cetak</button>';
-    html += '<button class="btn btn-info" onclick="downloadStokHistoryPDF()">📄 Download PDF</button>';
-    html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
-    html += '</div>';
+html += '<button class="btn btn-success" onclick="printStokHistory()">🖨️ Cetak</button>';
+
+if (noNota && shouldShowThermalButton()) {
+  html += '<button class="btn" onclick="cetakStokMasukThermal(\'' + noNota + '\')" ' +
+          'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
+          '📱 Cetak Thermal</button>';
+}
+
+html += '<button class="btn btn-info" onclick="downloadStokHistoryPDF()">📄 Download PDF</button>';
+html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
+html += '</div>';
     
     document.getElementById('modalTitle').textContent = '🖨️ Nota Stok Masuk: ' + h.noNota;
     document.getElementById('modalContent').classList.add('large');
@@ -7421,6 +7428,186 @@ function cetakStokMasukFromHistory(noNota) {
   });
 }
 
+  async function cetakStokMasukThermal(noNota) {
+  var t0 = performance.now();
+  
+  if (!noNota) {
+    showToast('⚠️ No. Nota tidak valid!', 'error');
+    return;
+  }
+
+  if (window._isPrintingThermal) {
+    showToast('⏳ Sedang mencetak, tunggu sebentar...', 'warning');
+    return;
+  }
+  window._isPrintingThermal = true;
+
+  try {
+    showToast('⏳ Menyiapkan cetak...', 'info');
+    
+    var bridgeReady = await isCleanterAvailableCached();
+    if (!bridgeReady) {
+      showToast('❌ Cleanter belum aktif. Buka aplikasi Cleanter dulu.', 'error');
+      return;
+    }
+    
+    var result = await callGAS('getDetailStokMasuk', { noNota: noNota });
+    if (!result || !result.success || !result.header) {
+      throw new Error('Data tidak ditemukan');
+    }
+    
+    var h = result.header;
+    var detail = result.detail || [];
+    var infoToko = getInfoTokoSync();
+    
+    var WIDTH = 32;
+    function makeRow(left, right) {
+      left = String(left);
+      right = String(right);
+      var spaceCount = WIDTH - left.length - right.length;
+      if (spaceCount > 0) {
+        return left + ' '.repeat(spaceCount) + right;
+      }
+      var maxLeft = WIDTH - right.length - 1;
+      if (maxLeft > 0) {
+        return left.substring(0, maxLeft) + ' ' + right;
+      }
+      return left + ' ' + right;
+    }
+    
+    var content = [];
+    
+    content.push({
+      type: 'text',
+      text: infoToko.namaToko || 'POS SYSTEM',
+      align: 'center',
+      bold: true,
+      size: 'large'
+    });
+    content.push({ type: 'text', text: ' ' });
+    
+    if (infoToko.alamat) {
+      content.push({
+        type: 'text',
+        text: String(infoToko.alamat),
+        align: 'center'
+      });
+    }
+    if (infoToko.noHp) {
+      content.push({
+        type: 'text',
+        text: 'Telp. ' + String(infoToko.noHp),
+        align: 'center'
+      });
+    }
+    
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: 'NOTA STOK MASUK',
+      align: 'center',
+      bold: true
+    });
+    
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: makeRow('No.Nota', ': ' + String(h.noNota))
+    });
+    content.push({
+      type: 'text',
+      text: makeRow('Tanggal', ': ' + formatTanggalDisplay(h.tanggal))
+    });
+    content.push({
+      type: 'text',
+      text: makeRow('Pemasok', ': ' + String(h.pemasok || '-'))
+    });
+    content.push({
+      type: 'text',
+      text: makeRow('User', ': ' + String(h.user || '-'))
+    });
+    
+    content.push({ type: 'divider' });
+    
+    var grandTotal = 0;
+    if (detail && detail.length > 0) {
+      for (var idx = 0; idx < detail.length; idx++) {
+        var item = detail[idx];
+        var nama = String(item.namaProduk || 'Produk');
+        var qty = parseInt(item.qty || 0);
+        var harga = parseInt(item.harga || 0);
+        var subtotal = parseInt(item.subtotal || (harga * qty));
+        grandTotal += subtotal;
+        
+        if (nama.length > 18) {
+          nama = nama.substring(0, 17) + '.';
+        }
+        
+        var hargaFmt = new Intl.NumberFormat('id-ID').format(harga);
+        var subtotalFmt = new Intl.NumberFormat('id-ID').format(subtotal);
+        
+        content.push({
+          type: 'text',
+          text: nama + ' x' + qty
+        });
+        content.push({
+          type: 'text',
+          text: makeRow('  @ ' + hargaFmt, subtotalFmt)
+        });
+      }
+    }
+    
+    content.push({ type: 'divider' });
+    
+    var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(grandTotal);
+    content.push({
+      type: 'text',
+      text: makeRow('TOTAL', totalFmt),
+      bold: true
+    });
+    
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: 'TERIMA KASIH',
+      align: 'center',
+      bold: true
+    });
+    
+    content.push({ type: 'feed', lines: 3 });
+    
+    var payload = {
+      cut: true,
+      content: content
+    };
+    
+    var response = await fetch('http://localhost:9100/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      var errText = await response.text();
+      throw new Error('HTTP ' + response.status + ': ' + errText);
+    }
+    
+    var t1 = performance.now();
+    console.log('⏱️ Cetak stok masuk:', (t1 - t0).toFixed(0), 'ms');
+    showToast('✅ Nota stok masuk terkirim ke printer!', 'success');
+    
+  } catch (error) {
+    console.error('❌ Error cetak stok masuk:', error);
+    showToast('❌ Gagal cetak: ' + error.message, 'error');
+  } finally {
+    window._isPrintingThermal = false;
+  }
+}
+  
+  
 function printStokHistory() {
   var content = document.getElementById('strukStokHistory');
   if (!content) { showToast('Nota tidak ditemukan!', 'error'); return; }
@@ -7432,6 +7619,9 @@ function printStokHistory() {
   setTimeout(function() { printWindow.print(); }, 300);
 }
 
+
+
+  
 function downloadStokHistoryPDF() {
   var content = document.getElementById('strukStokHistory');
   if (!content) { showToast('Nota tidak ditemukan!', 'error'); return; }
@@ -8932,8 +9122,15 @@ function prosesJualReseller(nominal, total) {
         loadPosProduk();
         updateStokGridPOS();
       }, 1000);
+
+      // 🔥 SIMPAN KE CACHE UNTUK CETAK CEPAT
+if (result.data && result.data.idTransaksi) {
+  window._lastResellerData = result.data;
+  console.log('💾 Data reseller di-cache:', result.data.idTransaksi);
+}
+showStrukReseller(result.data);
       
-      showStrukReseller(result.data);
+    
       
     } else {
       showToast('❌ ' + (result ? result.error : 'Gagal memproses!'), 'error');
@@ -9761,11 +9958,34 @@ function showNotaPembayaranVendor(noNota, nominal, tanggal, status, sisa, catata
   
   document.getElementById('modalTitle').textContent = '🧾 Preview Nota Pembayaran';
   document.getElementById('modalContent').classList.remove('large'); 
-  document.getElementById('modalBody').innerHTML = html + 
-    '<div class="struk-actions">' +
-    '<button class="btn btn-success" onclick="printNotaPembayaranVendor()">🖨️ Cetak</button>' +
-    '<button class="btn btn-danger" onclick="closeModal()">Tutup</button>' +
-    '</div>';
+  
+
+
+        var actionsHtml = '<div class="struk-actions">' +
+  '<button class="btn btn-success" onclick="printNotaPembayaranVendor()">🖨️ Cetak</button>';
+
+if (shouldShowThermalButton()) {
+  // Simpan data untuk cetak thermal
+  window._lastPembayaranVendorData = {
+    noNota: noNota,
+    nominal: nominal,
+    tanggal: tanggal,
+    status: status,
+    sisa: sisa,
+    catatan: catatan
+  };
+  actionsHtml += '<button class="btn" onclick="cetakNotaPembayaranVendorThermal()" ' +
+          'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
+          '📱 Cetak Thermal</button>';
+}
+
+actionsHtml += '<button class="btn btn-danger" onclick="closeModal()">Tutup</button>' +
+  '</div>';
+
+document.getElementById('modalBody').innerHTML = html + actionsHtml;
+
+
+  
   document.getElementById('modal').classList.add('active');
 }
 
@@ -9780,6 +10000,146 @@ function printNotaPembayaranVendor() {
   setTimeout(function() { printWindow.print(); }, 300);
 }
 
+
+async function cetakNotaPembayaranVendorThermal() {
+  var data = window._lastPembayaranVendorData;
+  
+  if (!data || !data.noNota) {
+    showToast('⚠️ Data tidak ditemukan!', 'error');
+    return;
+  }
+
+  if (window._isPrintingThermal) {
+    showToast('⏳ Sedang mencetak, tunggu sebentar...', 'warning');
+    return;
+  }
+  window._isPrintingThermal = true;
+
+  try {
+    showToast('⏳ Menyiapkan nota...', 'info');
+    
+    var bridgeReady = await isCleanterAvailableCached();
+    if (!bridgeReady) {
+      showToast('❌ Cleanter belum aktif. Buka aplikasi Cleanter dulu.', 'error');
+      return;
+    }
+    
+    var infoToko = getInfoTokoSync();
+    var WIDTH = 32;
+    
+    function makeRow(left, right) {
+      left = String(left);
+      right = String(right);
+      var spaceCount = WIDTH - left.length - right.length;
+      if (spaceCount > 0) {
+        return left + ' '.repeat(spaceCount) + right;
+      }
+      return left + ' ' + right;
+    }
+    
+    var content = [];
+    
+    content.push({
+      type: 'text',
+      text: infoToko.namaToko || 'POS SYSTEM',
+      align: 'center',
+      bold: true,
+      size: 'large'
+    });
+    content.push({ type: 'text', text: ' ' });
+    
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: 'NOTA PEMBAYARAN',
+      align: 'center',
+      bold: true
+    });
+    
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: makeRow('No.Nota', ': ' + String(data.noNota))
+    });
+    content.push({
+      type: 'text',
+      text: makeRow('Tanggal', ': ' + formatTanggalDisplay(data.tanggal))
+    });
+    content.push({
+      type: 'text',
+      text: makeRow('Status', ': ' + String(data.status || '-'))
+    });
+    
+    content.push({ type: 'divider' });
+    
+    var nominalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.nominal || 0);
+    content.push({
+      type: 'text',
+      text: makeRow('Nominal Bayar', nominalFmt),
+      bold: true
+    });
+    
+    if (data.sisa !== undefined && data.sisa !== null) {
+      var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.sisa);
+      content.push({
+        type: 'text',
+        text: makeRow('Sisa Hutang', sisaFmt),
+        bold: true
+      });
+    }
+    
+    if (data.catatan) {
+      content.push({
+        type: 'text',
+        text: 'Catatan: ' + String(data.catatan)
+      });
+    }
+    
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: makeRow('User', ': ' + String((currentUser && currentUser.nama) || '-'))
+    });
+    
+    content.push({
+      type: 'text',
+      text: 'TERIMA KASIH',
+      align: 'center',
+      bold: true
+    });
+    
+    content.push({ type: 'feed', lines: 3 });
+    
+    var payload = {
+      cut: true,
+      content: content
+    };
+    
+    var response = await fetch('http://localhost:9100/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      var errText = await response.text();
+      throw new Error('HTTP ' + response.status + ': ' + errText);
+    }
+    
+    showToast('✅ Nota pembayaran terkirim ke printer!', 'success');
+    
+  } catch (error) {
+    console.error('❌ Error cetak nota pembayaran:', error);
+    showToast('❌ Gagal cetak: ' + error.message, 'error');
+  } finally {
+    window._isPrintingThermal = false;
+  }
+}
+
+  
 function lihatRiwayatPembayaranVendor(noNota) {
   if (!noNota) { showToast('⚠️ No.Nota tidak valid!', 'error'); return; }
   
@@ -9882,8 +10242,20 @@ function cetakRiwayatVendor(noNota) {
     
     document.getElementById('modalTitle').textContent = '🖨️ Preview Cetak Riwayat';
     document.getElementById('modalContent').classList.remove('large'); 
-    document.getElementById('modalBody').innerHTML = html + 
-      '<div class="struk-actions"><button class="btn btn-success" onclick="printRiwayatVendor()">🖨️ Cetak</button><button class="btn btn-danger" onclick="closeModal()">Tutup</button></div>';
+    var actionsHtml = '<div class="struk-actions">' +
+  '<button class="btn btn-success" onclick="printRiwayatVendor()">🖨️ Cetak</button>';
+
+if (shouldShowThermalButton()) {
+  window._lastRiwayatVendorNota = noNota;
+  actionsHtml += '<button class="btn" onclick="cetakRiwayatVendorThermal(\'' + noNota + '\')" ' +
+          'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
+          '📱 Cetak Thermal</button>';
+}
+
+actionsHtml += '<button class="btn btn-danger" onclick="closeModal()">Tutup</button>' +
+  '</div>';
+
+document.getElementById('modalBody').innerHTML = html + actionsHtml;
     document.getElementById('modal').classList.add('active');
   });
 }
@@ -9977,6 +10349,161 @@ function startScanner() {
   }
 }
 
+
+async function cetakRiwayatVendorThermal(noNota) {
+  if (!noNota) {
+    showToast('⚠️ No. Nota tidak valid!', 'error');
+    return;
+  }
+
+  if (window._isPrintingThermal) {
+    showToast('⏳ Sedang mencetak, tunggu sebentar...', 'warning');
+    return;
+  }
+  window._isPrintingThermal = true;
+
+  try {
+    showToast('⏳ Menyiapkan riwayat...', 'info');
+    
+    var bridgeReady = await isCleanterAvailableCached();
+    if (!bridgeReady) {
+      showToast('❌ Cleanter belum aktif. Buka aplikasi Cleanter dulu.', 'error');
+      return;
+    }
+    
+    var result = await callGAS('getDetailHutangVendor', { noNota: noNota });
+    if (!result || !result.success) {
+      throw new Error('Data tidak ditemukan');
+    }
+    
+    var x = result.data;
+    var rows = x.riwayatPembayaran || [];
+    var infoToko = getInfoTokoSync();
+    
+    var WIDTH = 32;
+    function makeRow(left, right) {
+      left = String(left);
+      right = String(right);
+      var spaceCount = WIDTH - left.length - right.length;
+      if (spaceCount > 0) {
+        return left + ' '.repeat(spaceCount) + right;
+      }
+      return left + ' ' + right;
+    }
+    
+    var content = [];
+    
+    content.push({
+      type: 'text',
+      text: infoToko.namaToko || 'POS SYSTEM',
+      align: 'center',
+      bold: true,
+      size: 'large'
+    });
+    content.push({ type: 'text', text: ' ' });
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: 'RIWAYAT PEMBAYARAN',
+      align: 'center',
+      bold: true
+    });
+    
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: makeRow('No.Nota', ': ' + String(x.noNota))
+    });
+    content.push({
+      type: 'text',
+      text: makeRow('Vendor', ': ' + String(x.pemasok || '-'))
+    });
+    
+    content.push({ type: 'divider' });
+    
+    var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(x.totalNota || 0);
+    content.push({
+      type: 'text',
+      text: makeRow('Total Nota', totalFmt)
+    });
+    
+    var dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(x.totalDibayar || 0);
+    content.push({
+      type: 'text',
+      text: makeRow('Sudah Dibayar', dibayarFmt)
+    });
+    
+    var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(x.sisaHutang || 0);
+    content.push({
+      type: 'text',
+      text: makeRow('Sisa Hutang', sisaFmt),
+      bold: true
+    });
+    
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: 'Detail Pembayaran (' + rows.length + 'x):',
+      bold: true
+    });
+    
+    for (var i = 0; i < rows.length; i++) {
+      var a = rows[i];
+      var tgl = formatTanggalDisplay(a.tanggal);
+      var nominalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(a.nominal || 0);
+      content.push({
+        type: 'text',
+        text: makeRow(tgl, nominalFmt)
+      });
+      if (a.user) {
+        content.push({
+          type: 'text',
+          text: '  User: ' + String(a.user)
+        });
+      }
+    }
+    
+    content.push({ type: 'divider' });
+    
+    content.push({
+      type: 'text',
+      text: 'TERIMA KASIH',
+      align: 'center',
+      bold: true
+    });
+    
+    content.push({ type: 'feed', lines: 3 });
+    
+    var payload = {
+      cut: true,
+      content: content
+    };
+    
+    var response = await fetch('http://localhost:9100/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      var errText = await response.text();
+      throw new Error('HTTP ' + response.status + ': ' + errText);
+    }
+    
+    showToast('✅ Riwayat pembayaran terkirim ke printer!', 'success');
+    
+  } catch (error) {
+    console.error('❌ Error cetak riwayat vendor:', error);
+    showToast('❌ Gagal cetak: ' + error.message, 'error');
+  } finally {
+    window._isPrintingThermal = false;
+  }
+}
+
+  
 function initScanner() {
   try {
     var modal = document.getElementById('scannerModal');
