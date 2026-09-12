@@ -8450,17 +8450,24 @@ function cetakStrukFromHistory(id) {
         });
       }
       
-      var data = {
-        id: id,
-        tanggal: header.Tanggal || header.tanggal || '',
-        waktu: header.Waktu || header.waktu || '',
-        kasir: header.Kasir || header.kasir || 'Admin',
-        total: parseInt(header.Total || header.total || 0),
-        pembayaran: parseInt(header.Pembayaran || header.pembayaran || 0),
-        kembalian: parseInt(header.Kembalian || header.kembalian || 0),
-        namaPembeli: header['Nama Pembeli'] || header.namaPembeli || '-',
-        items: items
-      };
+     var data = {
+  id: id,
+  tanggal: header.Tanggal || header.tanggal || '',
+  waktu: header.Waktu || header.waktu || '',
+  kasir: header.Kasir || header.kasir || 'Admin',
+  total: parseInt(header.Total || header.total || 0),
+  pembayaran: parseInt(header.Pembayaran || header.pembayaran || 0),
+  kembalian: parseInt(header.Kembalian || header.kembalian || 0),
+  namaPembeli: header['Nama Pembeli'] || header.namaPembeli || '-',
+  items: items,
+  // 🔥 TAMBAHKAN FIELD HUTANG:
+  status: header.Status || header.status || '',
+  dibayar: parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0),
+  sisa: parseInt(header.Sisa || header.sisa || 0),
+  isReseller: header.isReseller || header.IsReseller || false,
+  kodeReseller: header.KodeReseller || header.kodeReseller || '',
+  namaReseller: header.NamaReseller || header.namaReseller || ''
+};
       
       transaksiCacheForPrint[id] = {
         data: data,
@@ -9743,6 +9750,24 @@ function formatRupiahPlain(amount) {
 function generateStrukHTML(data) {
   var infoToko = getInfoTokoSync();
   
+  // 🔥 AMBIL SEMUA FIELD HUTANG
+  var total = parseInt(data.total) || 0;
+  var dibayar = parseInt(data.dibayar || data.pembayaran || 0) || 0;
+  var sisa = parseInt(data.sisa) || 0;
+  var statusRaw = String(data.status || '').toUpperCase().trim();
+  var hutangAwal = total - dibayar;
+  
+  // Tentukan status kalau kosong
+  var status = statusRaw;
+  if (!status) {
+    if (sisa <= 0 && dibayar >= total && total > 0) status = 'LUNAS';
+    else if (sisa > 0 && dibayar > 0) status = 'CICILAN';
+    else if (sisa > 0 && dibayar === 0) status = 'BELUM BAYAR';
+    else status = 'Selesai';
+  }
+  
+  var isHutang = (status === 'BELUM BAYAR' || status === 'CICILAN' || sisa > 0);
+  
   var html = '<div class="struk-container" id="strukContent">';
   html += '<div class="header-struk">';
   
@@ -9765,10 +9790,11 @@ function generateStrukHTML(data) {
   }
   html += '</div>';
   
+  // ===== DETAIL PRODUK =====
   html += '<div class="items-struk">';
   html += '<div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>';
   
-  if (data.items.length === 0) {
+  if (!data.items || data.items.length === 0) {
     html += '<div class="item-row"><span class="item-name" style="color:#999;">Tidak ada item</span></div>';
   } else {
     for (var i = 0; i < data.items.length; i++) {
@@ -9788,16 +9814,65 @@ function generateStrukHTML(data) {
   }
   html += '</div>';
   
+  // ===== BLOK TOTAL & PEMBAYARAN =====
   html += '<div class="total-struk">';
-  html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(data.total) + '</span></div>';
-  if (data.pembayaran) {
-    html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;"><span>Pembayaran</span><span>' + formatRupiahPlain(data.pembayaran) + '</span></div>';
+  html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(total) + '</span></div>';
+  
+  // 🔥 BLOK HUTANG/CICILAN
+  if (isHutang) {
+    
+    // Hutang awal (untuk CICILAN)
+    if (dibayar > 0 && dibayar < total) {
+      html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;color:#e65100;">';
+      html += '<span>📋 Hutang Awal</span><span>' + formatRupiahPlain(hutangAwal) + '</span>';
+      html += '</div>';
+    }
+    
+    // Dibayar
+    if (dibayar > 0) {
+      html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;color:#2e7d32;">';
+      html += '<span>💵 Dibayar</span><span>' + formatRupiahPlain(dibayar) + '</span>';
+      html += '</div>';
+    }
+    
+    // Sisa Hutang (selalu tampil kalau > 0)
+    if (sisa > 0) {
+      html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:#c62828;font-weight:bold;padding:3px 0;border-top:1px dashed #999;margin-top:3px;">';
+      html += '<span>⚠️ Sisa Hutang</span><span>' + formatRupiahPlain(sisa) + '</span>';
+      html += '</div>';
+    }
+    
+    // Status
+    var statusLabel = status === 'CICILAN' ? 'CICILAN' : 'BELUM LUNAS';
+    var statusIcon = status === 'CICILAN' ? '🔄' : '⚠️';
+    html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#c62828;font-weight:bold;padding:3px 0;">';
+    html += '<span>Status</span><span>' + statusIcon + ' ' + statusLabel + '</span>';
+    html += '</div>';
+    
+    // Peringatan besar
+    html += '<div style="text-align:center;margin-top:8px;padding:6px;border:1px dashed #c62828;border-radius:4px;background:#ffebee;">';
+    if (status === 'CICILAN') {
+      html += '<div style="font-size:11px;font-weight:bold;color:#c62828;">*** CICILAN ***</div>';
+      html += '<div style="font-size:9px;color:#c62828;margin-top:2px;">Dibayar: Rp ' + formatRupiahPlain(dibayar) + '</div>';
+    } else {
+      html += '<div style="font-size:11px;font-weight:bold;color:#c62828;">*** BELUM LUNAS ***</div>';
+    }
+    html += '<div style="font-size:10px;font-weight:bold;color:#c62828;margin-top:2px;">Sisa Hutang: Rp ' + formatRupiahPlain(sisa) + '</div>';
+    html += '</div>';
+    
+  } else {
+    // LUNAS → tampilkan pembayaran normal
+    if (dibayar > 0) {
+      html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;"><span>Pembayaran</span><span>' + formatRupiahPlain(dibayar) + '</span></div>';
+    }
+    if (data.kembalian && data.kembalian > 0) {
+      html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;font-weight:bold;color:#4CAF50;"><span>Kembalian</span><span>' + formatRupiahPlain(data.kembalian) + '</span></div>';
+    }
   }
-  if (data.kembalian) {
-    html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;font-weight:bold;color:#4CAF50;"><span>Kembalian</span><span>' + formatRupiahPlain(data.kembalian) + '</span></div>';
-  }
+  
   html += '</div>';
   
+  // ===== FOOTER =====
   html += '<div class="footer-struk">';
   html += '<div class="divider"></div>';
   html += '<div class="thanks">TERIMA KASIH</div>';
