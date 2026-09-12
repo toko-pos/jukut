@@ -56,6 +56,172 @@
   <!-- ============================================================ -->
   <script>
     var GAS_URL = 'https://script.google.com/macros/s/AKfycbwuO0vYtslAm1QC4Qyi_GKxszPlegsXMxrWL0emmFMpUk-XlHi-gkn99BkYyT0uvFp1og/exec';
+
+
+    // ============================================================
+// 🔥 CACHE GLOBAL UNTUK PRINT PREVIEW (SUPER CEPAT)
+// ============================================================
+
+// Cache info toko (di-render sekali, dipakai terus)
+var _infoTokoCache = null;
+var _infoTokoCacheTime = 0;
+var INFO_TOKO_CACHE_TTL = 30 * 60 * 1000; // 30 menit
+
+// Cache format Rupiah (string-based, bukan regex)
+var _rupiahCache = {};
+
+// Cache tanggal
+var _tanggalCache = {};
+
+// ============================================================
+// 🔥 FORMAT RUPIAH SUPER CEPAT (pakai lookup + string loop)
+// ============================================================
+function formatRupiahPlain(amount) {
+  amount = parseInt(amount) || 0;
+  if (amount === 0) return '0';
+  
+  // Cek cache dulu
+  var key = amount;
+  if (_rupiahCache[key] !== undefined) return _rupiahCache[key];
+  
+  var str = '';
+  var neg = amount < 0;
+  if (neg) amount = -amount;
+  
+  var s = amount.toString();
+  var len = s.length;
+  var result = '';
+  var count = 0;
+  
+  for (var i = len - 1; i >= 0; i--) {
+    if (count > 0 && count % 3 === 0) result = '.' + result;
+    result = s[i] + result;
+    count++;
+  }
+  
+  var final = neg ? '-' + result : result;
+  
+  // Simpan ke cache (batasi ukuran)
+  if (Object.keys(_rupiahCache).length < 5000) {
+    _rupiahCache[key] = final;
+  }
+  
+  return final;
+}
+
+// ============================================================
+// 🔥 FORMAT TANGGAL SUPER CEPAT (pakai cache)
+// ============================================================
+function formatTanggalDisplay(tanggal, withTime) {
+  if (!tanggal) return '-';
+  
+  var cacheKey = String(tanggal) + (withTime ? '|1' : '|0');
+  if (_tanggalCache[cacheKey] !== undefined) return _tanggalCache[cacheKey];
+  
+  var result = _formatTanggalSlow(tanggal, withTime);
+  
+  if (Object.keys(_tanggalCache).length < 3000) {
+    _tanggalCache[cacheKey] = result;
+  }
+  
+  return result;
+}
+
+// Fungsi lama (rename, dipanggil hanya kalau cache miss)
+function _formatTanggalSlow(tanggal, withTime) {
+  if (!tanggal) return '-';
+  try {
+    if (typeof tanggal === 'string') {
+      var match = tanggal.match(/(\w{3}) (\w{3}) (\d{2}) (\d{4})/);
+      if (match) {
+        var monthNames = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'};
+        var day = match[3];
+        var month = monthNames[match[2]] || '01';
+        var year = match[4];
+        var result = day + '/' + month + '/' + year;
+        if (withTime) {
+          var timeMatch = tanggal.match(/(\d{2}:\d{2}:\d{2})/);
+          if (timeMatch) result += ' ' + timeMatch[1];
+        }
+        return result;
+      }
+      
+      var parts = tanggal.split(' ');
+      var datePart = parts[0] || '';
+      var timePart = parts[1] || '';
+      if (datePart && datePart.indexOf('-') > 0) {
+        var d = datePart.split('-');
+        if (d.length === 3) {
+          var result = d[2] + '/' + d[1] + '/' + d[0];
+          if (withTime && timePart) result += ' ' + timePart;
+          return result;
+        }
+      }
+      
+      if (tanggal.indexOf('/') > 0) {
+        var parts2 = tanggal.split(' ');
+        var datePart2 = parts2[0] || '';
+        var timePart2 = parts2[1] || '';
+        var d2 = datePart2.split('/');
+        if (d2.length === 3) {
+          var result2 = d2[0] + '/' + d2[1] + '/' + d2[2];
+          if (withTime && timePart2) result2 += ' ' + timePart2;
+          return result2;
+        }
+      }
+    }
+    
+    var tryDate = new Date(tanggal);
+    if (!isNaN(tryDate.getTime())) {
+      var day = String(tryDate.getDate()).padStart(2, '0');
+      var month = String(tryDate.getMonth() + 1).padStart(2, '0');
+      var year = tryDate.getFullYear();
+      var result = day + '/' + month + '/' + year;
+      if (withTime) {
+        var hours = String(tryDate.getHours()).padStart(2, '0');
+        var minutes = String(tryDate.getMinutes()).padStart(2, '0');
+        var seconds = String(tryDate.getSeconds()).padStart(2, '0');
+        result += ' ' + hours + ':' + minutes + ':' + seconds;
+      }
+      return result;
+    }
+    
+    return String(tanggal);
+  } catch (e) {
+    return String(tanggal);
+  }
+}
+
+// ============================================================
+// 🔥 GET INFO TOKO SUPER CEPAT (pakai cache, tanpa fetch)
+// ============================================================
+function getInfoTokoSync() {
+  var now = Date.now();
+  
+  // Pakai cache kalau masih fresh
+  if (_infoTokoCache && (now - _infoTokoCacheTime) < INFO_TOKO_CACHE_TTL) {
+    return _infoTokoCache;
+  }
+  
+  // Baca dari localStorage (sync, cepat)
+  try {
+    var cached = localStorage.getItem('info_toko');
+    if (cached) {
+      var parsed = JSON.parse(cached);
+      if (parsed && parsed.namaToko) {
+        _infoTokoCache = parsed;
+        _infoTokoCacheTime = now;
+        return parsed;
+      }
+    }
+  } catch(e) {
+    console.warn('⚠️ Gagal baca cache info_toko:', e);
+  }
+  
+  return { namaToko: '', alamat: '', noHp: '' };
+}
+  
+  
   </script>
 
   <style>
@@ -5114,12 +5280,16 @@ function showAppAfterLogin() {
   
   var currentUserEl = document.getElementById('currentUser');
   var currentRoleEl = document.getElementById('currentRole');
+  
   if (currentUserEl) {
     currentUserEl.textContent = currentUser.nama || currentUser.username || 'User';
   }
   if (currentRoleEl) {
     currentRoleEl.textContent = '(' + (currentUser.role || 'kasir') + ')';
   }
+  
+  // 🔥 Prefetch info toko SEKALI saat login (biar print instan)
+  refreshInfoTokoCache();
   
   if (typeof showAppByRole === 'function') {
     showAppByRole();
@@ -8399,92 +8569,177 @@ function showTambahProduk() {
 }
 
 function cetakStrukFromHistory(id) {
+  var t0 = performance.now();
+  
+  // 🔥 CEK CACHE DULU (instant kalau ada)
+  if (transaksiCacheForPrint[id]) {
+    var cacheEntry = transaksiCacheForPrint[id];
+    var age = Date.now() - cacheEntry.timestamp;
+    
+    if (age < TRANSAKSI_CACHE_TTL) {
+      console.log('⚡ Pakai cache print preview:', id, '(' + age + 'ms)');
+      showStruk(cacheEntry.data, true);
+      return; // INSTANT!
+    }
+  }
+  
   showToast('⏳ Memuat data transaksi...', 'info');
   
-  callGAS('getTransaksiById', { idTransaksi: id })
-  .then(function(headerData) {
+  // 🔥 Ambil header & detail PARALEL (bukan berurutan)
+  Promise.all([
+    callGAS('getTransaksiById', { idTransaksi: id }),
+    callGAS('getDetailTransaksi', { idTransaksi: id })
+  ])
+  .then(function(results) {
+    var headerData = results[0];
+    var detailResult = results[1];
+    
     if (!headerData || !headerData.success) {
       showToast('❌ Transaksi tidak ditemukan!', 'error');
       return;
     }
+    
     var header = headerData.data;
     if (!header) {
       showToast('❌ Transaksi tidak ditemukan!', 'error');
       return;
     }
     
-    callGAS('getDetailTransaksi', { idTransaksi: id })
-    .then(function(detailResult) {
-      if (!detailResult || !detailResult.success) {
-        showToast('❌ Tidak ada detail transaksi!', 'error');
-        return;
-      }
-      var detail = detailResult.data || [];
-      if (!detail || detail.length === 0) {
-        showToast('❌ Tidak ada detail transaksi!', 'error');
-        return;
-      }
+    var detail = (detailResult && detailResult.success) ? (detailResult.data || []) : [];
+    
+    var items = [];
+    for (var i = 0; i < detail.length; i++) {
+      var item = detail[i];
+      var qty = 0, harga = 0, subtotal = 0, namaProduk = 'Produk';
       
-      var items = [];
-      for (var i = 0; i < detail.length; i++) {
-        var item = detail[i];
-        var qty = 0, harga = 0, subtotal = 0, namaProduk = 'Produk';
-        
-        for (var key in item) {
-          var keyLower = key.toLowerCase().trim();
-          if (keyLower === 'qty' || keyLower === 'quantity' || keyLower === 'jumlah') qty = parseInt(item[key]) || 0;
-          if (keyLower === 'harga' || keyLower === 'price') harga = parseInt(item[key]) || 0;
-          if (keyLower === 'subtotal' || keyLower === 'total') subtotal = parseInt(item[key]) || 0;
-          if (keyLower === 'nama produk' || keyLower === 'produk' || keyLower === 'nama') namaProduk = item[key] || 'Produk';
-        }
-        
-        if (qty === 0) qty = parseInt(item['Qty']) || parseInt(item['qty']) || parseInt(item['Quantity']) || 0;
-        if (harga === 0) harga = parseInt(item['Harga']) || parseInt(item['harga']) || parseInt(item['Price']) || 0;
-        if (namaProduk === 'Produk') namaProduk = item['Nama Produk'] || item['nama produk'] || item['Produk'] || item['produk'] || 'Produk';
-        
-        items.push({ 
-          nama: namaProduk, 
-          harga: harga, 
-          qty: qty, 
-          subtotal: subtotal || (harga * qty) 
-        });
+      for (var key in item) {
+        var keyLower = key.toLowerCase().trim();
+        if (keyLower === 'qty' || keyLower === 'quantity' || keyLower === 'jumlah') qty = parseInt(item[key]) || 0;
+        if (keyLower === 'harga' || keyLower === 'price') harga = parseInt(item[key]) || 0;
+        if (keyLower === 'subtotal' || keyLower === 'total') subtotal = parseInt(item[key]) || 0;
+        if (keyLower === 'nama produk' || keyLower === 'produk' || keyLower === 'nama') namaProduk = item[key] || 'Produk';
       }
       
-     var data = {
-  id: id,
-  tanggal: header.Tanggal || header.tanggal || '',
-  waktu: header.Waktu || header.waktu || '',
-  kasir: header.Kasir || header.kasir || 'Admin',
-  total: parseInt(header.Total || header.total || 0),
-  pembayaran: parseInt(header.Pembayaran || header.pembayaran || 0),
-  kembalian: parseInt(header.Kembalian || header.kembalian || 0),
-  namaPembeli: header['Nama Pembeli'] || header.namaPembeli || '-',
-  items: items,
-  // 🔥 TAMBAHKAN FIELD HUTANG:
-  status: header.Status || header.status || '',
-  dibayar: parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0),
-  sisa: parseInt(header.Sisa || header.sisa || 0),
-  isReseller: header.isReseller || header.IsReseller || false,
-  kodeReseller: header.KodeReseller || header.kodeReseller || '',
-  namaReseller: header.NamaReseller || header.namaReseller || ''
-};
+      if (qty === 0) qty = parseInt(item['Qty']) || parseInt(item['qty']) || parseInt(item['Quantity']) || 0;
+      if (harga === 0) harga = parseInt(item['Harga']) || parseInt(item['harga']) || parseInt(item['Price']) || 0;
+      if (namaProduk === 'Produk') namaProduk = item['Nama Produk'] || item['nama produk'] || item['Produk'] || item['produk'] || 'Produk';
       
-      transaksiCacheForPrint[id] = {
-        data: data,
-        timestamp: Date.now()
-      };
-      
-      showStruk(data, true);
-    })
-    .catch(function(error) {
-      console.error('❌ Error getDetailTransaksi:', error);
-      showToast('❌ Gagal mengambil detail transaksi: ' + error.message, 'error');
-    });
+      items.push({ 
+        nama: namaProduk, 
+        harga: harga, 
+        qty: qty, 
+        subtotal: subtotal || (harga * qty) 
+      });
+    }
+    
+    var data = {
+      id: id,
+      tanggal: header.Tanggal || header.tanggal || '',
+      waktu: header.Waktu || header.waktu || '',
+      kasir: header.Kasir || header.kasir || 'Admin',
+      total: parseInt(header.Total || header.total || 0),
+      pembayaran: parseInt(header.Pembayaran || header.pembayaran || 0),
+      kembalian: parseInt(header.Kembalian || header.kembalian || 0),
+      namaPembeli: header['Nama Pembeli'] || header.namaPembeli || '-',
+      items: items,
+      status: header.Status || header.status || '',
+      dibayar: parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0),
+      sisa: parseInt(header.Sisa || header.sisa || 0),
+      isReseller: header.isReseller || header.IsReseller || false,
+      kodeReseller: header.KodeReseller || header.kodeReseller || '',
+      namaReseller: header.NamaReseller || header.namaReseller || ''
+    };
+    
+    // Simpan ke cache
+    transaksiCacheForPrint[id] = {
+      data: data,
+      timestamp: Date.now()
+    };
+    
+    // 🔥 Prefetch: ambil data lain di background
+    prefetchNextTransactions(id);
+    
+    showStruk(data, true);
+    
+    var t1 = performance.now();
+    console.log('⚡ Total cetak dari history:', (t1 - t0).toFixed(0), 'ms');
   })
   .catch(function(error) {
-    console.error('❌ Error getTransaksiById:', error);
-    showToast('❌ Gagal mengambil data transaksi: ' + error.message, 'error');
+    console.error('❌ Error cetakStrukFromHistory:', error);
+    showToast('❌ Gagal: ' + error.message, 'error');
   });
+}
+
+// 🔥 Prefetch transaksi berikutnya di background
+var _prefetchInProgress = {};
+function prefetchNextTransactions(currentId) {
+  // Ambil 3 transaksi berikutnya dari tabel untuk di-prefetch
+  var rows = document.querySelectorAll('#transaksiTable tr[data-id]');
+  var count = 0;
+  
+  for (var i = 0; i < rows.length && count < 3; i++) {
+    var id = rows[i].getAttribute('data-id');
+    if (id === currentId) continue;
+    if (transaksiCacheForPrint[id]) continue; // sudah di-cache
+    if (_prefetchInProgress[id]) continue;
+    
+    _prefetchInProgress[id] = true;
+    count++;
+    
+    // Prefetch di background (tidak blocking)
+    (function(tid) {
+      Promise.all([
+        callGAS('getTransaksiById', { idTransaksi: tid }),
+        callGAS('getDetailTransaksi', { idTransaksi: tid })
+      ])
+      .then(function(results) {
+        var headerData = results[0];
+        var detailResult = results[1];
+        
+        if (headerData && headerData.success && headerData.data) {
+          var header = headerData.data;
+          var detail = (detailResult && detailResult.success) ? (detailResult.data || []) : [];
+          
+          var items = [];
+          for (var j = 0; j < detail.length; j++) {
+            var it = detail[j];
+            var q = parseInt(it['Qty']) || parseInt(it.qty) || 0;
+            var h = parseInt(it['Harga']) || parseInt(it.harga) || 0;
+            items.push({
+              nama: it['Nama Produk'] || it.namaProduk || 'Produk',
+              harga: h,
+              qty: q,
+              subtotal: h * q
+            });
+          }
+          
+          transaksiCacheForPrint[tid] = {
+            data: {
+              id: tid,
+              tanggal: header.Tanggal || header.tanggal || '',
+              waktu: header.Waktu || header.waktu || '',
+              kasir: header.Kasir || header.kasir || 'Admin',
+              total: parseInt(header.Total || header.total || 0),
+              pembayaran: parseInt(header.Pembayaran || header.pembayaran || 0),
+              kembalian: parseInt(header.Kembalian || header.kembalian || 0),
+              namaPembeli: header['Nama Pembeli'] || header.namaPembeli || '-',
+              items: items,
+              status: header.Status || header.status || '',
+              dibayar: parseInt(header.Dibayar || header.dibayar || 0),
+              sisa: parseInt(header.Sisa || header.sisa || 0)
+            },
+            timestamp: Date.now()
+          };
+          
+          console.log('⚡ Prefetch OK:', tid);
+        }
+        delete _prefetchInProgress[tid];
+      })
+      .catch(function() {
+        delete _prefetchInProgress[tid];
+      });
+    })(id);
+  }
 }
 
 function cetakThermalBluetooth(idTransaksi) {
@@ -9726,15 +9981,19 @@ function refreshInfoTokoCache() {
   .then(function(result) {
     if (result && result.success) {
       var data = result.data;
-      if (data && data.data) {
-        data = data.data;
-      }
+      if (data && data.data) data = data.data;
+      
       var infoToko = {
         namaToko: data.namaToko || '',
         alamat: data.alamat || '',
         noHp: data.noHp || ''
       };
+      
       localStorage.setItem('info_toko', JSON.stringify(infoToko));
+      
+      // 🔥 Update global cache juga (biar getInfoTokoSync() instant)
+      _infoTokoCache = infoToko;
+      _infoTokoCacheTime = Date.now();
     }
   })
   .catch(function(error) {
@@ -9768,34 +10027,37 @@ function generateStrukHTML(data) {
   
   var isHutang = (status === 'BELUM BAYAR' || status === 'CICILAN' || sisa > 0);
   
-  var html = '<div class="struk-container" id="strukContent">';
-  html += '<div class="header-struk">';
+  // 🔥 Pakai array push + join (lebih cepat dari concat)
+  var h = [];
   
-  html += '<h2>' + (infoToko.namaToko || '🛒 POS System') + '</h2>';
+  h.push('<div class="struk-container" id="strukContent">');
+  h.push('<div class="header-struk">');
+  
+  h.push('<h2>' + (infoToko.namaToko || '🛒 POS System') + '</h2>');
   
   if (infoToko.alamat) {
-    html += '<div class="info">' + infoToko.alamat + '</div>';
+    h.push('<div class="info">' + infoToko.alamat + '</div>');
   }
   
   if (infoToko.noHp) {
-    html += '<div class="info">📞 Pemesanan: ' + infoToko.noHp + '</div>';
+    h.push('<div class="info">📞 Pemesanan: ' + infoToko.noHp + '</div>');
   }
   
-  html += '<div style="border-top:1px dashed #999;margin:5px 0;"></div>';
-  html += '<div class="info"><b>ID:</b> ' + data.id + '</div>';
-  html += '<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>';
-  html += '<div class="info"><b>Kasir:</b> ' + data.kasir + '</div>';
+  h.push('<div style="border-top:1px dashed #999;margin:5px 0;"></div>');
+  h.push('<div class="info"><b>ID:</b> ' + data.id + '</div>');
+  h.push('<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>');
+  h.push('<div class="info"><b>Kasir:</b> ' + data.kasir + '</div>');
   if (data.namaPembeli && data.namaPembeli !== '-') {
-    html += '<div class="info"><b>Pembeli:</b> ' + data.namaPembeli + '</div>';
+    h.push('<div class="info"><b>Pembeli:</b> ' + data.namaPembeli + '</div>');
   }
-  html += '</div>';
+  h.push('</div>');
   
   // ===== DETAIL PRODUK =====
-  html += '<div class="items-struk">';
-  html += '<div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>';
+  h.push('<div class="items-struk">');
+  h.push('<div class="struk-header-item"><span>Produk</span><span>Qty</span><span>Harga</span><span>Subtotal</span></div>');
   
   if (!data.items || data.items.length === 0) {
-    html += '<div class="item-row"><span class="item-name" style="color:#999;">Tidak ada item</span></div>';
+    h.push('<div class="item-row"><span class="item-name" style="color:#999;">Tidak ada item</span></div>');
   } else {
     for (var i = 0; i < data.items.length; i++) {
       var item = data.items[i];
@@ -9804,91 +10066,94 @@ function generateStrukHTML(data) {
       var qty = parseInt(item.qty) || 0;
       var price = parseInt(item.harga) || 0;
       var subtotal = parseInt(item.subtotal) || (price * qty);
-      html += '<div class="item-row">';
-      html += '<span class="item-name">' + name + '</span>';
-      html += '<span class="item-qty">' + qty + '</span>';
-      html += '<span class="item-harga">' + formatRupiahPlain(price) + '</span>';
-      html += '<span class="item-subtotal">' + formatRupiahPlain(subtotal) + '</span>';
-      html += '</div>';
+      h.push('<div class="item-row">');
+      h.push('<span class="item-name">' + name + '</span>');
+      h.push('<span class="item-qty">' + qty + '</span>');
+      h.push('<span class="item-harga">' + formatRupiahPlain(price) + '</span>');
+      h.push('<span class="item-subtotal">' + formatRupiahPlain(subtotal) + '</span>');
+      h.push('</div>');
     }
   }
-  html += '</div>';
+  h.push('</div>');
   
   // ===== BLOK TOTAL & PEMBAYARAN =====
-  html += '<div class="total-struk">';
-  html += '<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(total) + '</span></div>';
+  h.push('<div class="total-struk">');
+  h.push('<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(total) + '</span></div>');
   
   // 🔥 BLOK HUTANG/CICILAN
   if (isHutang) {
     
     // Hutang awal (untuk CICILAN)
     if (dibayar > 0 && dibayar < total) {
-      html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;color:#e65100;">';
-      html += '<span>📋 Hutang Awal</span><span>' + formatRupiahPlain(hutangAwal) + '</span>';
-      html += '</div>';
+      h.push('<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;color:#e65100;">');
+      h.push('<span>📋 Hutang Awal</span><span>' + formatRupiahPlain(hutangAwal) + '</span>');
+      h.push('</div>');
     }
     
     // Dibayar
     if (dibayar > 0) {
-      html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;color:#2e7d32;">';
-      html += '<span>💵 Dibayar</span><span>' + formatRupiahPlain(dibayar) + '</span>';
-      html += '</div>';
+      h.push('<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;color:#2e7d32;">');
+      h.push('<span>💵 Dibayar</span><span>' + formatRupiahPlain(dibayar) + '</span>');
+      h.push('</div>');
     }
     
     // Sisa Hutang (selalu tampil kalau > 0)
     if (sisa > 0) {
-      html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:#c62828;font-weight:bold;padding:3px 0;border-top:1px dashed #999;margin-top:3px;">';
-      html += '<span>⚠️ Sisa Hutang</span><span>' + formatRupiahPlain(sisa) + '</span>';
-      html += '</div>';
+      h.push('<div style="display:flex;justify-content:space-between;font-size:11px;color:#c62828;font-weight:bold;padding:3px 0;border-top:1px dashed #999;margin-top:3px;">');
+      h.push('<span>⚠️ Sisa Hutang</span><span>' + formatRupiahPlain(sisa) + '</span>');
+      h.push('</div>');
     }
     
     // Status
     var statusLabel = status === 'CICILAN' ? 'CICILAN' : 'BELUM LUNAS';
     var statusIcon = status === 'CICILAN' ? '🔄' : '⚠️';
-    html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#c62828;font-weight:bold;padding:3px 0;">';
-    html += '<span>Status</span><span>' + statusIcon + ' ' + statusLabel + '</span>';
-    html += '</div>';
+    h.push('<div style="display:flex;justify-content:space-between;font-size:10px;color:#c62828;font-weight:bold;padding:3px 0;">');
+    h.push('<span>Status</span><span>' + statusIcon + ' ' + statusLabel + '</span>');
+    h.push('</div>');
     
     // Peringatan besar
-    html += '<div style="text-align:center;margin-top:8px;padding:6px;border:1px dashed #c62828;border-radius:4px;background:#ffebee;">';
+    h.push('<div style="text-align:center;margin-top:8px;padding:6px;border:1px dashed #c62828;border-radius:4px;background:#ffebee;">');
     if (status === 'CICILAN') {
-      html += '<div style="font-size:14px;font-weight:bold;color:#c62828;">*** CICILAN ***</div>';
-      html += '<div style="font-size:9px;color:#c62828;margin-top:2px;">Dibayar: Rp ' + formatRupiahPlain(dibayar) + '</div>';
+      h.push('<div style="font-size:14px;font-weight:bold;color:#c62828;">*** CICILAN ***</div>');
+      h.push('<div style="font-size:9px;color:#c62828;margin-top:2px;">Dibayar: Rp ' + formatRupiahPlain(dibayar) + '</div>');
     } else {
-      html += '<div style="font-size:14px;font-weight:bold;color:#c62828;">*** BELUM LUNAS ***</div>';
+      h.push('<div style="font-size:14px;font-weight:bold;color:#c62828;">*** BELUM LUNAS ***</div>');
     }
-    html += '<div style="font-size:11px;font-weight:bold;color:#c62828;margin-top:2px;">Sisa Hutang: Rp ' + formatRupiahPlain(sisa) + '</div>';
-    html += '</div>';
+    h.push('<div style="font-size:11px;font-weight:bold;color:#c62828;margin-top:2px;">Sisa Hutang: Rp ' + formatRupiahPlain(sisa) + '</div>');
+    h.push('</div>');
     
   } else {
     // LUNAS → tampilkan pembayaran normal
     if (dibayar > 0) {
-      html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;"><span>Pembayaran</span><span>' + formatRupiahPlain(dibayar) + '</span></div>';
+      h.push('<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;"><span>Pembayaran</span><span>' + formatRupiahPlain(dibayar) + '</span></div>');
     }
     if (data.kembalian && data.kembalian > 0) {
-      html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;font-weight:bold;color:#4CAF50;"><span>Kembalian</span><span>' + formatRupiahPlain(data.kembalian) + '</span></div>';
+      h.push('<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;font-weight:bold;color:#4CAF50;"><span>Kembalian</span><span>' + formatRupiahPlain(data.kembalian) + '</span></div>');
     }
   }
   
-  html += '</div>';
+  h.push('</div>');
   
   // ===== FOOTER =====
-  html += '<div class="footer-struk">';
-  html += '<div class="divider"></div>';
-  html += '<div class="thanks">TERIMA KASIH</div>';
-  html += '<div style="font-size:9px;color:#999;">Barang yang sudah dibeli tidak dapat ditukar</div>';
+  h.push('<div class="footer-struk">');
+  h.push('<div class="divider"></div>');
+  h.push('<div class="thanks">TERIMA KASIH</div>');
+  h.push('<div style="font-size:9px;color:#999;">Barang yang sudah dibeli tidak dapat ditukar</div>');
   if (infoToko.noHp) {
-    html += '<div style="font-size:9px;color:#999;">📞 ' + infoToko.noHp + '</div>';
+    h.push('<div style="font-size:9px;color:#999;">📞 ' + infoToko.noHp + '</div>');
   }
-  html += '<div class="small">' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>';
-  html += '</div>';
-  html += '</div>';
+  h.push('<div class="small">' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>');
+  h.push('</div>');
+  h.push('</div>');
   
-  return html;
+  return h.join('');
 }
 
 function showStruk(data, isFromHistory) {
-  refreshInfoTokoCache();
+  var t0 = performance.now();
+  
+  // 🔥 TIDAK panggil refreshInfoTokoCache() di sini
+  // Info toko sudah di-cache, tidak perlu fetch ulang
   
   if (data && data.id) {
     transaksiCacheForPrint[data.id] = {
@@ -9897,27 +10162,32 @@ function showStruk(data, isFromHistory) {
     };
   }
   
+  // 🔥 Bangun HTML
   var html = generateStrukHTML(data);
-
-html += '<div class="struk-actions">';
-html += '<button class="btn btn-success" onclick="printStruk()">🖨️ Cetak</button>';
-
-if (data.id && shouldShowThermalButton()) {
-  html += '<button class="btn" onclick="cetakViaCleanter(\'' + data.id + '\')" ' +
-          'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
-          '📱 Cetak Thermal</button>';
-}
-
-if (!isFromHistory) {
-  html += '<button class="btn btn-info" onclick="downloadStrukPDF()">📄 Download PDF</button>';
-}
-html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
-html += '</div>';
-
+  
+  html += '<div class="struk-actions">';
+  html += '<button class="btn btn-success" onclick="printStruk()">🖨️ Cetak</button>';
+  
+  if (data.id && shouldShowThermalButton()) {
+    html += '<button class="btn" onclick="cetakViaCleanter(\'' + data.id + '\')" ' +
+            'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
+            '📱 Cetak Thermal</button>';
+  }
+  
+  if (!isFromHistory) {
+    html += '<button class="btn btn-info" onclick="downloadStrukPDF()">📄 Download PDF</button>';
+  }
+  html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
+  html += '</div>';
+  
+  // 🔥 Gunakan innerHTML langsung (paling cepat)
   document.getElementById('modalTitle').textContent = '🧾 Struk Transaksi - ' + data.id;
   document.getElementById('modalContent').classList.add('large');
   document.getElementById('modalBody').innerHTML = html;
   document.getElementById('modal').classList.add('active');
+  
+  var t1 = performance.now();
+  console.log('⚡ Print preview render:', (t1 - t0).toFixed(1), 'ms');
 }
 
 function printStruk() {
