@@ -4297,7 +4297,7 @@ async function cetakViaCleanter(idTransaksi) {
           text: '*** CICILAN ***',
           align: 'center',
           bold: true,
-          size: 'large'
+          
         });
         content.push({
           type: 'text',
@@ -4310,7 +4310,7 @@ async function cetakViaCleanter(idTransaksi) {
           text: '*** BELUM LUNAS ***',
           align: 'center',
           bold: true,
-          size: 'large'
+          
         });
       }
 
@@ -9852,12 +9852,12 @@ function generateStrukHTML(data) {
     // Peringatan besar
     html += '<div style="text-align:center;margin-top:8px;padding:6px;border:1px dashed #c62828;border-radius:4px;background:#ffebee;">';
     if (status === 'CICILAN') {
-      html += '<div style="font-size:11px;font-weight:bold;color:#c62828;">*** CICILAN ***</div>';
+      html += '<div style="font-size:14px;font-weight:bold;color:#c62828;">*** CICILAN ***</div>';
       html += '<div style="font-size:9px;color:#c62828;margin-top:2px;">Dibayar: Rp ' + formatRupiahPlain(dibayar) + '</div>';
     } else {
-      html += '<div style="font-size:11px;font-weight:bold;color:#c62828;">*** BELUM LUNAS ***</div>';
+      html += '<div style="font-size:14px;font-weight:bold;color:#c62828;">*** BELUM LUNAS ***</div>';
     }
-    html += '<div style="font-size:10px;font-weight:bold;color:#c62828;margin-top:2px;">Sisa Hutang: Rp ' + formatRupiahPlain(sisa) + '</div>';
+    html += '<div style="font-size:11px;font-weight:bold;color:#c62828;margin-top:2px;">Sisa Hutang: Rp ' + formatRupiahPlain(sisa) + '</div>';
     html += '</div>';
     
   } else {
