@@ -4191,10 +4191,6 @@ async function isCleanterAvailableCached() {
 // ============================================================
 async function cetakViaCleanter(idTransaksi) {
   var t0 = performance.now();
-
-    // 🔥 KONFIGURASI JARAK POTONG
-  var CUT_FEED_MM = 4;
-  var USE_CUSTOM_CUT = true;
   
   if (!idTransaksi) {
     showToast('⚠️ ID Transaksi tidak valid!', 'error');
@@ -4554,6 +4550,8 @@ else {
   }
 }
 
+
+
 // ===== FOOTER =====
 content.push({
   type: 'text',
@@ -4566,29 +4564,23 @@ content.push({
   text: 'Barang tidak dapat ditukar',
   align: 'center'
 });
+
+// Mengirimkan kode perintah pemotongan langsung tanpa feed berlebih
+// Format Hex '1d5601' merupakan standar ESC/POS perintah (GS V m) untuk memotong kertas langsung
+content.push({
+  type: 'raw',
+  value: '1d5601' 
+});
+
 var payload = {
-  cut: true,
   content: content
 };
 
-
-// 🔥 Tambahkan parameter jarak potong jika didukung Cleanter
-if (USE_CUSTOM_CUT) {
-  // Coba beberapa nama parameter (tergantung versi Cleanter)
-  payload.feedCut = CUT_FEED_MM;
-  payload.cutFeed = CUT_FEED_MM;
-  payload.feedBeforeCut = CUT_FEED_MM;
-  payload.cutMargin = CUT_FEED_MM;
-
-  // Versi ESC/POS mentah (jika Cleanter menerima raw command)
-  payload.escpos = [0x1D, 0x56, 0x42, CUT_FEED_MM]; // GS V 66 n
-}
-
+console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
 
 
 
   
-console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
 
 var response = await fetch('http://localhost:9100/print', {
   method: 'POST',
