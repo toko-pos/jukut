@@ -4191,6 +4191,10 @@ async function isCleanterAvailableCached() {
 // ============================================================
 async function cetakViaCleanter(idTransaksi) {
   var t0 = performance.now();
+
+    // 🔥 KONFIGURASI JARAK POTONG
+  var CUT_FEED_MM = 1;
+  var USE_CUSTOM_CUT = true;
   
   if (!idTransaksi) {
     showToast('⚠️ ID Transaksi tidak valid!', 'error');
