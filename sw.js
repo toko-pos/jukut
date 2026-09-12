@@ -2,7 +2,7 @@
 // SERVICE WORKER - PWA POS SYSTEM UNTUK GITHUB PAGES
 // ============================================================
 
-const CACHE_NAME = 'pos-app-v7';
+const CACHE_NAME = 'pos-app-v8';
 
 // 🔥 Base path untuk GitHub Pages
 const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '/') || '/';
