@@ -4568,6 +4568,23 @@ var payload = {
   content: content
 };
 
+
+// 🔥 Tambahkan parameter jarak potong jika didukung Cleanter
+if (USE_CUSTOM_CUT) {
+  // Coba beberapa nama parameter (tergantung versi Cleanter)
+  payload.feedCut = CUT_FEED_MM;
+  payload.cutFeed = CUT_FEED_MM;
+  payload.feedBeforeCut = CUT_FEED_MM;
+  payload.cutMargin = CUT_FEED_MM;
+
+  // Versi ESC/POS mentah (jika Cleanter menerima raw command)
+  payload.escpos = [0x1D, 0x56, 0x42, CUT_FEED_MM]; // GS V 66 n
+}
+
+
+
+
+  
 console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
 
 var response = await fetch('http://localhost:9100/print', {
@@ -4591,7 +4608,7 @@ showToast('✅ Struk terkirim ke printer!', 'success');
 } finally {
   window._isPrintingThermal = false;
 }
-}  // 🔥 INI YANG HILANG — PENUTUP FUNGSI cetakViaCleanter
+}
 
 
 
