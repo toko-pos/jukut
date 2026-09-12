@@ -4042,7 +4042,7 @@ async function cetakViaCleanter(idTransaksi) {
   try {
     showToast('⏳ Menyiapkan cetak...', 'info');
 
-    // 🔥 PERBAIKAN 1: Ambil field hutang dari cache
+    // 🔥 Ambil dari cache dulu (kalau ada)
     var cachedHeader = null;
     var cachedDetail = null;
     
@@ -4061,7 +4061,6 @@ async function cetakViaCleanter(idTransaksi) {
           Pembayaran: cachedData.pembayaran,
           Kembalian: cachedData.kembalian,
           'Nama Pembeli': cachedData.namaPembeli,
-          // 🔥 FIELD HUTANG/CICILAN:
           Status: cachedData.status,
           Dibayar: cachedData.dibayar,
           Sisa: cachedData.sisa,
@@ -4123,7 +4122,6 @@ async function cetakViaCleanter(idTransaksi) {
     var infoToko = getInfoTokoSync();
 
     var WIDTH = 32;
-
     function makeRow(left, right) {
       left = String(left);
       right = String(right);
@@ -4148,7 +4146,6 @@ async function cetakViaCleanter(idTransaksi) {
       bold: true,
       size: 'large'
     });
-
     content.push({ type: 'text', text: ' ' });
 
     if (infoToko.alamat) {
@@ -4158,7 +4155,6 @@ async function cetakViaCleanter(idTransaksi) {
         align: 'center'
       });
     }
-
     if (infoToko.noHp) {
       content.push({
         type: 'text',
@@ -4197,15 +4193,6 @@ async function cetakViaCleanter(idTransaksi) {
         type: 'text',
         text: formatLabel('Pembeli') + namaPembeli
       });
-
-      if (header.isReseller || header.IsReseller) {
-        content.push({
-          type: 'text',
-          text: 'RESELLER',
-          align: 'center',
-          bold: true
-        });
-      }
     }
 
     content.push({ type: 'divider' });
@@ -4232,7 +4219,6 @@ async function cetakViaCleanter(idTransaksi) {
           type: 'text',
           text: nama + ' x' + qty
         });
-
         content.push({
           type: 'text',
           text: makeRow('  @ ' + hargaFmt, subtotalFmt)
@@ -4252,37 +4238,24 @@ async function cetakViaCleanter(idTransaksi) {
       bold: true
     });
 
-    // 🔥 PERBAIKAN 2: Ambil semua field hutang
+    // 🔥 AMBIL SEMUA FIELD HUTANG
     var statusRaw = String(header.Status || header.status || '').toUpperCase().trim();
     var dibayar = parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0);
     var sisa = parseInt(header.Sisa || header.sisa || 0);
-    var isReseller = !!(header.isReseller || header.IsReseller);
-    var kodeReseller = String(header.KodeReseller || header.kodeReseller || '');
-    var namaReseller = String(header.NamaReseller || header.namaReseller || '');
-
-    // Hitung hutang awal (jika belum ada field Sisa)
     var hutangAwal = total - dibayar;
 
-    // Tentukan status jika kosong: cek dari data
+    // Tentukan status jika kosong
     var status = statusRaw;
-    if (!status && isReseller) {
-      if (sisa <= 0 && dibayar >= total) status = 'LUNAS';
+    if (!status) {
+      if (sisa <= 0 && dibayar >= total && total > 0) status = 'LUNAS';
       else if (sisa > 0 && dibayar > 0) status = 'CICILAN';
       else if (sisa > 0 && dibayar === 0) status = 'BELUM BAYAR';
     }
 
-    // Tampilkan info reseller
-    if (isReseller && namaReseller) {
-      content.push({
-        type: 'text',
-        text: makeRow('Reseller', ': ' + namaReseller)
-      });
-    }
-
-    // 🔥 PERBAIKAN 3: BLOK KHUSUS JIKA STATUS BUKAN LUNAS
+    // 🔥 BLOK KHUSUS JIKA STATUS BUKAN LUNAS
     if (status !== 'LUNAS' && (sisa > 0 || status === 'BELUM BAYAR' || status === 'CICILAN')) {
       
-      // Jika ada pembayaran sebagian (CICILAN)
+      // Untuk CICILAN: tampilkan hutang awal & dibayar
       if (dibayar > 0 && dibayar < total) {
         var hutangAwalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(hutangAwal);
         content.push({
@@ -4297,7 +4270,7 @@ async function cetakViaCleanter(idTransaksi) {
         });
       }
 
-      // Tampilkan SISA HUTANG (selalu jika sisa > 0)
+      // Selalu tampilkan SISA HUTANG
       if (sisa > 0) {
         var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisa);
         content.push({
@@ -4307,7 +4280,7 @@ async function cetakViaCleanter(idTransaksi) {
         });
       }
 
-      // Tampilkan STATUS
+      // Status
       var statusLabel = status === 'CICILAN' ? 'CICILAN' : 'BELUM LUNAS';
       content.push({
         type: 'text',
@@ -4315,7 +4288,7 @@ async function cetakViaCleanter(idTransaksi) {
         bold: true
       });
 
-      // 🔥 PERINGATAN BESAR
+      // 🔥 PERINGATAN BESAR DI TENGAH
       content.push({ type: 'divider' });
       
       if (status === 'CICILAN') {
@@ -4350,13 +4323,13 @@ async function cetakViaCleanter(idTransaksi) {
 
       content.push({ type: 'divider' });
     }
-    // Jika LUNAS, tampilkan info pembayaran normal
+    // Kalau LUNAS → tampilkan info pembayaran normal
     else {
       if (dibayar > 0 && dibayar <= total) {
-        var bayarFmt2 = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
+        var bayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
         content.push({
           type: 'text',
-          text: makeRow('Bayar', bayarFmt2)
+          text: makeRow('Bayar', bayarFmt)
         });
       }
 
