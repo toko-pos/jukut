@@ -4363,7 +4363,7 @@ async function cetakViaCleanter(idTransaksi) {
 
     content.push({ type: 'divider' });
 
-   // ===== DETAIL PRODUK (DENGAN WORD WRAP, TANPA @) =====
+   // ===== DETAIL PRODUK (DENGAN WORD WRAP) =====
 var grandTotal = 0;
 if (detail && detail.length > 0) {
   for (var idx = 0; idx < detail.length; idx++) {
@@ -4378,10 +4378,8 @@ if (detail && detail.length > 0) {
     var hargaFmt = new Intl.NumberFormat('id-ID').format(harga);
     var subtotalFmt = new Intl.NumberFormat('id-ID').format(subtotal);
 
-    // 🔥 WORD WRAP NAMA PRODUK
-    // Lebar kertas 32 char. Sisakan ruang untuk " x{qty}" di baris pertama.
-    var qtySuffix = ' x' + qty;
-    var maxNamaChars = WIDTH - qtySuffix.length;
+    // 🔥 WORD WRAP NAMA PRODUK (full 32 char, tanpa suffix qty)
+    var maxNamaChars = WIDTH;
 
     var namaLines = [];
 
@@ -4412,21 +4410,15 @@ if (detail && detail.length > 0) {
       if (currentLine) namaLines.push(currentLine);
     }
 
-    // 🔹 Baris 1: nama produk + qty
-    content.push({
-      type: 'text',
-      text: namaLines[0] + qtySuffix
-    });
-
-    // 🔹 Baris tambahan: nama yang di-wrap (indent 2 spasi)
-    for (var nl = 1; nl < namaLines.length; nl++) {
+    // 🔹 Baris nama produk (word wrap)
+    for (var nl = 0; nl < namaLines.length; nl++) {
       content.push({
         type: 'text',
-        text: '  ' + namaLines[nl]
+        text: nl === 0 ? namaLines[nl] : '  ' + namaLines[nl]
       });
     }
 
-    // 🔹 Baris harga (TANPA @): "{harga} x {qty}" di kiri, subtotal di kanan
+    // 🔹 Baris harga: "{harga} x {qty}" di kiri, subtotal di kanan
     var hargaLine = hargaFmt + ' x ' + qty;
     var spaceNeeded = hargaLine.length + subtotalFmt.length;
 
@@ -4560,47 +4552,46 @@ else {
   }
 }
 
-    // ===== FOOTER =====
-    content.push({
-      type: 'text',
-      text: 'TERIMA KASIH',
-      align: 'center',
-      bold: true
-    });
-    content.push({
-      type: 'text',
-      text: 'Barang tidak dapat ditukar',
-      align: 'center'
-    });
+// ===== FOOTER =====
+content.push({
+  type: 'text',
+  text: 'TERIMA KASIH',
+  align: 'center',
+  bold: true
+});
+content.push({
+  type: 'text',
+  text: 'Barang tidak dapat ditukar',
+  align: 'center'
+});
 
-    var payload = {
-      cut: true,
-      content: content
-    };
+var payload = {
+  cut: true,
+  content: content
+};
 
-    console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
+console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
 
-    var response = await fetch('http://localhost:9100/print', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+var response = await fetch('http://localhost:9100/print', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload)
+});
 
-    if (!response.ok) {
-      var errText = await response.text();
-      throw new Error('HTTP ' + response.status + ': ' + errText);
-    }
+if (!response.ok) {
+  var errText = await response.text();
+  throw new Error('HTTP ' + response.status + ': ' + errText);
+}
 
-    var t1 = performance.now();
-    console.log('⏱️ Total cetak:', (t1 - t0).toFixed(0), 'ms');
-    showToast('✅ Struk terkirim ke printer!', 'success');
+var t1 = performance.now();
+console.log('⏱️ Total cetak:', (t1 - t0).toFixed(0), 'ms');
+showToast('✅ Struk terkirim ke printer!', 'success');
 
-  } catch (error) {
-    console.error('❌ Error cetak Cleanter:', error);
-    showToast('❌ Gagal cetak: ' + error.message, 'error');
-  } finally {
-    window._isPrintingThermal = false;
-  }
+} catch (error) {
+  console.error('❌ Error cetak Cleanter:', error);
+  showToast('❌ Gagal cetak: ' + error.message, 'error');
+} finally {
+  window._isPrintingThermal = false;
 }
 
 // ============================================================
