@@ -4363,151 +4363,202 @@ async function cetakViaCleanter(idTransaksi) {
 
     content.push({ type: 'divider' });
 
-    // ===== DETAIL PRODUK =====
-    var grandTotal = 0;
-    if (detail && detail.length > 0) {
-      for (var idx = 0; idx < detail.length; idx++) {
-        var item = detail[idx];
-        var nama = String(item['Nama Produk'] || item.namaProduk || 'Produk');
-        var qty = parseInt(item.Qty || item.qty || 0);
-        var harga = parseInt(item.Harga || item.harga || 0);
-        var subtotal = harga * qty;
-        grandTotal += subtotal;
+   // ===== DETAIL PRODUK (DENGAN WORD WRAP, TANPA @) =====
+var grandTotal = 0;
+if (detail && detail.length > 0) {
+  for (var idx = 0; idx < detail.length; idx++) {
+    var item = detail[idx];
+    var nama = String(item['Nama Produk'] || item.namaProduk || 'Produk');
+    var qty = parseInt(item.Qty || item.qty || 0);
+    var harga = parseInt(item.Harga || item.harga || 0);
+    var subtotal = harga * qty;
+    grandTotal += subtotal;
 
-        if (nama.length > 18) {
-          nama = nama.substring(0, 17) + '.';
+    // 🔥 FORMAT ANGKA
+    var hargaFmt = new Intl.NumberFormat('id-ID').format(harga);
+    var subtotalFmt = new Intl.NumberFormat('id-ID').format(subtotal);
+
+    // 🔥 WORD WRAP NAMA PRODUK
+    // Lebar kertas 32 char. Sisakan ruang untuk " x{qty}" di baris pertama.
+    var qtySuffix = ' x' + qty;
+    var maxNamaChars = WIDTH - qtySuffix.length;
+
+    var namaLines = [];
+
+    if (nama.length <= maxNamaChars) {
+      namaLines.push(nama);
+    } else {
+      var words = nama.split(' ');
+      var currentLine = '';
+
+      for (var w = 0; w < words.length; w++) {
+        var word = words[w];
+        var testLine = currentLine ? currentLine + ' ' + word : word;
+
+        if (testLine.length <= maxNamaChars) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) namaLines.push(currentLine);
+
+          if (word.length > maxNamaChars) {
+            while (word.length > maxNamaChars) {
+              namaLines.push(word.substring(0, maxNamaChars));
+              word = word.substring(maxNamaChars);
+            }
+          }
+          currentLine = word;
         }
-
-        var hargaFmt = new Intl.NumberFormat('id-ID').format(harga);
-        var subtotalFmt = new Intl.NumberFormat('id-ID').format(subtotal);
-
-        content.push({
-          type: 'text',
-          text: nama + ' x' + qty
-        });
-        content.push({
-          type: 'text',
-          text: makeRow('  @ ' + hargaFmt, subtotalFmt)
-        });
       }
+      if (currentLine) namaLines.push(currentLine);
     }
 
-    content.push({ type: 'divider' });
-
-    // ===== TOTAL & PEMBAYARAN =====
-    var total = parseInt(header.Total || header.total || grandTotal);
-    var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
-
+    // 🔹 Baris 1: nama produk + qty
     content.push({
       type: 'text',
-      text: makeRow('TOTAL', totalFmt),
-      bold: true
+      text: namaLines[0] + qtySuffix
     });
 
-    // 🔥 AMBIL SEMUA FIELD HUTANG
-    var statusRaw = String(header.Status || header.status || '').toUpperCase().trim();
-    var dibayar = parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0);
-    var sisa = parseInt(header.Sisa || header.sisa || 0);
-    var hutangAwal = total - dibayar;
-
-    // Tentukan status jika kosong
-    var status = statusRaw;
-    if (!status) {
-      if (sisa <= 0 && dibayar >= total && total > 0) status = 'LUNAS';
-      else if (sisa > 0 && dibayar > 0) status = 'CICILAN';
-      else if (sisa > 0 && dibayar === 0) status = 'BELUM BAYAR';
-    }
-
-    // 🔥 BLOK KHUSUS JIKA STATUS BUKAN LUNAS
-    if (status !== 'LUNAS' && (sisa > 0 || status === 'BELUM BAYAR' || status === 'CICILAN')) {
-      
-      // Untuk CICILAN: tampilkan hutang awal & dibayar
-      if (dibayar > 0 && dibayar < total) {
-        var hutangAwalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(hutangAwal);
-        content.push({
-          type: 'text',
-          text: makeRow('Hutang Awal', hutangAwalFmt)
-        });
-        
-        var dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
-        content.push({
-          type: 'text',
-          text: makeRow('Dibayar', dibayarFmt)
-        });
-      }
-
-      // Selalu tampilkan SISA HUTANG
-      if (sisa > 0) {
-        var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisa);
-        content.push({
-          type: 'text',
-          text: makeRow('SISA HUTANG', sisaFmt),
-          bold: true
-        });
-      }
-
-      // Status
-      var statusLabel = status === 'CICILAN' ? 'CICILAN' : 'BELUM LUNAS';
+    // 🔹 Baris tambahan: nama yang di-wrap (indent 2 spasi)
+    for (var nl = 1; nl < namaLines.length; nl++) {
       content.push({
         type: 'text',
-        text: makeRow('Status', statusLabel),
-        bold: true
+        text: '  ' + namaLines[nl]
       });
+    }
 
-      // 🔥 PERINGATAN BESAR DI TENGAH
-      content.push({ type: 'divider' });
-      
-      if (status === 'CICILAN') {
-        content.push({
-          type: 'text',
-          text: '*** CICILAN ***',
-          align: 'center',
-          bold: true,
-          
-        });
-        content.push({
-          type: 'text',
-          text: 'Dibayar: Rp ' + new Intl.NumberFormat('id-ID').format(dibayar),
-          align: 'center'
-        });
-      } else {
-        content.push({
-          type: 'text',
-          text: '*** BELUM LUNAS ***',
-          align: 'center',
-          bold: true,
-          
-        });
-      }
+    // 🔹 Baris harga (TANPA @): "{harga} x {qty}" di kiri, subtotal di kanan
+    var hargaLine = hargaFmt + ' x ' + qty;
+    var spaceNeeded = hargaLine.length + subtotalFmt.length;
 
+    if (spaceNeeded + 1 > WIDTH) {
+      // ❌ Tidak muat 1 baris → harga di kiri, subtotal di baris berikut
       content.push({
         type: 'text',
-        text: 'Sisa Hutang: Rp ' + new Intl.NumberFormat('id-ID').format(sisa),
-        align: 'center',
-        bold: true
+        text: '  ' + hargaLine
       });
-
-      content.push({ type: 'divider' });
+      content.push({
+        type: 'text',
+        text: makeRow('', subtotalFmt)
+      });
+    } else {
+      // ✅ Muat 1 baris
+      content.push({
+        type: 'text',
+        text: makeRow('  ' + hargaLine, subtotalFmt)
+      });
     }
-    // Kalau LUNAS → tampilkan info pembayaran normal
-    else {
-      if (dibayar > 0 && dibayar <= total) {
-        var bayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
-        content.push({
-          type: 'text',
-          text: makeRow('Bayar', bayarFmt)
-        });
-      }
+  }
+}
 
-      var kembali = parseInt(header.Kembalian || header.kembalian || 0);
-      if (kembali > 0) {
-        var kembaliFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(kembali);
-        content.push({
-          type: 'text',
-          text: makeRow('Kembali', kembaliFmt)
-        });
-      }
-    }
+content.push({ type: 'divider' });
+
+// ===== TOTAL & PEMBAYARAN =====
+var total = parseInt(header.Total || header.total || grandTotal);
+var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+
+content.push({
+  type: 'text',
+  text: makeRow('TOTAL', totalFmt),
+  bold: true
+});
+
+// 🔥 AMBIL SEMUA FIELD HUTANG
+var statusRaw = String(header.Status || header.status || '').toUpperCase().trim();
+var dibayar = parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0);
+var sisa = parseInt(header.Sisa || header.sisa || 0);
+var hutangAwal = total - dibayar;
+
+// Tentukan status jika kosong
+var status = statusRaw;
+if (!status) {
+  if (sisa <= 0 && dibayar >= total && total > 0) status = 'LUNAS';
+  else if (sisa > 0 && dibayar > 0) status = 'CICILAN';
+  else if (sisa > 0 && dibayar === 0) status = 'BELUM BAYAR';
+}
+
+// 🔥 BLOK KHUSUS JIKA STATUS BUKAN LUNAS
+if (status !== 'LUNAS' && (sisa > 0 || status === 'BELUM BAYAR' || status === 'CICILAN')) {
+  
+  if (dibayar > 0 && dibayar < total) {
+    var hutangAwalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(hutangAwal);
+    content.push({
+      type: 'text',
+      text: makeRow('Hutang Awal', hutangAwalFmt)
+    });
+    
+    var dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
+    content.push({
+      type: 'text',
+      text: makeRow('Dibayar', dibayarFmt)
+    });
+  }
+
+  if (sisa > 0) {
+    var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisa);
+    content.push({
+      type: 'text',
+      text: makeRow('SISA HUTANG', sisaFmt),
+      bold: true
+    });
+  }
+
+  var statusLabel = status === 'CICILAN' ? 'CICILAN' : 'BELUM LUNAS';
+  content.push({
+    type: 'text',
+    text: makeRow('Status', statusLabel),
+    bold: true
+  });
+
+  content.push({ type: 'divider' });
+  
+  if (status === 'CICILAN') {
+    content.push({
+      type: 'text',
+      text: '*** CICILAN ***',
+      align: 'center',
+      bold: true
+    });
+    content.push({
+      type: 'text',
+      text: 'Dibayar: Rp ' + new Intl.NumberFormat('id-ID').format(dibayar),
+      align: 'center'
+    });
+  } else {
+    content.push({
+      type: 'text',
+      text: '*** BELUM LUNAS ***',
+      align: 'center',
+      bold: true
+    });
+  }
+
+  content.push({
+    type: 'text',
+    text: 'Sisa Hutang: Rp ' + new Intl.NumberFormat('id-ID').format(sisa),
+    align: 'center',
+    bold: true
+  });
+
+  content.push({ type: 'divider' });
+}
+else {
+  if (dibayar > 0 && dibayar <= total) {
+    var bayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
+    content.push({
+      type: 'text',
+      text: makeRow('Bayar', bayarFmt)
+    });
+  }
+
+  var kembali = parseInt(header.Kembalian || header.kembalian || 0);
+  if (kembali > 0) {
+    var kembaliFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(kembali);
+    content.push({
+      type: 'text',
+      text: makeRow('Kembali', kembaliFmt)
+    });
+  }
+}
 
     // ===== FOOTER =====
     content.push({
