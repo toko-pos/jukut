@@ -4550,8 +4550,6 @@ else {
   }
 }
 
-
-
 // ===== FOOTER =====
 content.push({
   type: 'text',
@@ -4564,23 +4562,12 @@ content.push({
   text: 'Barang tidak dapat ditukar',
   align: 'center'
 });
-
-// Mengirimkan kode perintah pemotongan langsung tanpa feed berlebih
-// Format Hex '1d5601' merupakan standar ESC/POS perintah (GS V m) untuk memotong kertas langsung
-content.push({
-  type: 'raw',
-  value: '1d5601' 
-});
-
 var payload = {
+  //  cut: true,
   content: content
-};
-
+};  
 console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
 
-
-
-  
 
 var response = await fetch('http://localhost:9100/print', {
   method: 'POST',
