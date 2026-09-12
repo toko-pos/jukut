@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyTgz1w40xoAWKgO54YFMZrDHjuX0o963N4pY6toVPkRIoicJqe5GD-gSd7FooBp4Ddhw/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwuO0vYtslAm1QC4Qyi_GKxszPlegsXMxrWL0emmFMpUk-XlHi-gkn99BkYyT0uvFp1og/exec';
   </script>
 
   <style>
@@ -4042,7 +4042,7 @@ async function cetakViaCleanter(idTransaksi) {
   try {
     showToast('⏳ Menyiapkan cetak...', 'info');
 
-    // 🔥 CEK CACHE DULU
+    // 🔥 PERBAIKAN 1: Ambil field hutang dari cache
     var cachedHeader = null;
     var cachedDetail = null;
     
@@ -4060,7 +4060,14 @@ async function cetakViaCleanter(idTransaksi) {
           Total: cachedData.total,
           Pembayaran: cachedData.pembayaran,
           Kembalian: cachedData.kembalian,
-          'Nama Pembeli': cachedData.namaPembeli
+          'Nama Pembeli': cachedData.namaPembeli,
+          // 🔥 FIELD HUTANG/CICILAN:
+          Status: cachedData.status,
+          Dibayar: cachedData.dibayar,
+          Sisa: cachedData.sisa,
+          isReseller: cachedData.isReseller,
+          KodeReseller: cachedData.kodeReseller,
+          NamaReseller: cachedData.namaReseller
         };
         
         cachedDetail = [];
@@ -4078,7 +4085,6 @@ async function cetakViaCleanter(idTransaksi) {
       }
     }
 
-    // 🔥 JALANKAN PARALEL
     var headerPromise = cachedHeader 
       ? Promise.resolve({ success: true, data: cachedHeader })
       : callGAS('getTransaksiById', { idTransaksi: idTransaksi });
@@ -4134,6 +4140,7 @@ async function cetakViaCleanter(idTransaksi) {
 
     var content = [];
 
+    // ===== HEADER TOKO =====
     content.push({
       type: 'text',
       text: infoToko.namaToko || 'POS SYSTEM',
@@ -4203,6 +4210,7 @@ async function cetakViaCleanter(idTransaksi) {
 
     content.push({ type: 'divider' });
 
+    // ===== DETAIL PRODUK =====
     var grandTotal = 0;
     if (detail && detail.length > 0) {
       for (var idx = 0; idx < detail.length; idx++) {
@@ -4234,6 +4242,7 @@ async function cetakViaCleanter(idTransaksi) {
 
     content.push({ type: 'divider' });
 
+    // ===== TOTAL & PEMBAYARAN =====
     var total = parseInt(header.Total || header.total || grandTotal);
     var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
 
@@ -4243,26 +4252,125 @@ async function cetakViaCleanter(idTransaksi) {
       bold: true
     });
 
-    var bayar = parseInt(header.Pembayaran || header.pembayaran || 0);
-    if (bayar > 0) {
-      var bayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(bayar);
+    // 🔥 PERBAIKAN 2: Ambil semua field hutang
+    var statusRaw = String(header.Status || header.status || '').toUpperCase().trim();
+    var dibayar = parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0);
+    var sisa = parseInt(header.Sisa || header.sisa || 0);
+    var isReseller = !!(header.isReseller || header.IsReseller);
+    var kodeReseller = String(header.KodeReseller || header.kodeReseller || '');
+    var namaReseller = String(header.NamaReseller || header.namaReseller || '');
+
+    // Hitung hutang awal (jika belum ada field Sisa)
+    var hutangAwal = total - dibayar;
+
+    // Tentukan status jika kosong: cek dari data
+    var status = statusRaw;
+    if (!status && isReseller) {
+      if (sisa <= 0 && dibayar >= total) status = 'LUNAS';
+      else if (sisa > 0 && dibayar > 0) status = 'CICILAN';
+      else if (sisa > 0 && dibayar === 0) status = 'BELUM BAYAR';
+    }
+
+    // Tampilkan info reseller
+    if (isReseller && namaReseller) {
       content.push({
         type: 'text',
-        text: makeRow('Bayar', bayarFmt)
+        text: makeRow('Reseller', ': ' + namaReseller)
       });
     }
 
-    var kembali = parseInt(header.Kembalian || header.kembalian || 0);
-    if (kembali > 0) {
-      var kembaliFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(kembali);
+    // 🔥 PERBAIKAN 3: BLOK KHUSUS JIKA STATUS BUKAN LUNAS
+    if (status !== 'LUNAS' && (sisa > 0 || status === 'BELUM BAYAR' || status === 'CICILAN')) {
+      
+      // Jika ada pembayaran sebagian (CICILAN)
+      if (dibayar > 0 && dibayar < total) {
+        var hutangAwalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(hutangAwal);
+        content.push({
+          type: 'text',
+          text: makeRow('Hutang Awal', hutangAwalFmt)
+        });
+        
+        var dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
+        content.push({
+          type: 'text',
+          text: makeRow('Dibayar', dibayarFmt)
+        });
+      }
+
+      // Tampilkan SISA HUTANG (selalu jika sisa > 0)
+      if (sisa > 0) {
+        var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisa);
+        content.push({
+          type: 'text',
+          text: makeRow('SISA HUTANG', sisaFmt),
+          bold: true
+        });
+      }
+
+      // Tampilkan STATUS
+      var statusLabel = status === 'CICILAN' ? 'CICILAN' : 'BELUM LUNAS';
       content.push({
         type: 'text',
-        text: makeRow('Kembali', kembaliFmt)
+        text: makeRow('Status', statusLabel),
+        bold: true
       });
+
+      // 🔥 PERINGATAN BESAR
+      content.push({ type: 'divider' });
+      
+      if (status === 'CICILAN') {
+        content.push({
+          type: 'text',
+          text: '*** CICILAN ***',
+          align: 'center',
+          bold: true,
+          size: 'large'
+        });
+        content.push({
+          type: 'text',
+          text: 'Dibayar: Rp ' + new Intl.NumberFormat('id-ID').format(dibayar),
+          align: 'center'
+        });
+      } else {
+        content.push({
+          type: 'text',
+          text: '*** BELUM LUNAS ***',
+          align: 'center',
+          bold: true,
+          size: 'large'
+        });
+      }
+
+      content.push({
+        type: 'text',
+        text: 'Sisa Hutang: Rp ' + new Intl.NumberFormat('id-ID').format(sisa),
+        align: 'center',
+        bold: true
+      });
+
+      content.push({ type: 'divider' });
+    }
+    // Jika LUNAS, tampilkan info pembayaran normal
+    else {
+      if (dibayar > 0 && dibayar <= total) {
+        var bayarFmt2 = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
+        content.push({
+          type: 'text',
+          text: makeRow('Bayar', bayarFmt2)
+        });
+      }
+
+      var kembali = parseInt(header.Kembalian || header.kembalian || 0);
+      if (kembali > 0) {
+        var kembaliFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(kembali);
+        content.push({
+          type: 'text',
+          text: makeRow('Kembali', kembaliFmt)
+        });
+      }
     }
 
-    content.push({ type: 'divider' });
-
+    // ===== FOOTER =====
     content.push({
       type: 'text',
       text: 'TERIMA KASIH',
