@@ -4193,7 +4193,7 @@ async function cetakViaCleanter(idTransaksi) {
   var t0 = performance.now();
 
     // 🔥 KONFIGURASI JARAK POTONG
-  var CUT_FEED_MM = 1;
+  var CUT_FEED_MM = 4;
   var USE_CUSTOM_CUT = true;
   
   if (!idTransaksi) {
@@ -4566,7 +4566,6 @@ content.push({
   text: 'Barang tidak dapat ditukar',
   align: 'center'
 });
-
 var payload = {
   cut: true,
   content: content
