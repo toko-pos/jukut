@@ -11947,16 +11947,26 @@ function initScanner() {
     html5QrCode.start(
       { facingMode: currentFacingMode },
       config,
-          html5QrCode.start(
-      { facingMode: currentFacingMode },
-      config,
       function(decodedText) {
         var found = false;
         for (var i = 0; i < produkList.length; i++) {
           var p = produkList[i];
           if (p.Kode === decodedText || p['Nama Produk'] === decodedText) {
-            if (scannerMode === "STOK") addToStokCart(p.Kode);
-            else addToCart(p.Kode);
+            // 🔥 SET FLAG agar prosesAddToCart tidak mainkan suara (kita mainkan manual)
+            _isFromScanner = true;
+            
+            if (scannerMode === "STOK") {
+              addToStokCart(p.Kode);
+            } else {
+              addToCart(p.Kode);
+            }
+            
+            // 🔥 Reset flag
+            _isFromScanner = false;
+            
+            // 🔥 MAINKAN SUARA LOUD khusus scan
+            playScanSoundIfEnabled();
+            
             found = true;
             showToast('✅ ' + p['Nama Produk'] + (scannerMode === "STOK" ? ' ditambahkan ke Stok Masuk!' : ' ditambahkan ke POS!'), 'success');
             if (html5QrCode && isScanning) {
@@ -11967,6 +11977,9 @@ function initScanner() {
           }
         }
         if (!found) {
+          // 🔥 Mainkan suara error kalau barcode tidak ditemukan
+          playErrorSoundIfEnabled();
+          
           showToast('⚠️ Produk dengan kode "' + decodedText + '" tidak ditemukan!', 'error');
           var manualInput = document.getElementById('scannerManualInput');
           if (manualInput) { manualInput.value = decodedText; manualInput.focus(); }
@@ -11976,9 +11989,9 @@ function initScanner() {
           }
         }
       },
-      function(error) {}
-    ).then(function() {
-      function(error) {}
+      function(error) {
+        // Callback error scanning — silent (biasanya noise frame)
+      }
     ).then(function() {
       scannerStarted = true;
       isScanning = true;
@@ -12013,7 +12026,6 @@ function initScanner() {
     showToast('❌ Error: ' + (e.message || 'Unknown error'), 'error');
   }
 }
-
 function stopScanner() {
   if (html5QrCode && scannerStarted) stopScannerInternal();
   var modal = document.getElementById('scannerModal');
