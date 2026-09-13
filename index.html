@@ -4186,6 +4186,172 @@ async function isCleanterAvailableCached() {
   return result;
 }
 
+
+// ============================================================
+// 🔥 HELPER: QR CODE WHATSAPP FOOTER UNTUK CLEANTER
+// (No. WA diambil dari kolom "No Telepon" di sheet User)
+// ============================================================
+var QR_WA_MESSAGE = 'Halo, saya mau pesan Bayam Tabur lagi';
+
+// Cache no. WA per username
+var _waNumberCache = {};
+var _waNumberFetchPromise = {};
+
+/**
+ * Normalisasi nomor HP ke format internasional (628xxx)
+ * Handle berbagai format input
+ */
+function normalizeWaNumber(noHp) {
+  if (!noHp) return '';
+  
+  var cleaned = String(noHp).replace(/[^0-9]/g, '');
+  if (!cleaned) return '';
+  
+  // Handle berbagai format
+  if (cleaned.indexOf('62') === 0) {
+    // 6281218263563 → biarkan
+    return cleaned;
+  }
+  if (cleaned.indexOf('0') === 0) {
+    // 081218263563 → 6281218263563
+    return '62' + cleaned.substring(1);
+  }
+  if (cleaned.indexOf('8') === 0) {
+    // 81218263563 → 6281218263563
+    return '62' + cleaned;
+  }
+  
+  // Fallback: asumsikan sudah internasional
+  return cleaned;
+}
+
+/**
+ * Format nomor untuk display: 6281218263563 → +62 812-1826-3563
+ */
+function formatWaDisplay(waNumber) {
+  if (!waNumber) return '';
+  
+  var s = String(waNumber);
+  if (s.indexOf('62') === 0) {
+    var rest = s.substring(2);
+    if (rest.length >= 9) {
+      return '+62 ' + rest.substring(0, 3) + '-' + 
+             rest.substring(3, 7) + '-' + 
+             rest.substring(7);
+    }
+    return '+62 ' + rest;
+  }
+  return '+' + s;
+}
+
+/**
+ * Ambil no. WA milik user yang sedang login.
+ * Sumber: kolom "No Telepon" di sheet User.
+ */
+function getWaNumberUser(callback) {
+  var username = (currentUser && currentUser.username) ? currentUser.username : '';
+  
+  if (!username) {
+    callback('', '');
+    return;
+  }
+  
+  // Cek cache dulu
+  if (_waNumberCache[username] !== undefined) {
+    var cached = _waNumberCache[username];
+    callback(cached.number, cached.display);
+    return;
+  }
+  
+  // Kalau sedang fetch, tunggu
+  if (_waNumberFetchPromise[username]) {
+    _waNumberFetchPromise[username].then(function(data) {
+      callback(data.number, data.display);
+    }).catch(function() {
+      callback('', '');
+    });
+    return;
+  }
+  
+  // Fetch dari GAS
+  _waNumberFetchPromise[username] = callGAS('getUserNoHp', { username: username })
+    .then(function(result) {
+      var rawNoHp = '';
+      
+      if (result && result.success && result.data) {
+        // 🔥 Ambil dari field yang sesuai dengan sheet User
+        rawNoHp = result.data.noTelepon || 
+                  result.data['No Telepon'] || 
+                  result.data.noHp || 
+                  result.data['No HP'] || 
+                  '';
+      }
+      
+      var waNumber = normalizeWaNumber(rawNoHp);
+      var waDisplay = waNumber ? formatWaDisplay(waNumber) : '';
+      
+      var data = { number: waNumber, display: waDisplay };
+      _waNumberCache[username] = data;
+      delete _waNumberFetchPromise[username];
+      
+      console.log('📱 WA user ' + username + ':', waNumber || '(kosong)');
+      
+      return data;
+    })
+    .catch(function(error) {
+      console.error('❌ Gagal ambil no. WA user:', error);
+      delete _waNumberFetchPromise[username];
+      return { number: '', display: '' };
+    });
+  
+  _waNumberFetchPromise[username].then(function(data) {
+    callback(data.number, data.display);
+  }).catch(function() {
+    callback('', '');
+  });
+}
+
+/**
+ * Tambah QR Footer WhatsApp ke content Cleanter.
+ * Kalau user tidak punya no. HP → skip (tidak ditambahkan).
+ */
+function tambahQRFooterCleanter(content, callback) {
+  getWaNumberUser(function(waNumber, waDisplay) {
+    // ❌ Kalau kosong, skip QR
+    if (!waNumber) {
+      console.log('⚠️ User tidak punya no. HP, QR footer di-skip');
+      if (typeof callback === 'function') callback();
+      return;
+    }
+    
+    // ✅ Ada no. HP → tambahkan QR
+    var waUrl = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(QR_WA_MESSAGE);
+    
+    content.push({
+      type: 'qr',
+      data: waUrl,
+      size: 5,
+      align: 'center'
+    });
+    content.push({
+      type: 'text',
+      text: 'Pesan via WhatsApp',
+      align: 'center',
+      size: 'small'
+    });
+    content.push({
+      type: 'text',
+      text: waDisplay,
+      align: 'center',
+      size: 'small'
+    });
+    
+    if (typeof callback === 'function') callback();
+  });
+}
+  
+
+  
 // ============================================================
 // 🔥 CETAK VIA CLEANTER (OPTIMIZED)
 // ============================================================
@@ -4562,6 +4728,10 @@ content.push({
   text: 'Barang tidak dapat ditukar',
   align: 'center'
 });
+
+
+tambahQRFooterCleanter(content);
+  
 
 // 🔥 TAMBAHKAN BARIS INI — feed di paling akhir
 content.push({ type: 'feed' });
@@ -7972,6 +8142,10 @@ html += '</div>';
       align: 'center',
       bold: true
     });
+
+
+ tambahQRFooterCleanter(content);
+
     
     content.push({ type: 'feed' });
 
@@ -9869,6 +10043,8 @@ content.push({
       align: 'center'
     });
 
+ tambahQRFooterCleanter(content);
+
     content.push({ type: 'feed' });
 
     var payload = {
@@ -10808,11 +10984,13 @@ async function cetakNotaPembayaranVendorThermal() {
       align: 'center',
       bold: true
     });
+
+  tambahQRFooterCleanter(content);
+
     
     content.push({ type: 'feed' });
     
     var payload = {
-      cut: true,
       content: content
     };
     
@@ -11172,11 +11350,13 @@ async function cetakRiwayatVendorThermal(noNota) {
       align: 'center',
       bold: true
     });
+
+    tambahQRFooterCleanter(content);
+
     
     content.push({ type: 'feed' });
     
     var payload = {
-      cut: true,
       content: content
     };
     
