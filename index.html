@@ -4730,7 +4730,10 @@ content.push({
 });
 
 
-tambahQRFooterCleanter(content);
+// 🔥 Tunggu QR selesai
+await new Promise(function(resolve) {
+  tambahQRFooterCleanter(content, resolve);
+});
   
 
 // 🔥 TAMBAHKAN BARIS INI — feed di paling akhir
@@ -8144,7 +8147,10 @@ html += '</div>';
     });
 
 
- tambahQRFooterCleanter(content);
+ // 🔥 Tunggu QR selesai
+await new Promise(function(resolve) {
+  tambahQRFooterCleanter(content, resolve);
+});
 
     
     content.push({ type: 'feed' });
@@ -10043,7 +10049,10 @@ content.push({
       align: 'center'
     });
 
- tambahQRFooterCleanter(content);
+ // 🔥 Tunggu QR selesai
+await new Promise(function(resolve) {
+  tambahQRFooterCleanter(content, resolve);
+});
 
     content.push({ type: 'feed' });
 
@@ -10985,7 +10994,10 @@ async function cetakNotaPembayaranVendorThermal() {
       bold: true
     });
 
-  tambahQRFooterCleanter(content);
+  // 🔥 Tunggu QR selesai
+await new Promise(function(resolve) {
+  tambahQRFooterCleanter(content, resolve);
+});
 
     
     content.push({ type: 'feed' });
@@ -11351,7 +11363,10 @@ async function cetakRiwayatVendorThermal(noNota) {
       bold: true
     });
 
-    tambahQRFooterCleanter(content);
+    // 🔥 Tunggu QR selesai
+await new Promise(function(resolve) {
+  tambahQRFooterCleanter(content, resolve);
+});
 
     
     content.push({ type: 'feed' });
