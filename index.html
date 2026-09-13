@@ -3534,6 +3534,53 @@ function showLogin() {
   document.getElementById('registerForm').style.display = 'none';
 }
 
+  
+
+  // ============================================================
+// 🔥 UNLOCK AUDIOCONTEXT (atasi autoplay policy browser)
+// ============================================================
+// Panggil fungsi ini pada interaksi user pertama (klik/tap tab)
+// Setelah unlocked, AudioContext bisa bunyi kapan saja
+
+var _audioUnlocked = false;
+
+function unlockAudio() {
+  if (_audioUnlocked) return;
+  
+  try {
+    var ctx = _ensureAudioCtx();
+    if (!ctx) return;
+    
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(function() {
+        _audioUnlocked = true;
+        console.log('🔊 AudioContext unlocked');
+      }).catch(function(e) {
+        console.warn('⚠️ Gagal unlock audio:', e);
+      });
+    } else {
+      _audioUnlocked = true;
+      console.log('🔊 AudioContext sudah aktif');
+    }
+    
+    // Trick: mainkan "silent beep" 1ms untuk paksa unlock
+    // (beberapa browser butuh ini)
+    var now = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.01);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.01);
+    
+  } catch (e) {
+    console.warn('⚠️ Error unlock audio:', e);
+  }
+}
+
+  
 // ============================================================
 // 🔥 FUNGSI PANGGIL GAS VIA FETCH
 // ============================================================
@@ -5047,6 +5094,129 @@ var _isProcessingStok = false;
 var allRiwayatStokData = [];
 
 // ============================================================
+// 🔥 FUNGSI SUARA KLIK (BEEP) SAAT PRODUK MASUK KERANJANG
+// ============================================================
+
+var _audioCtx = null;
+
+/**
+ * Mainkan bunyi "beep" pendek menggunakan Web Audio API
+ * Tidak perlu file audio eksternal, langsung generate tone
+ */
+function playClickSound() {
+  try {
+    // Buat AudioContext sekali saja (lazy init)
+    if (!_audioCtx) {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    // Resume kalau suspended (kebijakan browser)
+    if (_audioCtx.state === 'suspended') {
+      _audioCtx.resume();
+    }
+
+    var now = _audioCtx.currentTime;
+
+    // Oscillator untuk tone utama (frekuensi 880 Hz = nada A5, terdengar "ting")
+    var osc = _audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
+
+    // Gain node untuk atur volume + envelope (biar tidak "pop")
+    var gain = _audioCtx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.3, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+
+    osc.connect(gain);
+    gain.connect(_audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.15);
+
+  } catch (e) {
+    // Silent fail - jangan ganggu UX kalau browser tidak support
+    console.warn('⚠️ Gagal mainkan suara:', e);
+  }
+}
+
+/**
+ * Alternatif: suara "klik" lebih tegas (2 tone)
+ */
+function playClickSoundDouble() {
+  try {
+    if (!_audioCtx) {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (_audioCtx.state === 'suspended') {
+      _audioCtx.resume();
+    }
+
+    var now = _audioCtx.currentTime;
+
+    // Tone 1: tinggi
+    var osc1 = _audioCtx.createOscillator();
+    osc1.type = 'square';
+    osc1.frequency.setValueAtTime(1000, now);
+    var gain1 = _audioCtx.createGain();
+    gain1.gain.setValueAtTime(0.0001, now);
+    gain1.gain.exponentialRampToValueAtTime(0.15, now + 0.005);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+    osc1.connect(gain1);
+    gain1.connect(_audioCtx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.08);
+
+    // Tone 2: lebih tinggi, delay 60ms
+    var osc2 = _audioCtx.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(1400, now + 0.06);
+    var gain2 = _audioCtx.createGain();
+    gain2.gain.setValueAtTime(0.0001, now + 0.06);
+    gain2.gain.exponentialRampToValueAtTime(0.15, now + 0.065);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+    osc2.connect(gain2);
+    gain2.connect(_audioCtx.destination);
+    osc2.start(now + 0.06);
+    osc2.stop(now + 0.15);
+
+  } catch (e) {
+    console.warn('⚠️ Gagal mainkan suara:', e);
+  }
+}
+
+/**
+ * Getter: apakah suara aktif?
+ * Bisa disimpan di localStorage biar user bisa toggle on/off
+ */
+function isSoundEnabled() {
+  try {
+    var pref = localStorage.getItem('pos_sound_enabled');
+    if (pref === null) return true; // default ON
+    return pref === 'true';
+  } catch (e) {
+    return true;
+  }
+}
+
+function setSoundEnabled(enabled) {
+  try {
+    localStorage.setItem('pos_sound_enabled', enabled ? 'true' : 'false');
+  } catch (e) {}
+}
+
+/**
+ * Wrapper: mainkan suara kalau diaktifkan
+ */
+function playSoundIfEnabled() {
+  if (isSoundEnabled()) {
+    playClickSound();
+  }
+}
+
+  
+// ============================================================
 // 🔥 DETEKSI PLATFORM — UNTUK KONDISIONAL TOMBOL CETAK THERMAL
 // ============================================================
 function isMobileDevice() {
@@ -5653,6 +5823,9 @@ document.getElementById('formLogin').addEventListener('submit', function(e) {
     
     if (result.success) {
       currentUser = result.user;
+
+    // 🔥 UNLOCK AUDIO saat login berhasil (user gesture = klik tombol Login)
+      unlockAudio();
       
       clearHargaCache();
       transaksiCacheForPrint = {};
@@ -6195,6 +6368,10 @@ function loadBatchCache() {
 }
 
 function showPage(page) {
+
+// 🔥 UNLOCK AUDIO saat user klik tab apapun
+  unlockAudio();
+  
   if (page === 'reseller') {
     var role = currentUser ? currentUser.role.toUpperCase() : '';
     
@@ -6924,6 +7101,10 @@ function prosesAddToCart(produk, kode, harga, existing) {
   
   updateCartDisplay();
   updateStokGridPOS();
+
+// 🔥 TAMBAHKAN BARIS INI - mainkan suara klik
+  playSoundIfEnabled();
+  
   showToast(produk['Nama Produk'] + ' ditambahkan', 'success');
 }
 
@@ -7286,6 +7467,10 @@ function addToStokCart(kode) {
     });
   }
   updateStokCartDisplay();
+
+  // 🔥 TAMBAHKAN BARIS INI - mainkan suara klik
+  playSoundIfEnabled();
+  
   showToast(produk['Nama Produk'] + ' ditambahkan ke keranjang pembelian');
 }
 
@@ -11450,6 +11635,10 @@ function initScanner() {
           }
         }
         if (!found) {
+
+          // 🔥 TAMBAHKAN BARIS INI - mainkan suara klik
+        playSoundIfEnabled();
+          
           showToast('⚠️ Produk dengan kode "' + decodedText + '" tidak ditemukan!', 'error');
           var manualInput = document.getElementById('scannerManualInput');
           if (manualInput) { manualInput.value = decodedText; manualInput.focus(); }
@@ -14024,6 +14213,30 @@ function exportPiutangResellerCSV() {
   
   document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 })();
+
+
+// ============================================================
+// 🔥 UNLOCK AUDIO PADA INTERAKSI PERTAMA (FALLBACK)
+// ============================================================
+// Ini sebagai jaring pengaman kalau user pertama interaksi
+// bukan di tab POS / tombol Login
+
+(function() {
+  var handler = function() {
+    unlockAudio();
+    // Hapus listener setelah pertama kali
+    document.removeEventListener('click', handler);
+    document.removeEventListener('touchstart', handler);
+    document.removeEventListener('keydown', handler);
+  };
+  
+  document.addEventListener('click', handler, { once: true });
+  document.addEventListener('touchstart', handler, { once: true });
+  document.addEventListener('keydown', handler, { once: true });
+})();
+
+
+  
 </script>
 
 
