@@ -841,7 +841,19 @@ function getInfoTokoSync() {
     .cart-item .item-info img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background: #f0f0f0; }
     .cart-item .item-info .no-image-small { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: var(--gray); border-radius: 8px; font-size: 1.5rem; flex-shrink: 0; }
     .cart-item .item-detail { flex: 1; min-width: 0; }
-    .cart-item .item-detail .item-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cart-item .item-detail .item-name { 
+  font-weight: 600; 
+  font-size: 0.95rem; 
+  white-space: normal;           /* ← biarkan multi-baris */
+  overflow: visible;             /* ← jangan potong */
+  text-overflow: clip;           /* ← hilangkan ellipsis */
+  word-break: break-word;        /* ← pecah kata panjang */
+  line-height: 1.3;              /* ← rapat tapi enak dibaca */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;         /* ← maksimal 2 baris */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
     .cart-item .item-detail .item-price { font-size: 0.85rem; color: var(--primary); font-weight: 500; }
     .cart-item .qty-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .cart-item .qty-control button { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); background: white; cursor: pointer; font-size: 1.3rem; font-weight: bold; transition: all 0.3s; display: flex; align-items: center; justify-content: center; color: var(--dark); }
