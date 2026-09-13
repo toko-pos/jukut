@@ -5092,104 +5092,354 @@ var chartColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F
 var _isProcessingPayment = false;
 var _isProcessingStok = false;
 var allRiwayatStokData = [];
+var _isFromScanner = false; // 🔥 flag untuk cegah suara dobel saat scan
 
 // ============================================================
-// 🔥 FUNGSI SUARA KLIK (BEEP) SAAT PRODUK MASUK KERANJANG
+// 🔥 FUNGSI SUARA KASIR MINIMARKET (BEEP SCANNER)
+// ============================================================
+// Karakteristik suara:
+// - Waveform: square (tajam, khas mesin kasir)
+// - Frekuensi: 2000 Hz (nyaring, mirip scanner Indomaret/Alfamart)
+// - Durasi: 90ms (pendek, tegas)
+// - 2 oscillator (2000 + 3000 Hz) → suara lebih "full" & keras
+// - Compressor → cegah clipping, suara lebih padat
+// - Master Gain → kontrol volume global
 // ============================================================
 
 var _audioCtx = null;
+var _masterGain = null;
+var _audioUnlocked = false;
 
-/**
- * Mainkan bunyi "beep" pendek menggunakan Web Audio API
- * Tidak perlu file audio eksternal, langsung generate tone
- */
-function playClickSound() {
-  try {
-    // Buat AudioContext sekali saja (lazy init)
-    if (!_audioCtx) {
+// ============================================================
+// 🔥 INISIALISASI AUDIOCONTEXT
+// ============================================================
+function _ensureAudioCtx() {
+  if (!_audioCtx) {
+    try {
       _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // Master Gain untuk kontrol volume global
+      _masterGain = _audioCtx.createGain();
+      _masterGain.gain.value = 1.0;
+      _masterGain.connect(_audioCtx.destination);
+
+      console.log('🔊 AudioContext dibuat, state:', _audioCtx.state);
+    } catch (e) {
+      console.warn('⚠️ Web Audio API tidak didukung:', e);
+      return null;
+    }
+  }
+
+  // Resume kalau suspended
+  if (_audioCtx.state === 'suspended') {
+    _audioCtx.resume().then(function() {
+      console.log('🔊 AudioContext resumed');
+    }).catch(function(e) {
+      console.warn('⚠️ Gagal resume AudioContext:', e);
+    });
+  }
+
+  return _audioCtx;
+}
+
+// ============================================================
+// 🔥 UNLOCK AUDIOCONTEXT (atasi autoplay policy browser)
+// ============================================================
+// Panggil fungsi ini pada interaksi user pertama (klik/tap tab)
+// Setelah unlocked, AudioContext bisa bunyi kapan saja
+function unlockAudio() {
+  if (_audioUnlocked) return;
+
+  try {
+    var ctx = _ensureAudioCtx();
+    if (!ctx) return;
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(function() {
+        _audioUnlocked = true;
+        console.log('🔊 AudioContext unlocked');
+      }).catch(function(e) {
+        console.warn('⚠️ Gagal unlock audio:', e);
+      });
+    } else {
+      _audioUnlocked = true;
+      console.log('🔊 AudioContext sudah aktif');
     }
 
-    // Resume kalau suspended (kebijakan browser)
-    if (_audioCtx.state === 'suspended') {
-      _audioCtx.resume();
-    }
-
-    var now = _audioCtx.currentTime;
-
-    // Oscillator untuk tone utama (frekuensi 880 Hz = nada A5, terdengar "ting")
-    var osc = _audioCtx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, now);
-    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
-
-    // Gain node untuk atur volume + envelope (biar tidak "pop")
-    var gain = _audioCtx.createGain();
+    // Trick: mainkan "silent beep" untuk paksa unlock
+    // (beberapa browser butuh ini)
+    var now = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.3, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
-
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.01);
     osc.connect(gain);
-    gain.connect(_audioCtx.destination);
-
+    gain.connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.15);
+    osc.stop(now + 0.01);
 
   } catch (e) {
-    // Silent fail - jangan ganggu UX kalau browser tidak support
-    console.warn('⚠️ Gagal mainkan suara:', e);
+    console.warn('⚠️ Error unlock audio:', e);
   }
 }
 
-/**
- * Alternatif: suara "klik" lebih tegas (2 tone)
- */
-function playClickSoundDouble() {
+// ============================================================
+// 🔥 SUARA SCANNER KASIR — VERSI NORMAL
+// ============================================================
+// Untuk klik produk manual di POS / Stok
+// Volume: 0.45 (medium-keras)
+// Durasi: 90ms
+function playClickSound() {
+  var ctx = _ensureAudioCtx();
+  if (!ctx) return;
+
   try {
-    if (!_audioCtx) {
-      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (_audioCtx.state === 'suspended') {
-      _audioCtx.resume();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
     }
 
-    var now = _audioCtx.currentTime;
+    var now = ctx.currentTime;
+    var duration = 0.09; // 90ms
+    var volume = 0.45;   // volume normal
 
-    // Tone 1: tinggi
-    var osc1 = _audioCtx.createOscillator();
+    // Compressor — cegah suara pecah & bikin lebih "padat"
+    var compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-20, now);
+    compressor.knee.setValueAtTime(10, now);
+    compressor.ratio.setValueAtTime(12, now);
+    compressor.attack.setValueAtTime(0, now);
+    compressor.release.setValueAtTime(0.1, now);
+    compressor.connect(_masterGain);
+
+    // Oscillator 1: Tone utama 2000 Hz
+    var osc1 = ctx.createOscillator();
     osc1.type = 'square';
-    osc1.frequency.setValueAtTime(1000, now);
-    var gain1 = _audioCtx.createGain();
-    gain1.gain.setValueAtTime(0.0001, now);
-    gain1.gain.exponentialRampToValueAtTime(0.15, now + 0.005);
-    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
-    osc1.connect(gain1);
-    gain1.connect(_audioCtx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.08);
+    osc1.frequency.setValueAtTime(2000, now);
 
-    // Tone 2: lebih tinggi, delay 60ms
-    var osc2 = _audioCtx.createOscillator();
+    var gain1 = ctx.createGain();
+    gain1.gain.setValueAtTime(volume, now);
+    gain1.gain.setValueAtTime(volume, now + duration - 0.02);
+    gain1.gain.linearRampToValueAtTime(0, now + duration);
+
+    osc1.connect(gain1);
+    gain1.connect(compressor);
+
+    // Oscillator 2: Harmonic 3000 Hz (bikin lebih nyaring)
+    var osc2 = ctx.createOscillator();
     osc2.type = 'square';
-    osc2.frequency.setValueAtTime(1400, now + 0.06);
-    var gain2 = _audioCtx.createGain();
-    gain2.gain.setValueAtTime(0.0001, now + 0.06);
-    gain2.gain.exponentialRampToValueAtTime(0.15, now + 0.065);
-    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+    osc2.frequency.setValueAtTime(3000, now);
+
+    var gain2 = ctx.createGain();
+    gain2.gain.setValueAtTime(volume * 0.6, now);
+    gain2.gain.setValueAtTime(volume * 0.6, now + duration - 0.02);
+    gain2.gain.linearRampToValueAtTime(0, now + duration);
+
     osc2.connect(gain2);
-    gain2.connect(_audioCtx.destination);
-    osc2.start(now + 0.06);
-    osc2.stop(now + 0.15);
+    gain2.connect(compressor);
+
+    // Start & stop
+    osc1.start(now);
+    osc1.stop(now + duration);
+    osc2.start(now);
+    osc2.stop(now + duration);
+
+    // Cleanup
+    setTimeout(function() {
+      try {
+        osc1.disconnect();
+        osc2.disconnect();
+        gain1.disconnect();
+        gain2.disconnect();
+        compressor.disconnect();
+      } catch (e) {}
+    }, (duration + 0.1) * 1000);
 
   } catch (e) {
     console.warn('⚠️ Gagal mainkan suara:', e);
   }
 }
 
-/**
- * Getter: apakah suara aktif?
- * Bisa disimpan di localStorage biar user bisa toggle on/off
- */
+// ============================================================
+// 🔥 SUARA SCANNER KASIR — VERSI LOUD (KHUSUS SCAN)
+// ============================================================
+// Untuk scan barcode — lebih keras dari klik manual
+// Volume: 0.7 (keras)
+// Durasi: 120ms
+// Frekuensi: 2200 + 3300 Hz (lebih tinggi = lebih nyaring)
+function playClickSoundLoud() {
+  var ctx = _ensureAudioCtx();
+  if (!ctx) return;
+
+  try {
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    var now = ctx.currentTime;
+    var duration = 0.12; // 120ms — sedikit lebih panjang
+    var volume = 0.7;    // SANGAT KERAS untuk scan
+
+    // Compressor lebih agresif untuk suara yang lebih padat
+    var compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-15, now);
+    compressor.knee.setValueAtTime(5, now);
+    compressor.ratio.setValueAtTime(15, now);
+    compressor.attack.setValueAtTime(0, now);
+    compressor.release.setValueAtTime(0.1, now);
+    compressor.connect(_masterGain);
+
+    // Oscillator 1: Tone utama 2200 Hz
+    var osc1 = ctx.createOscillator();
+    osc1.type = 'square';
+    osc1.frequency.setValueAtTime(2200, now);
+
+    var gain1 = ctx.createGain();
+    gain1.gain.setValueAtTime(volume, now);
+    gain1.gain.setValueAtTime(volume, now + duration - 0.03);
+    gain1.gain.linearRampToValueAtTime(0, now + duration);
+
+    osc1.connect(gain1);
+    gain1.connect(compressor);
+
+    // Oscillator 2: Harmonic 3300 Hz
+    var osc2 = ctx.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(3300, now);
+
+    var gain2 = ctx.createGain();
+    gain2.gain.setValueAtTime(volume * 0.7, now);
+    gain2.gain.setValueAtTime(volume * 0.7, now + duration - 0.03);
+    gain2.gain.linearRampToValueAtTime(0, now + duration);
+
+    osc2.connect(gain2);
+    gain2.connect(compressor);
+
+    osc1.start(now);
+    osc1.stop(now + duration);
+    osc2.start(now);
+    osc2.stop(now + duration);
+
+    setTimeout(function() {
+      try {
+        osc1.disconnect();
+        osc2.disconnect();
+        gain1.disconnect();
+        gain2.disconnect();
+        compressor.disconnect();
+      } catch (e) {}
+    }, (duration + 0.1) * 1000);
+
+  } catch (e) {
+    console.warn('⚠️ Gagal play loud:', e);
+  }
+}
+
+// ============================================================
+// 🔥 SUARA ERROR (untuk stok habis / gagal)
+// ============================================================
+// 2 beep rendah berurutan — nada turun (kesan "gagal")
+function playErrorSound() {
+  var ctx = _ensureAudioCtx();
+  if (!ctx) return;
+
+  try {
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    var now = ctx.currentTime;
+
+    // Beep 1: 400 Hz
+    var osc1 = ctx.createOscillator();
+    osc1.type = 'square';
+    osc1.frequency.setValueAtTime(400, now);
+
+    var gain1 = ctx.createGain();
+    gain1.gain.setValueAtTime(0.35, now);
+    gain1.gain.setValueAtTime(0.35, now + 0.1);
+    gain1.gain.linearRampToValueAtTime(0, now + 0.12);
+
+    osc1.connect(gain1);
+    gain1.connect(_masterGain);
+    osc1.start(now);
+    osc1.stop(now + 0.12);
+
+    // Beep 2: 300 Hz (lebih rendah, mulai 150ms)
+    var now2 = now + 0.15;
+    var osc2 = ctx.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(300, now2);
+
+    var gain2 = ctx.createGain();
+    gain2.gain.setValueAtTime(0.35, now2);
+    gain2.gain.setValueAtTime(0.35, now2 + 0.1);
+    gain2.gain.linearRampToValueAtTime(0, now2 + 0.12);
+
+    osc2.connect(gain2);
+    gain2.connect(_masterGain);
+    osc2.start(now2);
+    osc2.stop(now2 + 0.12);
+
+  } catch (e) {
+    console.warn('⚠️ Gagal play error:', e);
+  }
+}
+
+// ============================================================
+// 🔥 SUARA DOUBLE BEEP (untuk konfirmasi berhasil lebih kuat)
+// ============================================================
+// 2 beep cepat — mirip konfirmasi "OK"
+function playClickSoundDouble() {
+  var ctx = _ensureAudioCtx();
+  if (!ctx) return;
+
+  try {
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    var now = ctx.currentTime;
+
+    // Beep 1: 1800 Hz, 60ms
+    var osc1 = ctx.createOscillator();
+    osc1.type = 'square';
+    osc1.frequency.setValueAtTime(1800, now);
+
+    var gain1 = ctx.createGain();
+    gain1.gain.setValueAtTime(0.4, now);
+    gain1.gain.setValueAtTime(0.4, now + 0.05);
+    gain1.gain.linearRampToValueAtTime(0, now + 0.06);
+
+    osc1.connect(gain1);
+    gain1.connect(_masterGain);
+    osc1.start(now);
+    osc1.stop(now + 0.06);
+
+    // Beep 2: 2200 Hz, 60ms, mulai 80ms setelah beep 1
+    var now2 = now + 0.08;
+    var osc2 = ctx.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(2200, now2);
+
+    var gain2 = ctx.createGain();
+    gain2.gain.setValueAtTime(0.4, now2);
+    gain2.gain.setValueAtTime(0.4, now2 + 0.05);
+    gain2.gain.linearRampToValueAtTime(0, now2 + 0.06);
+
+    osc2.connect(gain2);
+    gain2.connect(_masterGain);
+    osc2.start(now2);
+    osc2.stop(now2 + 0.06);
+
+  } catch (e) {
+    console.warn('⚠️ Gagal mainkan suara double:', e);
+  }
+}
+
+// ============================================================
+// 🔥 KONTROL SUARA (ON/OFF + VOLUME)
+// ============================================================
+
 function isSoundEnabled() {
   try {
     var pref = localStorage.getItem('pos_sound_enabled');
@@ -5207,13 +5457,90 @@ function setSoundEnabled(enabled) {
 }
 
 /**
- * Wrapper: mainkan suara kalau diaktifkan
+ * Set volume global (0.0 - 1.0)
+ */
+function setMasterVolume(vol) {
+  if (_masterGain) {
+    _masterGain.gain.value = vol;
+  }
+  try {
+    localStorage.setItem('pos_sound_volume', vol.toString());
+  } catch (e) {}
+
+  var el = document.getElementById('volumeValue');
+  if (el) el.textContent = Math.round(vol * 100) + '%';
+}
+
+/**
+ * Get volume global
+ */
+function getMasterVolume() {
+  try {
+    var saved = localStorage.getItem('pos_sound_volume');
+    if (saved) {
+      var vol = parseFloat(saved);
+      if (!isNaN(vol) && vol >= 0 && vol <= 1) return vol;
+    }
+  } catch (e) {}
+  return 0.8; // default 80%
+}
+
+// ============================================================
+// 🔥 WRAPPER — DIPANGGIL DARI LUAR
+// ============================================================
+
+/**
+ * Mainkan suara klik (normal) kalau diaktifkan
+ * Untuk klik produk manual
  */
 function playSoundIfEnabled() {
   if (isSoundEnabled()) {
     playClickSound();
   }
 }
+
+/**
+ * Mainkan suara scan (keras) kalau diaktifkan
+ * Khusus untuk scan barcode
+ */
+function playScanSoundIfEnabled() {
+  if (isSoundEnabled()) {
+    playClickSoundLoud();
+  }
+}
+
+/**
+ * Mainkan suara error kalau diaktifkan
+ */
+function playErrorSoundIfEnabled() {
+  if (isSoundEnabled()) {
+    playErrorSound();
+  }
+}
+
+// ============================================================
+// 🔥 AUTO-LOAD VOLUME DARI LOCALSTORAGE
+// ============================================================
+(function() {
+  // Load volume setelah AudioContext siap
+  var loadVolume = function() {
+    if (_masterGain) {
+      _masterGain.gain.value = getMasterVolume();
+      console.log('🔊 Volume loaded:', _masterGain.gain.value);
+
+      // Update UI kalau ada
+      var el = document.getElementById('volumeValue');
+      if (el) el.textContent = Math.round(getMasterVolume() * 100) + '%';
+      var slider = document.getElementById('volumeSlider');
+      if (slider) slider.value = getMasterVolume() * 100;
+    } else {
+      setTimeout(loadVolume, 500);
+    }
+  };
+
+  // Coba load setelah 1 detik (biar AudioContext sudah siap)
+  setTimeout(loadVolume, 1000);
+})();
 
   
 // ============================================================
@@ -6368,8 +6695,7 @@ function loadBatchCache() {
 }
 
 function showPage(page) {
-
-// 🔥 UNLOCK AUDIO saat user klik tab apapun
+  // 🔥 UNLOCK AUDIO saat user klik tab
   unlockAudio();
   
   if (page === 'reseller') {
@@ -7101,9 +7427,11 @@ function prosesAddToCart(produk, kode, harga, existing) {
   
   updateCartDisplay();
   updateStokGridPOS();
-
-// 🔥 TAMBAHKAN BARIS INI - mainkan suara klik
-  playSoundIfEnabled();
+  
+  // 🔥 Mainkan suara klik (hanya kalau BUKAN dari scanner)
+  if (!_isFromScanner) {
+    playSoundIfEnabled();
+  }
   
   showToast(produk['Nama Produk'] + ' ditambahkan', 'success');
 }
@@ -7466,14 +7794,15 @@ function addToStokCart(kode) {
       stok: stokSaatIni
     });
   }
-  updateStokCartDisplay();
-
-  // 🔥 TAMBAHKAN BARIS INI - mainkan suara klik
-  playSoundIfEnabled();
+   updateStokCartDisplay();
+  
+  // 🔥 Mainkan suara klik (hanya kalau BUKAN dari scanner)
+  if (!_isFromScanner) {
+    playSoundIfEnabled();
+  }
   
   showToast(produk['Nama Produk'] + ' ditambahkan ke keranjang pembelian');
 }
-
 function updateStokCartDisplay() {
   try {
     var container = document.getElementById('stokCartItems');
@@ -11618,6 +11947,9 @@ function initScanner() {
     html5QrCode.start(
       { facingMode: currentFacingMode },
       config,
+          html5QrCode.start(
+      { facingMode: currentFacingMode },
+      config,
       function(decodedText) {
         var found = false;
         for (var i = 0; i < produkList.length; i++) {
@@ -11635,10 +11967,6 @@ function initScanner() {
           }
         }
         if (!found) {
-
-          // 🔥 TAMBAHKAN BARIS INI - mainkan suara klik
-        playSoundIfEnabled();
-          
           showToast('⚠️ Produk dengan kode "' + decodedText + '" tidak ditemukan!', 'error');
           var manualInput = document.getElementById('scannerManualInput');
           if (manualInput) { manualInput.value = decodedText; manualInput.focus(); }
@@ -11648,6 +11976,8 @@ function initScanner() {
           }
         }
       },
+      function(error) {}
+    ).then(function() {
       function(error) {}
     ).then(function() {
       scannerStarted = true;
