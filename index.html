@@ -4562,8 +4562,11 @@ content.push({
   text: 'Barang tidak dapat ditukar',
   align: 'center'
 });
+
+// 🔥 TAMBAHKAN BARIS INI — feed di paling akhir
+content.push({ type: 'feed' });
+  
 var payload = {
-  //  cut: true,
   content: content
 };  
 console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
@@ -7970,7 +7973,8 @@ html += '</div>';
       bold: true
     });
     
-    content.push({ type: 'feed', lines: 0 });
+    content.push({ type: 'feed' });
+
     
     var payload = {
       cut: true,
@@ -9865,7 +9869,7 @@ content.push({
       align: 'center'
     });
 
-    content.push({ type: 'feed', lines: 0 });
+    content.push({ type: 'feed' });
 
     var payload = {
       cut: true,
@@ -10805,7 +10809,7 @@ async function cetakNotaPembayaranVendorThermal() {
       bold: true
     });
     
-    content.push({ type: 'feed', lines: 0 });
+    content.push({ type: 'feed' });
     
     var payload = {
       cut: true,
@@ -11169,7 +11173,7 @@ async function cetakRiwayatVendorThermal(noNota) {
       bold: true
     });
     
-    content.push({ type: 'feed', lines: 0 });
+    content.push({ type: 'feed' });
     
     var payload = {
       cut: true,
