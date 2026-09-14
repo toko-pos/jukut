@@ -4597,19 +4597,39 @@ async function cetakViaCleanter(idTransaksi) {
     var infoToko = getInfoTokoSync();
 
     var WIDTH = 32;
-    function makeRow(left, right) {
-      left = String(left);
-      right = String(right);
-      var spaceCount = WIDTH - left.length - right.length;
-      if (spaceCount > 0) {
-        return left + ' '.repeat(spaceCount) + right;
-      }
-      var maxLeft = WIDTH - right.length - 1;
-      if (maxLeft > 0) {
-        return left.substring(0, maxLeft) + ' ' + right;
-      }
-      return left + ' ' + right;
-    }
+    var WIDTH = 32;
+
+/**
+ * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
+ * Kalau tidak muat, sisi kiri dipotong (dengan elipsis).
+ */
+function makeRow(left, right) {
+  left  = String(left  == null ? '' : left);
+  right = String(right == null ? '' : right);
+  
+  // Kalau total muat → langsung rata kanan
+  var spaceCount = WIDTH - left.length - right.length;
+  if (spaceCount >= 1) {
+    return left + ' '.repeat(spaceCount) + right;
+  }
+  
+  // Kalau tidak muat → potong sisi kiri
+  // Sisakan minimal 1 spasi antara left & right
+  var maxLeftLen = WIDTH - right.length - 1;
+  if (maxLeftLen < 1) {
+    // right sendiri terlalu panjang → potong juga
+    right = right.substring(0, WIDTH - 1);
+    maxLeftLen = WIDTH - right.length - 1;
+  }
+  
+  var trimmedLeft = left.substring(0, maxLeftLen);
+  if (left.length > maxLeftLen) {
+    trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+  }
+  
+  var pad = WIDTH - trimmedLeft.length - right.length;
+  return trimmedLeft + ' '.repeat(pad > 0 ? pad : 1) + right;
+}
 
     var content = [];
 
@@ -8642,19 +8662,39 @@ html += '</div>';
     var infoToko = getInfoTokoSync();
     
     var WIDTH = 32;
-    function makeRow(left, right) {
-      left = String(left);
-      right = String(right);
-      var spaceCount = WIDTH - left.length - right.length;
-      if (spaceCount > 0) {
-        return left + ' '.repeat(spaceCount) + right;
-      }
-      var maxLeft = WIDTH - right.length - 1;
-      if (maxLeft > 0) {
-        return left.substring(0, maxLeft) + ' ' + right;
-      }
-      return left + ' ' + right;
-    }
+    var WIDTH = 32;
+
+/**
+ * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
+ * Kalau tidak muat, sisi kiri dipotong (dengan elipsis).
+ */
+function makeRow(left, right) {
+  left  = String(left  == null ? '' : left);
+  right = String(right == null ? '' : right);
+  
+  // Kalau total muat → langsung rata kanan
+  var spaceCount = WIDTH - left.length - right.length;
+  if (spaceCount >= 1) {
+    return left + ' '.repeat(spaceCount) + right;
+  }
+  
+  // Kalau tidak muat → potong sisi kiri
+  // Sisakan minimal 1 spasi antara left & right
+  var maxLeftLen = WIDTH - right.length - 1;
+  if (maxLeftLen < 1) {
+    // right sendiri terlalu panjang → potong juga
+    right = right.substring(0, WIDTH - 1);
+    maxLeftLen = WIDTH - right.length - 1;
+  }
+  
+  var trimmedLeft = left.substring(0, maxLeftLen);
+  if (left.length > maxLeftLen) {
+    trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+  }
+  
+  var pad = WIDTH - trimmedLeft.length - right.length;
+  return trimmedLeft + ' '.repeat(pad > 0 ? pad : 1) + right;
+}
     
     var content = [];
     
@@ -10518,19 +10558,39 @@ async function cetakNotaReseller(data) {
     var infoToko = getInfoTokoSync();
 
     var WIDTH = 32;
-    function makeRow(left, right) {
-      left = String(left);
-      right = String(right);
-      var spaceCount = WIDTH - left.length - right.length;
-      if (spaceCount > 0) {
-        return left + ' '.repeat(spaceCount) + right;
-      }
-      var maxLeft = WIDTH - right.length - 1;
-      if (maxLeft > 0) {
-        return left.substring(0, maxLeft) + ' ' + right;
-      }
-      return left + ' ' + right;
-    }
+    var WIDTH = 32;
+
+/**
+ * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
+ * Kalau tidak muat, sisi kiri dipotong (dengan elipsis).
+ */
+function makeRow(left, right) {
+  left  = String(left  == null ? '' : left);
+  right = String(right == null ? '' : right);
+  
+  // Kalau total muat → langsung rata kanan
+  var spaceCount = WIDTH - left.length - right.length;
+  if (spaceCount >= 1) {
+    return left + ' '.repeat(spaceCount) + right;
+  }
+  
+  // Kalau tidak muat → potong sisi kiri
+  // Sisakan minimal 1 spasi antara left & right
+  var maxLeftLen = WIDTH - right.length - 1;
+  if (maxLeftLen < 1) {
+    // right sendiri terlalu panjang → potong juga
+    right = right.substring(0, WIDTH - 1);
+    maxLeftLen = WIDTH - right.length - 1;
+  }
+  
+  var trimmedLeft = left.substring(0, maxLeftLen);
+  if (left.length > maxLeftLen) {
+    trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+  }
+  
+  var pad = WIDTH - trimmedLeft.length - right.length;
+  return trimmedLeft + ' '.repeat(pad > 0 ? pad : 1) + right;
+}
 
     var content = [];
 
@@ -11908,15 +11968,39 @@ async function cetakRiwayatVendorThermal(noNota) {
     var infoToko = getInfoTokoSync();
     
     var WIDTH = 32;
-    function makeRow(left, right) {
-      left = String(left);
-      right = String(right);
-      var spaceCount = WIDTH - left.length - right.length;
-      if (spaceCount > 0) {
-        return left + ' '.repeat(spaceCount) + right;
-      }
-      return left + ' ' + right;
-    }
+    var WIDTH = 32;
+
+/**
+ * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
+ * Kalau tidak muat, sisi kiri dipotong (dengan elipsis).
+ */
+function makeRow(left, right) {
+  left  = String(left  == null ? '' : left);
+  right = String(right == null ? '' : right);
+  
+  // Kalau total muat → langsung rata kanan
+  var spaceCount = WIDTH - left.length - right.length;
+  if (spaceCount >= 1) {
+    return left + ' '.repeat(spaceCount) + right;
+  }
+  
+  // Kalau tidak muat → potong sisi kiri
+  // Sisakan minimal 1 spasi antara left & right
+  var maxLeftLen = WIDTH - right.length - 1;
+  if (maxLeftLen < 1) {
+    // right sendiri terlalu panjang → potong juga
+    right = right.substring(0, WIDTH - 1);
+    maxLeftLen = WIDTH - right.length - 1;
+  }
+  
+  var trimmedLeft = left.substring(0, maxLeftLen);
+  if (left.length > maxLeftLen) {
+    trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+  }
+  
+  var pad = WIDTH - trimmedLeft.length - right.length;
+  return trimmedLeft + ' '.repeat(pad > 0 ? pad : 1) + right;
+}
     
     var content = [];
     
