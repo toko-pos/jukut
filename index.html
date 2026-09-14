@@ -2366,7 +2366,43 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     font-size: 0.9rem;
   }
 }
-    
+
+    /* ===== KOLOM POTENSI DI TABEL PRODUK ===== */
+#produkTable td:last-child,
+#produkTable th:last-child {
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+#produkTableFooter td {
+  border-top: 2px solid #4CAF50;
+  padding: 12px 10px;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  #produkTable td:last-child,
+  #produkTable th:last-child {
+    min-width: 90px;
+    font-size: 0.75rem;
+  }
+  #produkTableFooter td {
+    font-size: 0.75rem;
+    padding: 8px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  #produkTable td:last-child,
+  #produkTable th:last-child {
+    min-width: 75px;
+    font-size: 0.65rem;
+  }
+  #produkTableFooter td {
+    font-size: 0.65rem;
+    padding: 6px 4px;
+  }
+}
            
   </style>
 </head>
@@ -2949,9 +2985,30 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
         <div id="debugInfo" class="debug-info"></div>
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Harga Beli</th><th>Harga Jual</th><th>Stok</th><th>Satuan</th></tr></thead>
-            <tbody id="produkTable"><tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr></tbody>
-          </table>
+  <thead>
+    <tr>
+      <th>Kode</th>
+      <th>Nama</th>
+      <th>Kategori</th>
+      <th>Harga Beli</th>
+      <th>Harga Jual</th>
+      <th>Stok</th>
+      <th>Satuan</th>
+      <th style="text-align:right; background:#e8f5e9;">💰 Potensi</th>
+    </tr>
+  </thead>
+  <tbody id="produkTable">
+    <tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>
+  </tbody>
+  <tfoot id="produkTableFooter" style="background:#f0f8f2; font-weight:bold;">
+    <tr>
+      <td colspan="5" style="text-align:right; padding:10px;">TOTAL POTENSI PENJUALAN:</td>
+      <td id="totalStokSemua" style="text-align:center; color:#4CAF50;">0</td>
+      <td></td>
+      <td id="totalPotensiSemua" style="text-align:right; color:#4CAF50; font-size:1.05rem;">Rp 0</td>
+    </tr>
+  </tfoot>
+</table>
         </div>
 
 <div class="modal" id="auditStokModal">
@@ -9292,7 +9349,7 @@ function loadProduk() {
     return;
   }
   
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat data... (percobaan ' + loadAttempts + ')</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">⏳ Memuat data... (percobaan ' + loadAttempts + ')</td></tr>';
   
   callGAS('getProduk', {})
   .then(function(result) {
@@ -9305,29 +9362,48 @@ function loadProduk() {
     if (!tbody) return;
     
     if (produkList.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">📭 Belum ada produk</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">📭 Belum ada produk</td></tr>';
       return;
     }
     
     var html = '';
-    for (var i = 0; i < produkList.length; i++) {
-      var p = produkList[i];
-      var stok = parseInt(p.Stok) || 0;
-      var minStok = parseInt(p['Minimum Stok']) || 10;
-      var isLowStock = stok <= minStok;
-      var stockColor = isLowStock ? '#f44336' : '#4CAF50';
-      
-      html += '<tr>' +
-        '<td><strong>' + (p.Kode || '-') + '</strong></td>' +
-        '<td><strong>' + (p['Nama Produk'] || '-') + '</strong></td>' +
-        '<td>' + (p.Kategori || '-') + '</td>' +
-        '<td>' + formatRupiah(p['Harga Beli'] || 0) + '</td>' +
-        '<td>' + formatRupiah(p['Harga Jual'] || 0) + '</td>' +
-        '<td style="font-weight:bold;color:' + stockColor + ';">' + stok + '</td>' +
-        '<td>' + (p.Satuan || 'pcs') + '</td>' +
-        '</tr>';
-    }
-    tbody.innerHTML = html;
+var totalStok = 0;
+var totalPotensi = 0;
+
+for (var i = 0; i < produkList.length; i++) {
+  var p = produkList[i];
+  var stok = parseInt(p.Stok) || 0;
+  var hargaJual = parseInt(p['Harga Jual']) || 0;
+  var potensi = stok * hargaJual;   // 🔥 POTENSI = Harga Jual × Stok
+  
+  totalStok += stok;
+  totalPotensi += potensi;
+  
+  var minStok = parseInt(p['Minimum Stok']) || 10;
+  var isLowStock = stok <= minStok;
+  var stockColor = isLowStock ? '#f44336' : '#4CAF50';
+  
+  // Warna potensi: makin besar makin hijau
+  var potensiColor = potensi > 500000 ? '#1b5e20' : (potensi > 100000 ? '#2e7d32' : '#4CAF50');
+  
+  html += '<tr>' +
+    '<td><strong>' + (p.Kode || '-') + '</strong></td>' +
+    '<td><strong>' + (p['Nama Produk'] || '-') + '</strong></td>' +
+    '<td>' + (p.Kategori || '-') + '</td>' +
+    '<td>' + formatRupiah(p['Harga Beli'] || 0) + '</td>' +
+    '<td>' + formatRupiah(hargaJual) + '</td>' +
+    '<td style="font-weight:bold;color:' + stockColor + ';">' + stok + '</td>' +
+    '<td>' + (p.Satuan || 'pcs') + '</td>' +
+    '<td style="text-align:right; font-weight:700; color:' + potensiColor + ';">' + formatRupiah(potensi) + '</td>' +
+    '</tr>';
+}
+tbody.innerHTML = html;
+
+// 🔥 Update footer total
+var footStok = document.getElementById('totalStokSemua');
+var footPotensi = document.getElementById('totalPotensiSemua');
+if (footStok) footStok.textContent = totalStok;
+if (footPotensi) footPotensi.textContent = formatRupiah(totalPotensi);
 
       if (typeof populateEditHargaDropdown === 'function') {
           populateEditHargaDropdown();
@@ -9338,7 +9414,7 @@ function loadProduk() {
     console.error('❌ Error loadProduk:', error);
     var tbody = document.getElementById('produkTable');
     if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">❌ Gagal memuat data: ' + error.message + '</td></tr>';
     }
     showToast('❌ Gagal memuat produk: ' + error.message, 'error');
     
