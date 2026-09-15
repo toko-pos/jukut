@@ -4597,7 +4597,7 @@ async function cetakViaCleanter(idTransaksi) {
     var infoToko = getInfoTokoSync();
 
     var WIDTH = 32;
-    var WIDTH = 32;
+    var DIVIDER = '-'.repeat(WIDTH);
 
 /**
  * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
@@ -4607,28 +4607,40 @@ function makeRow(left, right) {
   left  = String(left  == null ? '' : left);
   right = String(right == null ? '' : right);
   
-  // Kalau total muat → langsung rata kanan
   var spaceCount = WIDTH - left.length - right.length;
   if (spaceCount >= 1) {
     return left + ' '.repeat(spaceCount) + right;
   }
   
-  // Kalau tidak muat → potong sisi kiri
-  // Sisakan minimal 1 spasi antara left & right
-  var maxLeftLen = WIDTH - right.length - 1;
-  if (maxLeftLen < 1) {
-    // right sendiri terlalu panjang → potong juga
-    right = right.substring(0, WIDTH - 1);
-    maxLeftLen = WIDTH - right.length - 1;
+  if (right.length >= WIDTH) {
+    right = right.substring(0, WIDTH);
   }
   
-  var trimmedLeft = left.substring(0, maxLeftLen);
+  var maxLeftLen = WIDTH - right.length - 1;
+  if (maxLeftLen < 1) {
+    right = right.substring(0, WIDTH - 1);
+    maxLeftLen = 0;
+  }
+  
+  var trimmedLeft = left;
   if (left.length > maxLeftLen) {
-    trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    if (maxLeftLen <= 1) {
+      trimmedLeft = '';
+    } else {
+      trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    }
   }
   
   var pad = WIDTH - trimmedLeft.length - right.length;
-  return trimmedLeft + ' '.repeat(pad > 0 ? pad : 1) + right;
+  if (pad < 1) pad = 1;
+  
+  var result = trimmedLeft + ' '.repeat(pad) + right;
+  
+  if (result.length > WIDTH) {
+    result = result.substring(0, WIDTH);
+  }
+  
+  return result;
 }
 
     var content = [];
@@ -4658,7 +4670,7 @@ function makeRow(left, right) {
       });
     }
 
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
 
     function formatLabel(label) {
       return label.padEnd(8, ' ') + ': ';
@@ -4690,7 +4702,7 @@ function makeRow(left, right) {
       });
     }
 
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
 
    // ===== DETAIL PRODUK (DENGAN WORD WRAP) =====
 var grandTotal = 0;
@@ -4771,7 +4783,7 @@ if (detail && detail.length > 0) {
   }
 }
 
-content.push({ type: 'divider' });
+content.push({ type: 'text', text: DIVIDER });
 
 // ===== TOTAL & PEMBAYARAN =====
 var total = parseInt(header.Total || header.total || grandTotal);
@@ -4830,7 +4842,7 @@ if (status !== 'LUNAS' && (sisa > 0 || status === 'BELUM BAYAR' || status === 'C
     bold: true
   });
 
-  content.push({ type: 'divider' });
+  content.push({ type: 'text', text: DIVIDER });
   
   if (status === 'CICILAN') {
     content.push({
@@ -4860,7 +4872,7 @@ if (status !== 'LUNAS' && (sisa > 0 || status === 'BELUM BAYAR' || status === 'C
     bold: true
   });
 
-  content.push({ type: 'divider' });
+  content.push({ type: 'text', text: DIVIDER });
 }
 else {
   if (dibayar > 0 && dibayar <= total) {
@@ -8662,7 +8674,7 @@ html += '</div>';
     var infoToko = getInfoTokoSync();
     
     var WIDTH = 32;
-    var WIDTH = 32;
+var DIVIDER = '-'.repeat(WIDTH);
 
 /**
  * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
@@ -8672,28 +8684,40 @@ function makeRow(left, right) {
   left  = String(left  == null ? '' : left);
   right = String(right == null ? '' : right);
   
-  // Kalau total muat → langsung rata kanan
   var spaceCount = WIDTH - left.length - right.length;
   if (spaceCount >= 1) {
     return left + ' '.repeat(spaceCount) + right;
   }
   
-  // Kalau tidak muat → potong sisi kiri
-  // Sisakan minimal 1 spasi antara left & right
-  var maxLeftLen = WIDTH - right.length - 1;
-  if (maxLeftLen < 1) {
-    // right sendiri terlalu panjang → potong juga
-    right = right.substring(0, WIDTH - 1);
-    maxLeftLen = WIDTH - right.length - 1;
+  if (right.length >= WIDTH) {
+    right = right.substring(0, WIDTH);
   }
   
-  var trimmedLeft = left.substring(0, maxLeftLen);
+  var maxLeftLen = WIDTH - right.length - 1;
+  if (maxLeftLen < 1) {
+    right = right.substring(0, WIDTH - 1);
+    maxLeftLen = 0;
+  }
+  
+  var trimmedLeft = left;
   if (left.length > maxLeftLen) {
-    trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    if (maxLeftLen <= 1) {
+      trimmedLeft = '';
+    } else {
+      trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    }
   }
   
   var pad = WIDTH - trimmedLeft.length - right.length;
-  return trimmedLeft + ' '.repeat(pad > 0 ? pad : 1) + right;
+  if (pad < 1) pad = 1;
+  
+  var result = trimmedLeft + ' '.repeat(pad) + right;
+  
+  if (result.length > WIDTH) {
+    result = result.substring(0, WIDTH);
+  }
+  
+  return result;
 }
     
     var content = [];
@@ -8722,7 +8746,7 @@ function makeRow(left, right) {
       });
     }
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
@@ -8731,7 +8755,7 @@ function makeRow(left, right) {
       bold: true
     });
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
@@ -8750,7 +8774,7 @@ function makeRow(left, right) {
       text: makeRow('User', ': ' + String(h.user || '-'))
     });
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     var grandTotal = 0;
     if (detail && detail.length > 0) {
@@ -8780,7 +8804,7 @@ function makeRow(left, right) {
       }
     }
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(grandTotal);
     content.push({
@@ -8789,7 +8813,7 @@ function makeRow(left, right) {
       bold: true
     });
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
@@ -10558,7 +10582,7 @@ async function cetakNotaReseller(data) {
     var infoToko = getInfoTokoSync();
 
     var WIDTH = 32;
-    var WIDTH = 32;
+var DIVIDER = '-'.repeat(WIDTH);
 
 /**
  * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
@@ -10568,28 +10592,40 @@ function makeRow(left, right) {
   left  = String(left  == null ? '' : left);
   right = String(right == null ? '' : right);
   
-  // Kalau total muat → langsung rata kanan
   var spaceCount = WIDTH - left.length - right.length;
   if (spaceCount >= 1) {
     return left + ' '.repeat(spaceCount) + right;
   }
   
-  // Kalau tidak muat → potong sisi kiri
-  // Sisakan minimal 1 spasi antara left & right
-  var maxLeftLen = WIDTH - right.length - 1;
-  if (maxLeftLen < 1) {
-    // right sendiri terlalu panjang → potong juga
-    right = right.substring(0, WIDTH - 1);
-    maxLeftLen = WIDTH - right.length - 1;
+  if (right.length >= WIDTH) {
+    right = right.substring(0, WIDTH);
   }
   
-  var trimmedLeft = left.substring(0, maxLeftLen);
+  var maxLeftLen = WIDTH - right.length - 1;
+  if (maxLeftLen < 1) {
+    right = right.substring(0, WIDTH - 1);
+    maxLeftLen = 0;
+  }
+  
+  var trimmedLeft = left;
   if (left.length > maxLeftLen) {
-    trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    if (maxLeftLen <= 1) {
+      trimmedLeft = '';
+    } else {
+      trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    }
   }
   
   var pad = WIDTH - trimmedLeft.length - right.length;
-  return trimmedLeft + ' '.repeat(pad > 0 ? pad : 1) + right;
+  if (pad < 1) pad = 1;
+  
+  var result = trimmedLeft + ' '.repeat(pad) + right;
+  
+  if (result.length > WIDTH) {
+    result = result.substring(0, WIDTH);
+  }
+  
+  return result;
 }
 
     var content = [];
@@ -10618,7 +10654,7 @@ function makeRow(left, right) {
       });
     }
 
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
 
     content.push({
       type: 'text',
@@ -10627,7 +10663,7 @@ function makeRow(left, right) {
       bold: true
     });
 
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
 
     content.push({
       type: 'text',
@@ -10651,7 +10687,7 @@ function makeRow(left, right) {
       });
     }
 
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
 
     var grandTotal = 0;
     if (data.detail && data.detail.length > 0) {
@@ -10682,7 +10718,7 @@ function makeRow(left, right) {
       }
     }
 
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
 
     var total = parseInt(data.total || grandTotal);
 var dibayar = parseInt(data.dibayar || 0);
@@ -10734,7 +10770,7 @@ content.push({
   bold: true
 });
 
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
 
     content.push({
       type: 'text',
@@ -11630,7 +11666,7 @@ async function cetakNotaPembayaranVendorThermal() {
     });
     content.push({ type: 'text', text: ' ' });
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
@@ -11639,7 +11675,7 @@ async function cetakNotaPembayaranVendorThermal() {
       bold: true
     });
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
@@ -11654,7 +11690,7 @@ async function cetakNotaPembayaranVendorThermal() {
       text: makeRow('Status', ': ' + String(data.status || '-'))
     });
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     var nominalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.nominal || 0);
     content.push({
@@ -11679,7 +11715,7 @@ async function cetakNotaPembayaranVendorThermal() {
       });
     }
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
@@ -11968,7 +12004,7 @@ async function cetakRiwayatVendorThermal(noNota) {
     var infoToko = getInfoTokoSync();
     
     var WIDTH = 32;
-    var WIDTH = 32;
+var DIVIDER = '-'.repeat(WIDTH);
 
 /**
  * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
@@ -11978,28 +12014,40 @@ function makeRow(left, right) {
   left  = String(left  == null ? '' : left);
   right = String(right == null ? '' : right);
   
-  // Kalau total muat → langsung rata kanan
   var spaceCount = WIDTH - left.length - right.length;
   if (spaceCount >= 1) {
     return left + ' '.repeat(spaceCount) + right;
   }
   
-  // Kalau tidak muat → potong sisi kiri
-  // Sisakan minimal 1 spasi antara left & right
-  var maxLeftLen = WIDTH - right.length - 1;
-  if (maxLeftLen < 1) {
-    // right sendiri terlalu panjang → potong juga
-    right = right.substring(0, WIDTH - 1);
-    maxLeftLen = WIDTH - right.length - 1;
+  if (right.length >= WIDTH) {
+    right = right.substring(0, WIDTH);
   }
   
-  var trimmedLeft = left.substring(0, maxLeftLen);
+  var maxLeftLen = WIDTH - right.length - 1;
+  if (maxLeftLen < 1) {
+    right = right.substring(0, WIDTH - 1);
+    maxLeftLen = 0;
+  }
+  
+  var trimmedLeft = left;
   if (left.length > maxLeftLen) {
-    trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    if (maxLeftLen <= 1) {
+      trimmedLeft = '';
+    } else {
+      trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    }
   }
   
   var pad = WIDTH - trimmedLeft.length - right.length;
-  return trimmedLeft + ' '.repeat(pad > 0 ? pad : 1) + right;
+  if (pad < 1) pad = 1;
+  
+  var result = trimmedLeft + ' '.repeat(pad) + right;
+  
+  if (result.length > WIDTH) {
+    result = result.substring(0, WIDTH);
+  }
+  
+  return result;
 }
     
     var content = [];
@@ -12012,7 +12060,7 @@ function makeRow(left, right) {
       size: 'large'
     });
     content.push({ type: 'text', text: ' ' });
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
@@ -12021,7 +12069,7 @@ function makeRow(left, right) {
       bold: true
     });
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
@@ -12032,7 +12080,7 @@ function makeRow(left, right) {
       text: makeRow('Vendor', ': ' + String(x.pemasok || '-'))
     });
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(x.totalNota || 0);
     content.push({
@@ -12053,7 +12101,7 @@ function makeRow(left, right) {
       bold: true
     });
     
-    content.push({ type: 'divider' });
+    content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
@@ -12077,7 +12125,7 @@ function makeRow(left, right) {
       }
     }
     
-    content.push({ type: 'divider' });
+   content.push({ type: 'text', text: DIVIDER });
     
     content.push({
       type: 'text',
