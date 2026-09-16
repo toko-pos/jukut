@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxuLUKyid42m-0sXksSM5q8Iv5G95QHlwqEh-1zXMgtFyzNaiVTtwAHiq5gcSPe2vIYfg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwJPdG6yrf90RO18_G3t3LYXy7EZ_ml5rqDT_JG9JEEunkGAQlzcxgA3DexYV_bytvr3g/exec';
 
 
     // ============================================================
@@ -2242,16 +2242,82 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   transform: translateY(-3px);
 }
 
-@media (max-width: 768px) {
-  .dash-piutang-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-  .dash-card { padding: 12px 14px !important; }
-  .dash-card > div:nth-child(2) { font-size: 1.1rem !important; }
+/* 🔥 Label (judul kecil di atas angka) */
+.dash-card > div:nth-child(1) {
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
 }
 
+/* 🔥 Angka utama (yang nilainya) */
+.dash-card > div:nth-child(2) {
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+}
+
+/* 🔥 Sub-text di bawah angka */
+.dash-card > div:nth-child(3) {
+  font-size: 0.7rem !important;
+  line-height: 1.3 !important;
+}
+
+/* ===== TABLET ===== */
+@media (max-width: 768px) {
+  .dash-piutang-grid { 
+    grid-template-columns: repeat(2, 1fr) !important; 
+    gap: 10px !important; 
+  }
+  .dash-card { 
+    padding: 14px 12px !important; 
+    min-height: 90px !important;
+  }
+  .dash-card > div:nth-child(1) {
+    font-size: 0.7rem !important;
+  }
+  .dash-card > div:nth-child(2) { 
+    font-size: 1.35rem !important;   /* ← NAIKKAN dari 1.1rem */
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+  }
+  .dash-card > div:nth-child(3) { 
+    font-size: 0.7rem !important;
+  }
+}
+
+/* ===== HP KECIL ===== */
 @media (max-width: 480px) {
-  .dash-piutang-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
-  .dash-card { padding: 10px 8px !important; }
-  .dash-card > div:nth-child(2) { font-size: 0.9rem !important; }
+  .dash-piutang-grid { 
+    grid-template-columns: repeat(2, 1fr) !important; 
+    gap: 8px !important; 
+  }
+  .dash-card { 
+    padding: 12px 10px !important; 
+    min-height: 85px !important;
+    border-radius: 10px !important;
+  }
+  .dash-card > div:nth-child(1) {
+    font-size: 0.65rem !important;   /* ← judul lebih kecil dari angka */
+    font-weight: 600 !important;
+    opacity: 0.95 !important;
+  }
+  .dash-card > div:nth-child(2) { 
+    font-size: 1.15rem !important;   /* ← NAIKKAN dari 0.9rem */
+    font-weight: 800 !important;
+    letter-spacing: -0.3px !important;
+    line-height: 1.15 !important;
+  }
+  .dash-card > div:nth-child(3) { 
+    font-size: 0.6rem !important;
+  }
+}
+
+/* ===== HP SANGAT KECIL (≤360px) ===== */
+@media (max-width: 360px) {
+  .dash-piutang-grid { gap: 6px !important; }
+  .dash-card { padding: 10px 8px !important; min-height: 80px !important; }
+  .dash-card > div:nth-child(1) { font-size: 0.6rem !important; }
+  .dash-card > div:nth-child(2) { font-size: 1rem !important; }
   .dash-card > div:nth-child(3) { font-size: 0.55rem !important; }
 }
 
