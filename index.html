@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbw3PSiRfXmBSLLqEJNrsiH5NTH3WvpIa-RDhqqc85XcqINqSGv1wXkjxr4xWeah8a5_NA/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxuLUKyid42m-0sXksSM5q8Iv5G95QHlwqEh-1zXMgtFyzNaiVTtwAHiq5gcSPe2vIYfg/exec';
 
 
     // ============================================================
@@ -1509,7 +1509,7 @@ function getInfoTokoSync() {
 .debt-detail-inner { padding: 15px 20px; border: 1px solid #e8ecf4; border-radius: 8px; margin: 10px 0; background: white; }
   
   /* ===== STRUK 58MM ===== */
-..struk-58mm {
+.struk-58mm {
   font-family: 'Courier New', 'Lucida Console', monospace;
   font-size: 9px;
   line-height: 1.2;
@@ -11644,16 +11644,47 @@ async function cetakNotaPembayaranVendorThermal() {
     
     var infoToko = getInfoTokoSync();
     var WIDTH = 32;
+    var DIVIDER = '-'.repeat(WIDTH);
     
     function makeRow(left, right) {
-      left = String(left);
-      right = String(right);
-      var spaceCount = WIDTH - left.length - right.length;
-      if (spaceCount > 0) {
-        return left + ' '.repeat(spaceCount) + right;
-      }
-      return left + ' ' + right;
+  left  = String(left  == null ? '' : left);
+  right = String(right == null ? '' : right);
+  
+  var spaceCount = WIDTH - left.length - right.length;
+  if (spaceCount >= 1) {
+    return left + ' '.repeat(spaceCount) + right;
+  }
+  
+  if (right.length >= WIDTH) {
+    right = right.substring(0, WIDTH);
+  }
+  
+  var maxLeftLen = WIDTH - right.length - 1;
+  if (maxLeftLen < 1) {
+    right = right.substring(0, WIDTH - 1);
+    maxLeftLen = 0;
+  }
+  
+  var trimmedLeft = left;
+  if (left.length > maxLeftLen) {
+    if (maxLeftLen <= 1) {
+      trimmedLeft = '';
+    } else {
+      trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
     }
+  }
+  
+  var pad = WIDTH - trimmedLeft.length - right.length;
+  if (pad < 1) pad = 1;
+  
+  var result = trimmedLeft + ' '.repeat(pad) + right;
+  
+  if (result.length > WIDTH) {
+    result = result.substring(0, WIDTH);
+  }
+  
+  return result;
+}
     
     var content = [];
     
@@ -12001,10 +12032,10 @@ async function cetakRiwayatVendorThermal(noNota) {
     
     var x = result.data;
     var rows = x.riwayatPembayaran || [];
-    var infoToko = getInfoTokoSync();
     
+     var infoToko = getInfoTokoSync();
     var WIDTH = 32;
-var DIVIDER = '-'.repeat(WIDTH);
+    var DIVIDER = '-'.repeat(WIDTH);
 
 /**
  * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
@@ -14195,19 +14226,30 @@ function loadPiutangReseller() {
       }
       
       var data = result.data || [];
+      var tampil = [];
       
-      var belumLunas = [];
       for (var i = 0; i < data.length; i++) {
         var item = data[i];
         var sisa = parseInt(item.sisa) || 0;
         var total = parseInt(item.total) || 0;
         var dibayar = parseInt(item.dibayar) || 0;
         
-        if (sisa <= 0) continue;
         if (total <= 0) continue;
-        if (dibayar >= total) continue;
         
-        belumLunas.push({
+        // Tampilkan kalau pernah hutang (sisa > 0 ATAU ada riwayat pembayaran)
+        if (!item.pernahHutang) continue;
+        
+        // Tentukan status
+        var status;
+        if (sisa <= 0) {
+          status = 'LUNAS';
+        } else if (dibayar > 0) {
+          status = 'CICILAN';
+        } else {
+          status = 'BELUM BAYAR';
+        }
+        
+        tampil.push({
           idTransaksi: item.idTransaksi,
           tanggal: item.tanggal,
           kodeReseller: item.kodeReseller,
@@ -14215,12 +14257,13 @@ function loadPiutangReseller() {
           total: total,
           dibayar: dibayar,
           sisa: sisa,
-          status: sisa <= 0 ? 'LUNAS' : (dibayar > 0 ? 'CICILAN' : 'BELUM BAYAR')
+          status: status,
+          riwayatCount: item.riwayatCount || 0
         });
       }
       
-      renderDashboardPiutang(belumLunas);
-      renderTabelPiutang(belumLunas);
+      renderDashboardPiutang(tampil);
+      renderTabelPiutang(tampil);
       
     })
     .catch(function(error) {
@@ -14237,6 +14280,8 @@ function renderDashboardPiutang(belumLunas) {
   var sudahDiterima = 0;
   var sisaPiutang = 0;
   var jumlahNota = belumLunas.length;
+  var jumlahAktif = 0;
+  var jumlahLunas = 0;
   var jatuhTempo = 0;
   var cicilanAktif = 0;
   var belumBayar = 0;
@@ -14256,6 +14301,9 @@ function renderDashboardPiutang(belumLunas) {
     sudahDiterima += dibayar;
     sisaPiutang += sisa;
     
+    if (sisa > 0) jumlahAktif++;
+    else jumlahLunas++;
+    
     var umurHari = 0;
     if (t.tanggal) {
       try {
@@ -14267,9 +14315,11 @@ function renderDashboardPiutang(belumLunas) {
     }
     totalUmur += umurHari;
     
-    if (umurHari > 30) jatuhTempo++;
-    if (dibayar > 0 && sisa > 0) cicilanAktif++;
-    if (dibayar === 0) belumBayar++;
+    if (sisa > 0) {
+      if (umurHari > 30) jatuhTempo++;
+      if (dibayar > 0 && sisa > 0) cicilanAktif++;
+      if (dibayar === 0) belumBayar++;
+    }
     
     var kodeReseller = t.kodeReseller || 'unknown';
     var namaReseller = t.namaReseller || '-';
@@ -14287,7 +14337,7 @@ function renderDashboardPiutang(belumLunas) {
     resellerMap[kodeReseller].jumlahNota++;
   }
   
-  var rataUmur = jumlahNota > 0 ? Math.round(totalUmur / jumlahNota) : 0;
+  var rataUmur = jumlahAktif > 0 ? Math.round(totalUmur / jumlahAktif) : 0;
   var persenDiterima = totalPiutang > 0 ? Math.round((sudahDiterima / totalPiutang) * 100) : 0;
   
   var el;
@@ -14295,7 +14345,7 @@ function renderDashboardPiutang(belumLunas) {
   if (el) el.textContent = formatRupiah(totalPiutang);
   
   el = document.getElementById('dashTotalPiutangSub');
-  if (el) el.textContent = jumlahNota + ' nota';
+  if (el) el.textContent = jumlahNota + ' nota (' + jumlahAktif + ' aktif · ' + jumlahLunas + ' lunas)';
   
   el = document.getElementById('dashSudahDiterima');
   if (el) el.textContent = formatRupiah(sudahDiterima);
@@ -14307,13 +14357,13 @@ function renderDashboardPiutang(belumLunas) {
   if (el) el.textContent = formatRupiah(sisaPiutang);
   
   el = document.getElementById('dashSisaPiutangSub');
-  if (el) el.textContent = jumlahNota + ' nota aktif';
+  if (el) el.textContent = jumlahAktif + ' nota aktif';
   
   el = document.getElementById('dashJumlahNota');
   if (el) el.textContent = jumlahNota;
   
   el = document.getElementById('dashJumlahNotaSub');
-  if (el) el.textContent = 'nota belum lunas';
+  if (el) el.textContent = jumlahAktif + ' aktif · ' + jumlahLunas + ' lunas';
   
   el = document.getElementById('dashJatuhTempo');
   if (el) el.textContent = jatuhTempo;
@@ -14328,7 +14378,7 @@ function renderDashboardPiutang(belumLunas) {
   if (el) el.textContent = rataUmur + ' hari';
   
   el = document.getElementById('badgeJumlahPiutang');
-  if (el) el.textContent = jumlahNota;
+  if (el) el.textContent = jumlahAktif;
   
   el = document.getElementById('dashProgressPersen');
   if (el) el.textContent = persenDiterima + '%';
@@ -14408,7 +14458,7 @@ function renderTabelPiutang(belumLunas) {
   if (!tbody) return;
   
   if (belumLunas.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#4CAF50;padding:30px;font-weight:600;">✅ Semua piutang reseller sudah lunas!<br><span style="font-size:0.8rem;color:#666;font-weight:400;">Reseller yang bayar cash/lunas tidak muncul di sini.</span></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">📭 Tidak ada riwayat piutang reseller</td></tr>';
     return;
   }
   
@@ -14426,55 +14476,56 @@ function renderTabelPiutang(belumLunas) {
     var dibayar = t.dibayar || 0;
     var sisa = t.sisa || 0;
     var progress = total > 0 ? Math.round((dibayar / total) * 100) : 0;
-    var statusClass = t.status === 'CICILAN' ? 'badge-warning' : 'badge-danger';
-    var statusText = t.status === 'CICILAN' ? '🔄 Cicilan' : '⚠️ Belum Bayar';
+    
+    var statusClass, statusText;
+    if (t.status === 'LUNAS') {
+      statusClass = 'badge-success';
+      statusText = '✅ LUNAS';
+    } else if (t.status === 'CICILAN') {
+      statusClass = 'badge-warning';
+      statusText = '🔄 Cicilan';
+    } else {
+      statusClass = 'badge-danger';
+      statusText = '⚠️ Belum Bayar';
+    }
+    
+    var rowStyle = (t.status === 'LUNAS') ? 'background:#f0fdf4;' : '';
     
     var umurHari = 0;
     if (t.tanggal) {
       try {
-        var tglPiutang = new Date(t.tanggal + 'T00:00:00');
-        var diffMs = today - tglPiutang;
-        umurHari = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        var tgl = new Date(t.tanggal + 'T00:00:00');
+        umurHari = Math.floor((today - tgl) / (1000 * 60 * 60 * 24));
         if (umurHari < 0) umurHari = 0;
       } catch(e) { umurHari = 0; }
     }
     
-    var umurColor = '#4CAF50';
-    var umurBg = '#e8f5e9';
-    if (umurHari > 30) {
-      umurColor = '#c62828';
-      umurBg = '#ffebee';
-    } else if (umurHari > 14) {
-      umurColor = '#e65100';
-      umurBg = '#fff3e0';
-    } else if (umurHari > 7) {
-      umurColor = '#f57c00';
-      umurBg = '#fff8e1';
-    }
+    var umurColor = '#4CAF50', umurBg = '#e8f5e9';
+    if (umurHari > 30) { umurColor = '#c62828'; umurBg = '#ffebee'; }
+    else if (umurHari > 14) { umurColor = '#e65100'; umurBg = '#fff3e0'; }
+    else if (umurHari > 7) { umurColor = '#f57c00'; umurBg = '#fff8e1'; }
     
-    html += '<tr>';
+    html += '<tr style="' + rowStyle + '">';
     html += '<td style="text-align:center;">' + (i + 1) + '</td>';
     html += '<td style="white-space:nowrap;">' + formatTanggalDisplay(t.tanggal) + '</td>';
     html += '<td><strong>' + escapeHtml(t.idTransaksi || '-') + '</strong></td>';
     html += '<td>' + escapeHtml(t.namaReseller || '-') + '</td>';
     html += '<td style="text-align:right;font-weight:600;">' + formatRupiah(total) + '</td>';
     html += '<td style="text-align:right;color:#2e7d32;font-weight:600;">' + formatRupiah(dibayar) + '</td>';
-    html += '<td style="text-align:right;color:#c62828;font-weight:700;">' + formatRupiah(sisa) + '</td>';
-    html += '<td style="text-align:center;">';
-    html += '<span style="background:' + umurBg + ';color:' + umurColor + ';padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:700;white-space:nowrap;">' + umurHari + ' hari</span>';
-    html += '</td>';
+    html += '<td style="text-align:right;font-weight:700;color:' + (sisa > 0 ? '#c62828' : '#2e7d32') + ';">' + formatRupiah(sisa) + '</td>';
+    html += '<td style="text-align:center;"><span style="background:' + umurBg + ';color:' + umurColor + ';padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:700;white-space:nowrap;">' + umurHari + ' hari</span></td>';
     html += '<td style="text-align:center;">';
     html += '<span class="' + statusClass + '" style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:600;">' + statusText + '</span>';
-    html += '<div style="margin-top:3px;">';
-    html += '<div style="width:60px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto;overflow:hidden;">';
-    html += '<div style="width:' + Math.min(progress, 100) + '%;height:100%;background:' + (progress >= 75 ? '#4CAF50' : progress >= 50 ? '#FF9800' : '#f44336') + ';border-radius:2px;"></div>';
-    html += '</div>';
-    html += '<div style="font-size:0.6rem;color:#666;margin-top:2px;">' + progress + '%</div>';
-    html += '</div>';
     html += '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">';
-    html += '<button class="btn btn-success btn-sm" onclick="bukaPopupBayarPiutang(\'' + escapeHtml(t.idTransaksi) + '\',\'' + escapeHtml(t.kodeReseller) + '\',\'' + escapeHtml(t.namaReseller) + '\',' + total + ',' + dibayar + ',' + sisa + ')" style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;box-shadow:0 2px 6px rgba(76,175,80,0.3);margin-right:3px;" title="Terima Bayar">💰 Terima</button>';
-    html += '<button class="btn btn-info btn-sm" onclick="lihatRiwayatPiutang(\'' + escapeHtml(t.idTransaksi) + '\')" style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;box-shadow:0 2px 6px rgba(33,150,243,0.3);" title="Riwayat">📋</button>';
+    
+    if (sisa > 0) {
+      html += '<button class="btn btn-success btn-sm" onclick="bukaPopupBayarPiutang(\'' + escapeHtml(t.idTransaksi) + '\',\'' + escapeHtml(t.kodeReseller) + '\',\'' + escapeHtml(t.namaReseller) + '\',' + total + ',' + dibayar + ',' + sisa + ')" style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;box-shadow:0 2px 6px rgba(76,175,80,0.3);margin-right:3px;">💰 Terima</button>';
+    } else {
+      html += '<button class="btn btn-sm" disabled style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;background:#e0e0e0;color:#999;cursor:not-allowed;margin-right:3px;">✅ Lunas</button>';
+    }
+    
+    html += '<button class="btn btn-info btn-sm" onclick="lihatRiwayatPiutang(\'' + escapeHtml(t.idTransaksi) + '\')" style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;box-shadow:0 2px 6px rgba(33,150,243,0.3);">📋</button>';
     html += '</td>';
     html += '</tr>';
   }
