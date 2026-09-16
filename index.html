@@ -2229,8 +2229,9 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 }
 
 /* ============================================================
-   🔥 DASHBOARD PIUTANG — Kartu Statistik
-   Pakai selector ID, bukan :nth-child — biar tahan banting
+   🔥 DASHBOARD PIUTANG — Kartu Statistik Proporsional
+   Pakai selector ID, bukan :nth-child
+   Card auto-size, tidak ada ruang kosong
    ============================================================ */
 
 .dash-piutang-grid {
@@ -2241,6 +2242,9 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 
 .dash-card {
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
 }
 
 .dash-card:hover {
@@ -2254,16 +2258,31 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     gap: 10px !important; 
   }
   .dash-card { 
-    padding: 14px 12px !important; 
-    min-height: 100px !important;
+    padding: 12px 14px !important;
+    /* ❌ Tidak pakai min-height — card auto-size */
   }
   
-  /* 🔥 SEMUA elemen di dalam .dash-card yang punya id starting "dash" */
+  /* 🔥 ANGKA STAT — besar & tegas */
   .dash-card [id^="dash"]:not([id$="Sub"]) {
     font-size: 1.4rem !important;
     font-weight: 800 !important;
-    line-height: 1.15 !important;
+    line-height: 1.1 !important;
     letter-spacing: -0.3px !important;
+    margin-top: 4px !important;
+  }
+  
+  /* 🔥 LABEL — lebih kecil dari angka */
+  .dash-card > div:not([id]) {
+    font-size: 0.68rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* 🔥 SUB-TEXT */
+  .dash-card [id$="Sub"] {
+    font-size: 0.65rem !important;
+    line-height: 1.2 !important;
+    margin-top: 3px !important;
   }
 }
 
@@ -2274,31 +2293,33 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     gap: 8px !important; 
   }
   .dash-card { 
-    padding: 12px 10px !important; 
-    min-height: 95px !important;
+    padding: 10px 12px !important;
     border-radius: 10px !important;
+    /* ❌ Tidak pakai min-height */
   }
   
-  /* 🔥 ANGKA — lebih besar & tegas */
+  /* 🔥 ANGKA STAT — besar & tegas */
   .dash-card [id^="dash"]:not([id$="Sub"]) {
     font-size: 1.25rem !important;
     font-weight: 800 !important;
-    line-height: 1.15 !important;
+    line-height: 1.1 !important;
     letter-spacing: -0.3px !important;
     word-break: break-word !important;
+    margin-top: 3px !important;
   }
   
   /* 🔥 LABEL — lebih kecil dari angka */
   .dash-card > div:not([id]) {
     font-size: 0.6rem !important;
     font-weight: 600 !important;
-    line-height: 1.25 !important;
+    line-height: 1.15 !important;
   }
   
-  /* 🔥 SUB-TEXT — kecil di bawah angka */
+  /* 🔥 SUB-TEXT */
   .dash-card [id$="Sub"] {
     font-size: 0.55rem !important;
-    line-height: 1.3 !important;
+    line-height: 1.15 !important;
+    margin-top: 2px !important;
   }
 }
 
@@ -2308,17 +2329,21 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     gap: 6px !important; 
   }
   .dash-card { 
-    padding: 10px 8px !important; 
-    min-height: 88px !important; 
+    padding: 8px 10px !important;
   }
+  
   .dash-card [id^="dash"]:not([id$="Sub"]) {
     font-size: 1.1rem !important;
+    margin-top: 2px !important;
   }
+  
   .dash-card > div:not([id]) {
     font-size: 0.55rem !important;
   }
+  
   .dash-card [id$="Sub"] {
     font-size: 0.5rem !important;
+    margin-top: 1px !important;
   }
 }
 
