@@ -14955,43 +14955,92 @@ function lihatRiwayatPiutang(idTransaksi) {
     }
     
     var rows = result.data || [];
+    var infoToko = getInfoTokoSync();
     
-    var html = '';
-    html += '<div style="background:#f0f4ff;padding:12px 15px;border-radius:8px;margin-bottom:12px;">';
-    html += '  <div style="font-weight:700;color:#37474f;font-size:0.9rem;">📋 Riwayat Penerimaan - ' + escapeHtml(idTransaksi) + '</div>';
-    html += '  <div style="font-size:0.75rem;color:#666;margin-top:4px;">' + rows.length + ' pembayaran tercatat</div>';
+    // 🔥 Simpan data untuk cetak
+    window._lastRiwayatPiutangData = {
+      idTransaksi: idTransaksi,
+      rows: rows,
+      infoToko: infoToko
+    };
+    
+    // Hitung total untuk preview
+    var totalNominal = 0;
+    for (var i = 0; i < rows.length; i++) {
+      totalNominal += parseInt(rows[i].nominal) || 0;
+    }
+    
+    // Bangun preview riwayat
+    var html = '<div id="strukRiwayatPiutang" class="struk-container">';
+    
+    // Header toko
+    html += '<div class="header-struk">';
+    html += '<h2>' + (infoToko.namaToko || 'POS SYSTEM') + '</h2>';
+    if (infoToko.alamat) {
+      html += '<div class="info">' + infoToko.alamat + '</div>';
+    }
+    if (infoToko.noHp) {
+      html += '<div class="info">📞 ' + infoToko.noHp + '</div>';
+    }
+    html += '<div style="border-top:1px dashed #999;margin:5px 0;"></div>';
+    html += '<div class="info"><b>RIWAYAT PIUTANG</b></div>';
+    html += '<div class="info"><b>ID:</b> ' + escapeHtml(idTransaksi) + '</div>';
+    html += '<div class="info"><b>Tanggal Cetak:</b> ' + formatTanggalDisplay(new Date(), true) + '</div>';
     html += '</div>';
     
     if (rows.length === 0) {
-      html += '<div style="text-align:center;color:#999;padding:30px;border:1px dashed #ddd;border-radius:8px;">📭 Belum ada pembayaran</div>';
+      html += '<div style="text-align:center;padding:20px;color:#999;">📭 Belum ada pembayaran</div>';
     } else {
-      html += '<div style="max-height:400px;overflow-y:auto;border:1px solid #e8ecf4;border-radius:8px;">';
-      html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
-      html += '<thead><tr style="background:#f0f4ff;position:sticky;top:0;">';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">No</th>';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Tanggal</th>';
-      html += '  <th style="padding:8px 12px;text-align:right;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Nominal</th>';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">User</th>';
-      html += '  <th style="padding:8px 12px;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;color:#555;">Catatan</th>';
-      html += '</tr></thead><tbody>';
+      html += '<div class="items-struk">';
+      html += '<div class="struk-header-item"><span>No</span><span>Tgl Bayar</span><span>Nominal</span></div>';
       
       for (var i = 0; i < rows.length; i++) {
         var a = rows[i];
-        html += '<tr>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + (i + 1) + '</td>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + formatTanggalDisplay(a.tanggal) + '</td>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;text-align:right;font-weight:600;color:#2e7d32;">' + formatRupiah(a.nominal || 0) + '</td>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;">' + escapeHtml(a.user || '-') + '</td>';
-        html += '<td style="padding:6px 12px;border-bottom:1px solid #edf0f7;font-size:0.8rem;color:#666;">' + escapeHtml(a.catatan || '-') + '</td>';
-        html += '</tr>';
+        html += '<div class="item-row">';
+        html += '<span style="flex:0.4;text-align:left;">' + (i + 1) + '</span>';
+        html += '<span style="flex:1.3;text-align:left;">' + formatTanggalDisplay(a.tanggal) + '</span>';
+        html += '<span style="flex:1.3;text-align:right;font-weight:600;">' + formatRupiahPlain(a.nominal || 0) + '</span>';
+        html += '</div>';
+        if (a.user) {
+          html += '<div style="font-size:0.65rem;color:#666;padding-left:10px;">👤 ' + escapeHtml(a.user) + '</div>';
+        }
+        if (a.catatan) {
+          html += '<div style="font-size:0.65rem;color:#666;padding-left:10px;">📝 ' + escapeHtml(a.catatan) + '</div>';
+        }
       }
+      html += '</div>';
       
-      html += '</tbody></table></div>';
+      // Total
+      html += '<div class="total-struk">';
+      html += '<div class="total-row"><span>TOTAL DITERIMA</span><span>' + formatRupiahPlain(totalNominal) + '</span></div>';
+      html += '<div class="total-row" style="font-size:0.75rem;font-weight:normal;color:#666;"><span>Jumlah Pembayaran</span><span>' + rows.length + 'x</span></div>';
+      html += '</div>';
     }
     
-    html += '<div style="margin-top:15px;"><button class="btn btn-primary btn-block" onclick="closeModal()" style="padding:12px;border-radius:8px;">Tutup</button></div>';
+    // Footer
+    html += '<div class="footer-struk">';
+    html += '<div class="divider"></div>';
+    html += '<div class="thanks">TERIMA KASIH</div>';
+    html += '<div class="small">' + formatTanggalDisplay(new Date(), true) + '</div>';
+    html += '</div>';
     
-    document.getElementById('modalTitle').textContent = '📋 Riwayat Piutang';
+    html += '</div>';
+    
+    // 🔥 TOMBOL AKSI
+    html += '<div class="struk-actions">';
+    html += '<button class="btn btn-success" onclick="printRiwayatPiutang()">🖨️ Cetak</button>';
+    
+    if (shouldShowThermalButton()) {
+      html += '<button class="btn" onclick="cetakRiwayatPiutangThermal(\'' + escapeHtml(idTransaksi) + '\')" ' +
+              'style="padding:8px 16px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;">' +
+              '📱 Cetak Thermal</button>';
+    }
+    
+    html += '<button class="btn btn-info" onclick="downloadRiwayatPiutangPDF()">📄 Download PDF</button>';
+    html += '<button class="btn btn-danger" onclick="closeModal()">✖ Tutup</button>';
+    html += '</div>';
+    
+    document.getElementById('modalTitle').textContent = '📋 Riwayat Piutang - ' + idTransaksi;
     document.getElementById('modalContent').classList.add('large');
     document.getElementById('modalBody').innerHTML = html;
     document.getElementById('modal').classList.add('active');
@@ -15001,6 +15050,313 @@ function lihatRiwayatPiutang(idTransaksi) {
   });
 }
 
+
+// ============================================================
+// 🖨️ PRINT PREVIEW RIWAYAT PIUTANG RESELLER
+// ============================================================
+function printRiwayatPiutang() {
+  var content = document.getElementById('strukRiwayatPiutang');
+  if (!content) { 
+    showToast('⚠️ Riwayat tidak ditemukan!', 'error'); 
+    return; 
+  }
+  
+  var printWindow = window.open('', '_blank', 'width=280,height=auto');
+  printWindow.document.write('<html><head><title>Riwayat Piutang</title><style>');
+  printWindow.document.write('body { font-family: "Courier New", monospace; font-size: 8px; margin: 0; padding: 5px; }');
+  printWindow.document.write('.struk-container { max-width: 58mm; margin: 0 auto; }');
+  printWindow.document.write('.header-struk { text-align: center; border-bottom: 1px dashed #333; padding-bottom: 4px; margin-bottom: 4px; }');
+  printWindow.document.write('.header-struk h2 { font-size: 11px; margin: 0 0 2px 0; }');
+  printWindow.document.write('.header-struk .info { font-size: 7px; color: #444; line-height: 1.2; }');
+  printWindow.document.write('.items-struk { border-bottom: 1px dashed #333; padding-bottom: 4px; margin-bottom: 4px; }');
+  printWindow.document.write('.struk-header-item { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px dotted #999; padding-bottom: 2px; margin-bottom: 2px; font-size: 7px; }');
+  printWindow.document.write('.item-row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 7px; }');
+  printWindow.document.write('.total-struk { border-bottom: 1px dashed #333; padding-bottom: 4px; margin-bottom: 4px; }');
+  printWindow.document.write('.total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 9px; padding: 2px 0; }');
+  printWindow.document.write('.footer-struk { text-align: center; font-size: 7px; color: #666; line-height: 1.3; padding-top: 2px; }');
+  printWindow.document.write('.footer-struk .divider { border-top: 1px dashed #ccc; margin: 3px 0; }');
+  printWindow.document.write('.footer-struk .thanks { font-size: 9px; font-weight: bold; color: #333; }');
+  printWindow.document.write('.footer-struk .small { font-size: 6px; color: #999; }');
+  printWindow.document.write('</style></head><body>');
+  printWindow.document.write(content.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  setTimeout(function() { printWindow.print(); }, 300);
+}
+
+// ============================================================
+// 📄 DOWNLOAD PDF RIWAYAT PIUTANG RESELLER
+// ============================================================
+function downloadRiwayatPiutangPDF() {
+  var content = document.getElementById('strukRiwayatPiutang');
+  if (!content) { 
+    showToast('⚠️ Riwayat tidak ditemukan!', 'error'); 
+    return; 
+  }
+  
+  showToast('📄 Membuat PDF...', 'success');
+  
+  var printWindow = window.open('', '_blank', 'width=280,height=auto');
+  printWindow.document.write('<html><head><title>Riwayat Piutang</title><style>');
+  printWindow.document.write('body { font-family: "Courier New", monospace; font-size: 8px; margin: 0; padding: 5px; }');
+  printWindow.document.write('.struk-container { max-width: 58mm; margin: 0 auto; }');
+  printWindow.document.write('.header-struk { text-align: center; border-bottom: 1px dashed #333; padding-bottom: 4px; margin-bottom: 4px; }');
+  printWindow.document.write('.header-struk h2 { font-size: 11px; margin: 0 0 2px 0; }');
+  printWindow.document.write('.header-struk .info { font-size: 7px; color: #444; line-height: 1.2; }');
+  printWindow.document.write('.items-struk { border-bottom: 1px dashed #333; padding-bottom: 4px; margin-bottom: 4px; }');
+  printWindow.document.write('.struk-header-item { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px dotted #999; padding-bottom: 2px; margin-bottom: 2px; font-size: 7px; }');
+  printWindow.document.write('.item-row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 7px; }');
+  printWindow.document.write('.total-struk { border-bottom: 1px dashed #333; padding-bottom: 4px; margin-bottom: 4px; }');
+  printWindow.document.write('.total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 9px; padding: 2px 0; }');
+  printWindow.document.write('.footer-struk { text-align: center; font-size: 7px; color: #666; line-height: 1.3; padding-top: 2px; }');
+  printWindow.document.write('.footer-struk .divider { border-top: 1px dashed #ccc; margin: 3px 0; }');
+  printWindow.document.write('.footer-struk .thanks { font-size: 9px; font-weight: bold; color: #333; }');
+  printWindow.document.write('.footer-struk .small { font-size: 6px; color: #999; }');
+  printWindow.document.write('</style></head><body>');
+  printWindow.document.write(content.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  setTimeout(function() { printWindow.print(); }, 300);
+}
+  // ============================================================
+// 📱 CETAK THERMAL RIWAYAT PIUTANG RESELLER (VIA CLEANTER)
+// ============================================================
+async function cetakRiwayatPiutangThermal(idTransaksi) {
+  var t0 = performance.now();
+  
+  if (!idTransaksi) {
+    showToast('⚠️ ID Transaksi tidak valid!', 'error');
+    return;
+  }
+
+  if (window._isPrintingThermal) {
+    showToast('⏳ Sedang mencetak, tunggu sebentar...', 'warning');
+    return;
+  }
+  window._isPrintingThermal = true;
+
+  try {
+    showToast('⏳ Menyiapkan riwayat...', 'info');
+    
+    // Cek Cleanter
+    var bridgeReady = await isCleanterAvailableCached();
+    if (!bridgeReady) {
+      showToast('❌ Cleanter belum aktif. Buka aplikasi Cleanter dulu.', 'error');
+      return;
+    }
+    
+    // Ambil data riwayat
+    var result = await callGAS('getRiwayatPembayaranPiutang', { idTransaksi: idTransaksi });
+    if (!result || !result.success) {
+      throw new Error('Gagal mengambil data riwayat');
+    }
+    
+    var rows = result.data || [];
+    var infoToko = getInfoTokoSync();
+    
+    var WIDTH = 32;
+    var DIVIDER = '-'.repeat(WIDTH);
+
+    /**
+     * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow
+     */
+    function makeRow(left, right) {
+      left  = String(left  == null ? '' : left);
+      right = String(right == null ? '' : right);
+      
+      var spaceCount = WIDTH - left.length - right.length;
+      if (spaceCount >= 1) {
+        return left + ' '.repeat(spaceCount) + right;
+      }
+      
+      if (right.length >= WIDTH) {
+        right = right.substring(0, WIDTH);
+      }
+      
+      var maxLeftLen = WIDTH - right.length - 1;
+      if (maxLeftLen < 1) {
+        right = right.substring(0, WIDTH - 1);
+        maxLeftLen = 0;
+      }
+      
+      var trimmedLeft = left;
+      if (left.length > maxLeftLen) {
+        if (maxLeftLen <= 1) {
+          trimmedLeft = '';
+        } else {
+          trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+        }
+      }
+      
+      var pad = WIDTH - trimmedLeft.length - right.length;
+      if (pad < 1) pad = 1;
+      
+      var result = trimmedLeft + ' '.repeat(pad) + right;
+      if (result.length > WIDTH) result = result.substring(0, WIDTH);
+      
+      return result;
+    }
+    
+    var content = [];
+    
+    // Header Toko
+    content.push({
+      type: 'text',
+      text: infoToko.namaToko || 'POS SYSTEM',
+      align: 'center',
+      bold: true,
+      size: 'large'
+    });
+    content.push({ type: 'text', text: ' ' });
+    
+    if (infoToko.alamat) {
+      content.push({
+        type: 'text',
+        text: String(infoToko.alamat),
+        align: 'center'
+      });
+    }
+    if (infoToko.noHp) {
+      content.push({
+        type: 'text',
+        text: 'Telp. ' + String(infoToko.noHp),
+        align: 'center'
+      });
+    }
+    
+    content.push({ type: 'text', text: DIVIDER });
+    
+    // Judul
+    content.push({
+      type: 'text',
+      text: 'RIWAYAT PIUTANG',
+      align: 'center',
+      bold: true
+    });
+    
+    content.push({ type: 'text', text: DIVIDER });
+    
+    // Info Transaksi
+    content.push({
+      type: 'text',
+      text: makeRow('ID', ': ' + String(idTransaksi))
+    });
+    content.push({
+      type: 'text',
+      text: makeRow('Cetak', ': ' + formatTanggalDisplay(new Date()))
+    });
+    
+    content.push({ type: 'text', text: DIVIDER });
+    
+    // Detail Pembayaran
+    if (rows.length === 0) {
+      content.push({
+        type: 'text',
+        text: 'Belum ada pembayaran',
+        align: 'center'
+      });
+    } else {
+      var totalNominal = 0;
+      
+      for (var i = 0; i < rows.length; i++) {
+        var a = rows[i];
+        var nominal = parseInt(a.nominal) || 0;
+        totalNominal += nominal;
+        
+        // Nomor + tanggal
+        content.push({
+          type: 'text',
+          text: (i + 1) + '. ' + formatTanggalDisplay(a.tanggal)
+        });
+        
+        // Nominal
+        var nominalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(nominal);
+        content.push({
+          type: 'text',
+          text: makeRow('   Nominal', nominalFmt)
+        });
+        
+        // User (jika ada)
+        if (a.user) {
+          var userText = String(a.user);
+          if (userText.length > 24) userText = userText.substring(0, 23) + '…';
+          content.push({
+            type: 'text',
+            text: '   User: ' + userText
+          });
+        }
+        
+        // Catatan (jika ada)
+        if (a.catatan && a.catatan !== '-') {
+          var catText = String(a.catatan);
+          if (catText.length > 24) catText = catText.substring(0, 23) + '…';
+          content.push({
+            type: 'text',
+            text: '   Cat: ' + catText
+          });
+        }
+      }
+      
+      content.push({ type: 'text', text: DIVIDER });
+      
+      // Total
+      var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalNominal);
+      content.push({
+        type: 'text',
+        text: makeRow('TOTAL DITERIMA', totalFmt),
+        bold: true
+      });
+      
+      content.push({
+        type: 'text',
+        text: makeRow('Jumlah Bayar', rows.length + 'x')
+      });
+    }
+    
+    content.push({ type: 'text', text: DIVIDER });
+    
+    // Footer
+    content.push({
+      type: 'text',
+      text: 'TERIMA KASIH',
+      align: 'center',
+      bold: true
+    });
+    
+    // 🔥 Tunggu QR selesai
+    await new Promise(function(resolve) {
+      tambahQRFooterCleanter(content, resolve);
+    });
+    
+    content.push({ type: 'feed' });
+    
+    var payload = { content: content };
+    
+    // Kirim ke Cleanter
+    var response = await fetch('http://localhost:9100/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      var errText = await response.text();
+      throw new Error('HTTP ' + response.status + ': ' + errText);
+    }
+    
+    var t1 = performance.now();
+    console.log('⏱️ Cetak riwayat piutang:', (t1 - t0).toFixed(0), 'ms');
+    showToast('✅ Riwayat piutang terkirim ke printer!', 'success');
+    
+  } catch (error) {
+    console.error('❌ Error cetak riwayat piutang:', error);
+    showToast('❌ Gagal cetak: ' + error.message, 'error');
+  } finally {
+    window._isPrintingThermal = false;
+  }
+}
+  
+  
 function exportPiutangResellerCSV() {
   showToast('⏳ Memproses ekspor...', 'info');
   
