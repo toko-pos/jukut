@@ -15134,9 +15134,7 @@ function lihatRiwayatPiutang(idTransaksi) {
 }
 
 
-// ============================================================
-// 🖨️ PRINT PREVIEW RIWAYAT PIUTANG RESELLER
-// ============================================================
+
 // ============================================================
 // 🖨️ PRINT PREVIEW RIWAYAT PIUTANG RESELLER (VERSI LENGKAP)
 // ============================================================
@@ -15310,34 +15308,7 @@ function printRiwayatPiutang() {
   printWindow.document.close();
   setTimeout(function() { printWindow.print(); }, 300);
 }
-  var content = document.getElementById('strukRiwayatPiutang');
-  if (!content) { 
-    showToast('⚠️ Riwayat tidak ditemukan!', 'error'); 
-    return; 
-  }
   
-  var printWindow = window.open('', '_blank', 'width=280,height=auto');
-  printWindow.document.write('<html><head><title>Riwayat Piutang</title><style>');
-  printWindow.document.write('body { font-family: "Courier New", monospace; font-size: 8px; margin: 0; padding: 5px; }');
-  printWindow.document.write('.struk-container { max-width: 58mm; margin: 0 auto; }');
-  printWindow.document.write('.header-struk { text-align: center; border-bottom: 1px dashed #333; padding-bottom: 4px; margin-bottom: 4px; }');
-  printWindow.document.write('.header-struk h2 { font-size: 11px; margin: 0 0 2px 0; }');
-  printWindow.document.write('.header-struk .info { font-size: 7px; color: #444; line-height: 1.2; }');
-  printWindow.document.write('.items-struk { border-bottom: 1px dashed #333; padding-bottom: 4px; margin-bottom: 4px; }');
-  printWindow.document.write('.struk-header-item { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px dotted #999; padding-bottom: 2px; margin-bottom: 2px; font-size: 7px; }');
-  printWindow.document.write('.item-row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 7px; }');
-  printWindow.document.write('.total-struk { border-bottom: 1px dashed #333; padding-bottom: 4px; margin-bottom: 4px; }');
-  printWindow.document.write('.total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 9px; padding: 2px 0; }');
-  printWindow.document.write('.footer-struk { text-align: center; font-size: 7px; color: #666; line-height: 1.3; padding-top: 2px; }');
-  printWindow.document.write('.footer-struk .divider { border-top: 1px dashed #ccc; margin: 3px 0; }');
-  printWindow.document.write('.footer-struk .thanks { font-size: 9px; font-weight: bold; color: #333; }');
-  printWindow.document.write('.footer-struk .small { font-size: 6px; color: #999; }');
-  printWindow.document.write('</style></head><body>');
-  printWindow.document.write(content.innerHTML);
-  printWindow.document.write('</body></html>');
-  printWindow.document.close();
-  setTimeout(function() { printWindow.print(); }, 300);
-}
 
 // ============================================================
 // 📄 DOWNLOAD PDF RIWAYAT PIUTANG RESELLER (VERSI LENGKAP)
