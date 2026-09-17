@@ -14803,13 +14803,13 @@ function bukaPopupBayarPiutang(idTransaksi, kodeReseller, namaReseller, total, d
   html += '  <textarea id="catatanTerimaPiutang" placeholder="Contoh: Transfer BCA, cicilan ke-2, dll..." style="width:100%;padding:10px 12px;border:2px solid #dce3f0;border-radius:8px;font-size:0.9rem;min-height:50px;resize:vertical;"></textarea>';
   html += '</div>';
   
-  html += '<div style="display:flex;gap:10px;margin-top:18px;padding-top:15px;border-top:2px solid #eee;">';
+html += '<div style="display:flex;gap:10px;margin-top:18px;padding-top:15px;border-top:2px solid #eee;">';
   html += '  <button class="btn btn-success" onclick="prosesTerimaPiutang(\'' + escapeHtml(idTransaksi) + '\',\'' + escapeHtml(kodeReseller) + '\',' + sisa + ')" ';
-  html += '          style="flex:2;padding:14px;font-size:1.05rem;font-weight:700;border-radius:10px;background:linear-gradient(135deg,#4CAF50,#388E3C);color:white;border:none;cursor:pointer;box-shadow:0 4px 15px rgba(76,175,80,0.3);">';
+  html += '          style="flex:2;padding:18px 14px;min-height:60px;font-size:1.05rem;font-weight:700;border-radius:10px;background:linear-gradient(135deg,#4CAF50,#388E3C);color:white;border:none;cursor:pointer;box-shadow:0 4px 15px rgba(76,175,80,0.3);display:flex;align-items:center;justify-content:center;">';
   html += '    ✅ Proses Penerimaan';
   html += '  </button>';
   html += '  <button class="btn btn-danger" onclick="closeModal()" ';
-  html += '          style="flex:1;padding:14px;font-size:1.05rem;font-weight:700;border-radius:10px;background:#f44336;color:white;border:none;cursor:pointer;">';
+  html += '          style="flex:1;padding:18px 14px;min-height:60px;font-size:1.05rem;font-weight:700;border-radius:10px;background:#f44336;color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">';
   html += '    ✖ Batal';
   html += '  </button>';
   html += '</div>';
