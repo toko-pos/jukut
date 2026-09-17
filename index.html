@@ -8960,51 +8960,73 @@ html += '</div>';
     var infoToko = getInfoTokoSync();
     
     var WIDTH = 32;
-var DIVIDER = '-'.repeat(WIDTH);
+    var DIVIDER = '-'.repeat(WIDTH);
 
-/**
- * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
- * Kalau tidak muat, sisi kiri dipotong (dengan elipsis).
- */
-function makeRow(left, right) {
-  left  = String(left  == null ? '' : left);
-  right = String(right == null ? '' : right);
-  
-  var spaceCount = WIDTH - left.length - right.length;
-  if (spaceCount >= 1) {
-    return left + ' '.repeat(spaceCount) + right;
-  }
-  
-  if (right.length >= WIDTH) {
-    right = right.substring(0, WIDTH);
-  }
-  
-  var maxLeftLen = WIDTH - right.length - 1;
-  if (maxLeftLen < 1) {
-    right = right.substring(0, WIDTH - 1);
-    maxLeftLen = 0;
-  }
-  
-  var trimmedLeft = left;
-  if (left.length > maxLeftLen) {
-    if (maxLeftLen <= 1) {
-      trimmedLeft = '';
-    } else {
-      trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    /**
+     * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow (kiri-kanan).
+     */
+    function makeRow(left, right) {
+      left  = String(left  == null ? '' : left);
+      right = String(right == null ? '' : right);
+      
+      var spaceCount = WIDTH - left.length - right.length;
+      if (spaceCount >= 1) {
+        return left + ' '.repeat(spaceCount) + right;
+      }
+      
+      if (right.length >= WIDTH) {
+        right = right.substring(0, WIDTH);
+      }
+      
+      var maxLeftLen = WIDTH - right.length - 1;
+      if (maxLeftLen < 1) {
+        right = right.substring(0, WIDTH - 1);
+        maxLeftLen = 0;
+      }
+      
+      var trimmedLeft = left;
+      if (left.length > maxLeftLen) {
+        if (maxLeftLen <= 1) {
+          trimmedLeft = '';
+        } else {
+          trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+        }
+      }
+      
+      var pad = WIDTH - trimmedLeft.length - right.length;
+      if (pad < 1) pad = 1;
+      
+      var result = trimmedLeft + ' '.repeat(pad) + right;
+      
+      if (result.length > WIDTH) {
+        result = result.substring(0, WIDTH);
+      }
+      
+      return result;
     }
-  }
-  
-  var pad = WIDTH - trimmedLeft.length - right.length;
-  if (pad < 1) pad = 1;
-  
-  var result = trimmedLeft + ' '.repeat(pad) + right;
-  
-  if (result.length > WIDTH) {
-    result = result.substring(0, WIDTH);
-  }
-  
-  return result;
-}
+    
+    /**
+     * 🔥 BARU: Label sejajar dengan ":" dan isi rata kiri.
+     * Contoh: makeLabelRow('No.Nota', 'STM-001', 10)
+     *   → "No.Nota   : STM-001"
+     *   → "Tanggal   : 17/09/2026"
+     */
+    function makeLabelRow(label, value, labelWidth) {
+      labelWidth = labelWidth || 10;
+      
+      label = String(label == null ? '' : label);
+      value = String(value == null ? '' : value);
+      
+      var paddedLabel = label;
+      while (paddedLabel.length < labelWidth) {
+        paddedLabel += ' ';
+      }
+      if (paddedLabel.length > labelWidth) {
+        paddedLabel = paddedLabel.substring(0, labelWidth);
+      }
+      
+      return paddedLabel + ' : ' + value;
+    }
     
     var content = [];
     
@@ -9043,21 +9065,22 @@ function makeRow(left, right) {
     
     content.push({ type: 'text', text: DIVIDER });
     
+    // 🔥 INFO NOTA — label sejajar, isi rata kiri
     content.push({
       type: 'text',
-      text: makeRow('No.Nota', ': ' + String(h.noNota))
+      text: makeLabelRow('No.Nota', String(h.noNota), 10)
     });
     content.push({
       type: 'text',
-      text: makeRow('Tanggal', ': ' + formatTanggalDisplay(h.tanggal))
+      text: makeLabelRow('Tanggal', formatTanggalDisplay(h.tanggal), 10)
     });
     content.push({
       type: 'text',
-      text: makeRow('Pemasok', ': ' + String(h.pemasok || '-'))
+      text: makeLabelRow('Pemasok', String(h.pemasok || '-'), 10)
     });
     content.push({
       type: 'text',
-      text: makeRow('User', ': ' + String(h.user || '-'))
+      text: makeLabelRow('User', String(h.user || '-'), 10)
     });
     
     content.push({ type: 'text', text: DIVIDER });
@@ -9108,16 +9131,13 @@ function makeRow(left, right) {
       bold: true
     });
 
-
- // 🔥 Tunggu QR selesai
-await new Promise(function(resolve) {
-  tambahQRFooterCleanter(content, resolve);
-});
-
+    // 🔥 Tunggu QR selesai
+    await new Promise(function(resolve) {
+      tambahQRFooterCleanter(content, resolve);
+    });
     
     content.push({ type: 'feed' });
 
-    
     var payload = {
       cut: true,
       content: content
@@ -9145,7 +9165,6 @@ await new Promise(function(resolve) {
     window._isPrintingThermal = false;
   }
 }
-  
   
 function printStokHistory() {
   var content = document.getElementById('strukStokHistory');
