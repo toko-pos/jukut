@@ -15307,6 +15307,54 @@ async function cetakNotaTerimaPiutangThermal() {
       
       return paddedLabel + ' : ' + value;
     }
+
+
+      // 🔥 HELPER: Word wrap — pecah teks panjang jadi multi-baris
+function wrapText(text, width, indent) {
+  width = width || WIDTH;
+  indent = indent || '';
+  
+  text = String(text == null ? '' : text).trim();
+  if (!text) return [''];
+  
+  var maxLineLen = width - indent.length;
+  if (maxLineLen < 10) maxLineLen = width;
+  
+  var words = text.split(/\s+/);
+  var lines = [];
+  var currentLine = '';
+  
+  for (var i = 0; i < words.length; i++) {
+    var word = words[i];
+    
+    if (word.length > maxLineLen) {
+      if (currentLine) {
+        lines.push(indent + currentLine);
+        currentLine = '';
+      }
+      while (word.length > maxLineLen) {
+        lines.push(indent + word.substring(0, maxLineLen));
+        word = word.substring(maxLineLen);
+      }
+      if (word) currentLine = word;
+      continue;
+    }
+    
+    var testLine = currentLine ? currentLine + ' ' + word : word;
+    
+    if (testLine.length <= maxLineLen) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) lines.push(indent + currentLine);
+      currentLine = word;
+    }
+  }
+  
+  if (currentLine) lines.push(indent + currentLine);
+  
+  return lines.length > 0 ? lines : [indent];
+}
+      
     
     var content = [];
     
@@ -15366,16 +15414,29 @@ async function cetakNotaTerimaPiutangThermal() {
     
     content.push({ type: 'text', text: DIVIDER });
     
-    // Catatan
-    if (dataNota.catatan) {
-      content.push({ type: 'text', text: 'Catatan: ' + dataNota.catatan });
-      content.push({ type: 'text', text: DIVIDER });
-    }
-    
-    // User
-    content.push({ type: 'text', text: makeRow('Diterima oleh', dataNota.user) });
-    
-    content.push({ type: 'text', text: DIVIDER });
+    // Catatan (dengan word wrap multi-baris)
+if (dataNota.catatan) {
+  content.push({ type: 'text', text: 'Catatan:' });
+  
+  // 🔥 Word wrap — pecah catatan jadi beberapa baris
+  var catatanStr = String(dataNota.catatan);
+  var catatanLines = wrapText(catatanStr, WIDTH, '  ');
+  
+  for (var ci = 0; ci < catatanLines.length; ci++) {
+    content.push({
+      type: 'text',
+      text: catatanLines[ci]
+    });
+  }
+  
+  content.push({ type: 'text', text: DIVIDER });
+}
+
+// User
+content.push({ type: 'text', text: makeRow('Diterima oleh', dataNota.user) });
+
+content.push({ type: 'text', text: DIVIDER });
+
     
     // Footer
     content.push({ type: 'text', text: 'TERIMA KASIH', align: 'center', bold: true });
