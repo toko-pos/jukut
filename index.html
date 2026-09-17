@@ -2501,6 +2501,100 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     padding: 6px 4px;
   }
 }
+
+
+  /* ===== TOMBOL AKSI PIUTANG RESELLER (SAMAKAN DENGAN TRANSAKSI) ===== */
+#piutangResellerTable .aksi-piutang-wrapper {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+#piutangResellerTable .aksi-piutang-wrapper button {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  line-height: 1;
+}
+
+#piutangResellerTable .aksi-piutang-wrapper button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+#piutangResellerTable .aksi-piutang-wrapper button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none !important;
+}
+
+/* Icon besar */
+#piutangResellerTable .aksi-piutang-wrapper button .aksi-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  display: block;
+}
+
+/* Label kecil seperti TAB */
+#piutangResellerTable .aksi-piutang-wrapper button .aksi-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  line-height: 1;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Warna tombol */
+#piutangResellerTable .aksi-piutang-wrapper .btn-aksi-terima {
+  background: #4CAF50;
+  color: white;
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+}
+#piutangResellerTable .aksi-piutang-wrapper .btn-aksi-terima:hover:not(:disabled) {
+  background: #388E3C;
+}
+
+#piutangResellerTable .aksi-piutang-wrapper .btn-aksi-lunas {
+  background: #e0e0e0;
+  color: #999;
+  box-shadow: none;
+}
+
+#piutangResellerTable .aksi-piutang-wrapper .btn-aksi-riwayat {
+  background: #2196F3;
+  color: white;
+  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
+}
+#piutangResellerTable .aksi-piutang-wrapper .btn-aksi-riwayat:hover:not(:disabled) {
+  background: #1976D2;
+}
+
+/* Responsive HP */
+@media (max-width: 480px) {
+  #piutangResellerTable .aksi-piutang-wrapper button {
+    width: 38px;
+    height: 38px;
+    border-radius: 7px;
+  }
+  #piutangResellerTable .aksi-piutang-wrapper button .aksi-icon {
+    font-size: 0.95rem;
+  }
+  #piutangResellerTable .aksi-piutang-wrapper button .aksi-label {
+    font-size: 0.5rem;
+  }
+}
            
   </style>
 </head>
@@ -14614,15 +14708,31 @@ function renderTabelPiutang(belumLunas) {
     html += '<span class="' + statusClass + '" style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:600;">' + statusText + '</span>';
     html += '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">';
-    
-    if (sisa > 0) {
-      html += '<button class="btn btn-success btn-sm" onclick="bukaPopupBayarPiutang(\'' + escapeHtml(t.idTransaksi) + '\',\'' + escapeHtml(t.kodeReseller) + '\',\'' + escapeHtml(t.namaReseller) + '\',' + total + ',' + dibayar + ',' + sisa + ')" style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;box-shadow:0 2px 6px rgba(76,175,80,0.3);margin-right:3px;">💰 Terima</button>';
-    } else {
-      html += '<button class="btn btn-sm" disabled style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;background:#e0e0e0;color:#999;cursor:not-allowed;margin-right:3px;">✅ Lunas</button>';
-    }
-    
-    html += '<button class="btn btn-info btn-sm" onclick="lihatRiwayatPiutang(\'' + escapeHtml(t.idTransaksi) + '\')" style="padding:6px 12px;font-size:0.7rem;font-weight:700;border-radius:6px;box-shadow:0 2px 6px rgba(33,150,243,0.3);">📋</button>';
-    html += '</td>';
+html += '<div class="aksi-piutang-wrapper">';
+
+if (sisa > 0) {
+  html += '<button class="btn-aksi-terima" ' +
+          'onclick="bukaPopupBayarPiutang(\'' + escapeHtml(t.idTransaksi) + '\',\'' + escapeHtml(t.kodeReseller) + '\',\'' + escapeHtml(t.namaReseller) + '\',' + total + ',' + dibayar + ',' + sisa + ')" ' +
+          'title="Terima Pembayaran">' +
+          '<span class="aksi-icon">💰</span>' +
+          '<span class="aksi-label">TERIMA</span>' +
+          '</button>';
+} else {
+  html += '<button class="btn-aksi-lunas" disabled title="Lunas">' +
+          '<span class="aksi-icon">✅</span>' +
+          '<span class="aksi-label">LUNAS</span>' +
+          '</button>';
+}
+
+html += '<button class="btn-aksi-riwayat" ' +
+        'onclick="lihatRiwayatPiutang(\'' + escapeHtml(t.idTransaksi) + '\')" ' +
+        'title="Riwayat Pembayaran">' +
+        '<span class="aksi-icon">📋</span>' +
+        '<span class="aksi-label">RIWAYAT</span>' +
+        '</button>';
+
+html += '</div>';
+html += '</td>';
     html += '</tr>';
   }
   
