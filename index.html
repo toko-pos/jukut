@@ -15465,6 +15465,7 @@ function downloadRiwayatPiutangPDF() {
 }
   // ============================================================
 // 📱 CETAK THERMAL RIWAYAT PIUTANG RESELLER (VERSI LENGKAP)
+// Dengan label sejajar & isi rata kiri
 // ============================================================
 async function cetakRiwayatPiutangThermal(idTransaksi) {
   var t0 = performance.now();
@@ -15529,6 +15530,7 @@ async function cetakRiwayatPiutangThermal(idTransaksi) {
     var WIDTH = 32;
     var DIVIDER = '-'.repeat(WIDTH);
     
+    // 🔥 HELPER 1: Baris kiri-kanan (untuk Total & Nominal)
     function makeRow(left, right) {
       left  = String(left  == null ? '' : left);
       right = String(right == null ? '' : right);
@@ -15558,6 +15560,27 @@ async function cetakRiwayatPiutangThermal(idTransaksi) {
       if (result.length > WIDTH) result = result.substring(0, WIDTH);
       
       return result;
+    }
+    
+    // 🔥 HELPER 2: Baris label sejajar dengan ":" dan isi rata kiri
+    // Contoh: makeLabelRow('ID', 'RS-123', 8) → "ID       : RS-123"
+    function makeLabelRow(label, value, labelWidth) {
+      labelWidth = labelWidth || 8;
+      
+      label = String(label == null ? '' : label);
+      value = String(value == null ? '' : value);
+      
+      // Pad label supaya rata
+      var paddedLabel = label;
+      while (paddedLabel.length < labelWidth) {
+        paddedLabel += ' ';
+      }
+      if (paddedLabel.length > labelWidth) {
+        paddedLabel = paddedLabel.substring(0, labelWidth);
+      }
+      
+      // Format: "Label    : Value" — value rata kiri
+      return paddedLabel + ' : ' + value;
     }
     
     var content = [];
@@ -15605,27 +15628,27 @@ async function cetakRiwayatPiutangThermal(idTransaksi) {
     
     content.push({ type: 'text', text: DIVIDER });
     
-    // ===== INFO TRANSAKSI =====
+    // ===== INFO TRANSAKSI (LABEL SEJAJAR) =====
     content.push({
       type: 'text',
-      text: makeRow('ID', ': ' + String(header.idTransaksi))
+      text: makeLabelRow('ID', header.idTransaksi, 8)
     });
     content.push({
       type: 'text',
-      text: makeRow('Tgl', ': ' + formatTanggalDisplay(header.tanggal))
+      text: makeLabelRow('Tgl', formatTanggalDisplay(header.tanggal), 8)
     });
     content.push({
       type: 'text',
-      text: makeRow('Reseller', ': ' + String(header.namaReseller))
+      text: makeLabelRow('Reseller', header.namaReseller, 8)
     });
     content.push({
       type: 'text',
-      text: makeRow('Kode', ': ' + String(header.kodeReseller))
+      text: makeLabelRow('Kode', header.kodeReseller, 8)
     });
     
     content.push({ type: 'text', text: DIVIDER });
     
-    // ===== RINGKASAN PIUTANG =====
+    // ===== RINGKASAN PIUTANG (LABEL SEJAJAR) =====
     content.push({
       type: 'text',
       text: 'RINGKASAN PIUTANG',
@@ -15638,25 +15661,25 @@ async function cetakRiwayatPiutangThermal(idTransaksi) {
     var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(header.total);
     content.push({
       type: 'text',
-      text: makeRow('Total Piutang', totalFmt)
+      text: makeLabelRow('Total Piutang', totalFmt, 15)
     });
     
     var dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(header.dibayar);
     content.push({
       type: 'text',
-      text: makeRow('Sudah Diterima', dibayarFmt)
+      text: makeLabelRow('Sudah Diterima', dibayarFmt, 15)
     });
     
     var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(header.sisa);
     content.push({
       type: 'text',
-      text: makeRow('SISA PIUTANG', sisaFmt),
+      text: makeLabelRow('SISA PIUTANG', sisaFmt, 15),
       bold: true
     });
     
     content.push({
       type: 'text',
-      text: makeRow('Status', statusLabel),
+      text: makeLabelRow('Status', statusLabel, 15),
       bold: true
     });
     
@@ -15683,12 +15706,13 @@ async function cetakRiwayatPiutangThermal(idTransaksi) {
         var a = rows[i];
         var nominal = parseInt(a.nominal) || 0;
         
-        // Nomor + tanggal + nominal
+        // Nomor + tanggal
         content.push({
           type: 'text',
           text: (i + 1) + '. ' + formatTanggalDisplay(a.tanggal)
         });
         
+        // Nominal
         var nominalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(nominal);
         content.push({
           type: 'text',
