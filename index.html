@@ -12812,8 +12812,8 @@ function onEditHargaDropdownChange() {
   
   if (hargaInput) {
     hargaInput.value = found['Harga Jual'] || 0;
-    hargaInput.focus();
-    hargaInput.select();
+    // 🔥 TIDAK ADA focus() atau select() di sini
+    // User yang harus klik sendiri kalau mau edit
   }
   
   resultDiv.dataset.kode = found.Kode;
