@@ -403,9 +403,48 @@ function getInfoTokoSync() {
   #installBanner .btn-close-install { padding: 6px 10px; font-size: 0.7rem; }
 }
 
-    
-    /* ===== SCANNER ===== */
-    .scanner-container { 
+ /* ===== SCANNER ===== */
+ /* 🔥 Overlay gelap proporsional dengan 4 sisi */
+.scanner-dark-top,
+.scanner-dark-bottom,
+.scanner-dark-left,
+.scanner-dark-right {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.scanner-dark-top {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(50% - 20%);
+}
+
+.scanner-dark-bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(50% - 20%);
+}
+
+.scanner-dark-left {
+  top: calc(50% - 20%);
+  bottom: calc(50% - 20%);
+  left: 0;
+  width: calc(50% - 35%);
+}
+
+.scanner-dark-right {
+  top: calc(50% - 20%);
+  bottom: calc(50% - 20%);
+  right: 0;
+  width: calc(50% - 35%);
+}
+
+/* ===== SCANNER ===== */
+.scanner-container { 
   position: relative; 
   width: 100%; 
   max-width: 400px; 
@@ -413,11 +452,18 @@ function getInfoTokoSync() {
   border-radius: 12px; 
   overflow: hidden; 
   background: #000;
-  aspect-ratio: 1 / 1;     /* 🔥 Tambah: paksa rasio 1:1 */
-  max-height: 55vh;        /* 🔥 Tambah: maksimal 55% tinggi layar */
+  aspect-ratio: 1 / 1;
+  max-height: 55vh;
+  isolation: isolate;
 }
-    .scanner-container video { width: 100%; height: auto; display: block; }
-    .scanner-overlay { 
+
+.scanner-container video { 
+  width: 100%; 
+  height: auto; 
+  display: block; 
+}
+
+.scanner-overlay { 
   position: absolute; 
   top: 50%; 
   left: 50%; 
@@ -426,26 +472,63 @@ function getInfoTokoSync() {
   height: 40%; 
   border: 3px solid rgba(76, 175, 80, 0.8); 
   border-radius: 12px; 
-  box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.4); 
   pointer-events: none; 
-  animation: pulse-border 1.5s infinite; 
+  animation: pulse-border 1.5s infinite;
+  z-index: 10;
 }
-    @keyframes pulse-border { 0%, 100% { border-color: rgba(76, 175, 80, 0.8); } 50% { border-color: rgba(76, 175, 80, 0.3); } }
-    .scanner-controls { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
-    .scanner-controls .btn { min-width: 80px; }
-    .scanner-status { 
+
+@keyframes pulse-border { 
+  0%, 100% { border-color: rgba(76, 175, 80, 0.8); } 
+  50% { border-color: rgba(76, 175, 80, 0.3); } 
+}
+
+.scanner-controls { 
+  display: flex; 
+  gap: 10px; 
+  justify-content: center; 
+  margin-top: 10px; 
+  flex-wrap: wrap; 
+}
+
+.scanner-controls .btn { min-width: 80px; }
+
+.scanner-status { 
   text-align: center; 
   padding: 8px; 
   font-size: 0.85rem; 
   color: #666; 
-  min-height: 32px;       /* 🔥 Biar tidak "naik-turun" saat teks ganti */
-  font-weight: 600;       /* 🔥 Biar lebih jelas */
+  min-height: 32px;
+  font-weight: 600;
 }
-    .btn-scan { background: #03A9F4; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-scan:hover { background: #0288D1; transform: scale(1.02); }
-    .btn-scan:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-    .btn-scan-stop { background: #f44336; }
-    .btn-scan-stop:hover { background: #d32f2f; }
+
+.btn-scan { 
+  background: #03A9F4; 
+  color: white; 
+  border: none; 
+  padding: 8px 16px; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  font-weight: 600; 
+  font-size: 0.9rem; 
+  transition: all 0.3s; 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 6px; 
+}
+
+.btn-scan:hover { 
+  background: #0288D1; 
+  transform: scale(1.02); 
+}
+
+.btn-scan:disabled { 
+  opacity: 0.5; 
+  cursor: not-allowed; 
+  transform: none !important; 
+}
+
+.btn-scan-stop { background: #f44336; }
+.btn-scan-stop:hover { background: #d32f2f; }
     
     /* ===== HEADER WITH LOGO ===== */
     .header { background: white; padding: 15px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -3752,9 +3835,17 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     <div id="scannerBody">
       <div id="scannerContainer">
         <div class="scanner-container" id="scannerBox">
-          <div id="reader" style="width:100%;"></div>
-          <div class="scanner-overlay"></div>
-        </div>
+  <div id="reader" style="width:100%;"></div>
+  
+  <!-- 🔥 4 sisi gelap proporsional -->
+  <div class="scanner-dark-top"></div>
+  <div class="scanner-dark-bottom"></div>
+  <div class="scanner-dark-left"></div>
+  <div class="scanner-dark-right"></div>
+  
+  <!-- 🔥 Kotak hijau panduan -->
+  <div class="scanner-overlay"></div>
+</div>
         <div class="scanner-status" id="scannerStatus">📸 Menyiapkan kamera...</div>
         <div class="scanner-controls">
           <button class="btn btn-danger" id="btnStopScan" onclick="stopScanner()">⏹ Berhenti</button>
