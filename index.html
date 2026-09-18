@@ -12726,10 +12726,13 @@ function initScanner() {
     // ============================================================
     // 🔥 CALLBACK SCAN — dipakai bersama oleh start() dan fallback
     // ============================================================
+        // 🔥 FLAG GUARD — cegah double-scan TANPA pause()
+    var _scanCooldown = false;
+    
     function onScanSuccess(decodedText) {
-      // 🔥 PAUSE DULU (guard race condition)
-      if (html5QrCode && isScanning) {
-        try { html5QrCode.pause(true); } catch(e) {}
+      // 🔥 Cek cooldown — kalau masih cooldown, skip
+      if (_scanCooldown) {
+        return;
       }
       
       var found = false;
@@ -12755,11 +12758,10 @@ function initScanner() {
             (scannerMode === "STOK" ? ' ditambahkan ke Stok Masuk!' : ' ditambahkan ke POS!'), 
             'success');
           
-          // 🔥 Resume setelah 1 detik
+          // 🔥 COOLDOWN 1 detik (TANPA pause)
+          _scanCooldown = true;
           setTimeout(function() {
-            if (html5QrCode && isScanning) {
-              try { html5QrCode.resume(); } catch(e) {}
-            }
+            _scanCooldown = false;
           }, 1000);
           
           break;
@@ -12778,11 +12780,10 @@ function initScanner() {
           manualInput.focus();
         }
         
-        // 🔥 Resume setelah 2 detik
+        // 🔥 COOLDOWN 2 detik (TANPA pause)
+        _scanCooldown = true;
         setTimeout(function() {
-          if (html5QrCode && isScanning) {
-            try { html5QrCode.resume(); } catch(e) {}
-          }
+          _scanCooldown = false;
         }, 2000);
       }
     }
