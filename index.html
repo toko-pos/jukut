@@ -5802,6 +5802,52 @@ function playErrorSound() {
 }
 
 // ============================================================
+// 🔥 SUARA STOK HABIS — 3 beep cepat NAIK (kesan "ditolak")
+// ============================================================
+function playOutOfStockSound() {
+  var ctx = _ensureAudioCtx();
+  if (!ctx) return;
+
+  try {
+    if (ctx.state === 'suspended') ctx.resume();
+
+    var now = ctx.currentTime;
+    var volume = 0.4;
+    var freqs = [800, 1000, 1200];   // naik cepat
+    var beepDur = 0.07;
+    var gap = 0.09;
+
+    for (var i = 0; i < freqs.length; i++) {
+      var startTime = now + (i * gap);
+      
+      var osc = ctx.createOscillator();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freqs[i], startTime);
+
+      var gain = ctx.createGain();
+      gain.gain.setValueAtTime(volume, startTime);
+      gain.gain.setValueAtTime(volume, startTime + beepDur - 0.01);
+      gain.gain.linearRampToValueAtTime(0, startTime + beepDur);
+
+      osc.connect(gain);
+      gain.connect(_masterGain);
+      osc.start(startTime);
+      osc.stop(startTime + beepDur);
+    }
+  } catch (e) {
+    console.warn('⚠️ Gagal play out-of-stock:', e);
+  }
+}
+
+// Wrapper — dipanggil dari addToCart
+function playOutOfStockSoundIfEnabled() {
+  if (isSoundEnabled()) {
+    playOutOfStockSound();
+  }
+}
+
+  
+// ============================================================
 // 🔥 SUARA DOUBLE BEEP (untuk konfirmasi berhasil lebih kuat)
 // ============================================================
 // 2 beep cepat — mirip konfirmasi "OK"
@@ -7748,14 +7794,15 @@ function renderPosProducts(hargaMap, kodeReseller) {
 }
 
 function addToCart(kode) {
+  // 🔥 Return value: true = berhasil, false = gagal
   if (!currentUser) { 
     showToast('Silakan login terlebih dahulu!', 'warning'); 
-    return; 
+    return false; 
   }
   
   if (_isChangingReseller) {
     showToast('⏳ Sedang memuat harga reseller, tunggu sebentar...', 'warning');
-    return;
+    return false;
   }
   
   var produk = null;
@@ -7765,7 +7812,7 @@ function addToCart(kode) {
       break; 
     } 
   }
-  if (!produk) return;
+  if (!produk) return false;
   
   var stokProduk = parseInt(produk.Stok) || 0;
   var stokBatch = 0;
@@ -7787,9 +7834,12 @@ function addToCart(kode) {
   }
   
   var stokTersedia = stokEfektif - qtyDiCart;
+  
+  // 🔥 STOK HABIS — bunyi khusus + return false
   if (stokTersedia <= 0) { 
-    showToast('Stok produk habis!', 'error'); 
-    return; 
+    playOutOfStockSoundIfEnabled();
+    showToast('⛔ Stok produk habis!', 'error'); 
+    return false; 
   }
   
   var hargaNormal = produk['Harga Jual'] || 0;
@@ -7797,16 +7847,15 @@ function addToCart(kode) {
   var kodeReseller = selectReseller ? selectReseller.value : '';
   
   if (!kodeReseller) {
-    prosesAddToCart(produk, kode, hargaNormal, existing);
-    return;
+    return prosesAddToCart(produk, kode, hargaNormal, existing);
   }
   
   if (isHargaCacheValid(kodeReseller)) {
     var harga = getHargaFromCache(kode, hargaNormal);
-    prosesAddToCart(produk, kode, harga, existing);
-    return;
+    return prosesAddToCart(produk, kode, harga, existing);
   }
   
+  // Path async (reseller) — suara stok habis sudah ditangani di atas
   fetchHargaReseller(kodeReseller, true)
   .then(function(hargaMap) {
     var harga = hargaNormal;
@@ -7823,6 +7872,8 @@ function addToCart(kode) {
     prosesAddToCart(produk, kode, hargaNormal, existing);
     showToast('⚠️ Pakai harga normal (gagal muat harga reseller)', 'warning');
   });
+  
+  return true;  // optimis — kalau gagal network, masih dianggap berhasil klik
 }
 
 function prosesAddToCart(produk, kode, harga, existing) {
@@ -7850,6 +7901,8 @@ function prosesAddToCart(produk, kode, harga, existing) {
   }
   
   showToast(produk['Nama Produk'] + ' ditambahkan', 'success');
+  
+  return true;   // ← TAMBAHAN
 }
 
 function resetToNormalPrice() {
@@ -12541,47 +12594,53 @@ function initScanner() {
       { facingMode: currentFacingMode },
       config,
       function(decodedText) {
-        var found = false;
-        for (var i = 0; i < produkList.length; i++) {
-          var p = produkList[i];
-          if (p.Kode === decodedText || p['Nama Produk'] === decodedText) {
-            // 🔥 SET FLAG agar prosesAddToCart tidak mainkan suara (kita mainkan manual)
-            _isFromScanner = true;
-            
-            if (scannerMode === "STOK") {
-              addToStokCart(p.Kode);
-            } else {
-              addToCart(p.Kode);
-            }
-            
-            // 🔥 Reset flag
-            _isFromScanner = false;
-            
-            // 🔥 MAINKAN SUARA LOUD khusus scan
-            playScanSoundIfEnabled();
-            
-            found = true;
-            showToast('✅ ' + p['Nama Produk'] + (scannerMode === "STOK" ? ' ditambahkan ke Stok Masuk!' : ' ditambahkan ke POS!'), 'success');
-            if (html5QrCode && isScanning) {
-              html5QrCode.pause(true);
-              setTimeout(function() { if (html5QrCode && isScanning) html5QrCode.resume(); }, 1000);
-            }
-            break;
-          }
-        }
-        if (!found) {
-          // 🔥 Mainkan suara error kalau barcode tidak ditemukan
-          playErrorSoundIfEnabled();
-          
-          showToast('⚠️ Produk dengan kode "' + decodedText + '" tidak ditemukan!', 'error');
-          var manualInput = document.getElementById('scannerManualInput');
-          if (manualInput) { manualInput.value = decodedText; manualInput.focus(); }
-          if (html5QrCode && isScanning) {
-            html5QrCode.pause(true);
-            setTimeout(function() { if (html5QrCode && isScanning) html5QrCode.resume(); }, 2000);
-          }
-        }
-      },
+  var found = false;
+  for (var i = 0; i < produkList.length; i++) {
+    var p = produkList[i];
+    if (p.Kode === decodedText || p['Nama Produk'] === decodedText) {
+      _isFromScanner = true;
+      
+      var berhasil = false;
+      if (scannerMode === "STOK") {
+        addToStokCart(p.Kode);
+        berhasil = true;   // stok masuk selalu diizinkan
+      } else {
+        berhasil = addToCart(p.Kode);   // 🔥 ambil return value
+      }
+      
+      _isFromScanner = false;
+      
+      // 🔥 Bunyi scan HANYA kalau berhasil masuk keranjang
+      if (berhasil) {
+        playScanSoundIfEnabled();
+        showToast('✅ ' + p['Nama Produk'] + 
+                  (scannerMode === "STOK" ? ' ditambahkan ke Stok Masuk!' : ' ditambahkan ke POS!'), 
+                  'success');
+      }
+      // ⛔ Kalau gagal (stok habis), addToCart sudah bunyi playOutOfStockSoundIfEnabled()
+      
+      found = true;
+      if (html5QrCode && isScanning) {
+        html5QrCode.pause(true);
+        setTimeout(function() { if (html5QrCode && isScanning) html5QrCode.resume(); }, 1000);
+      }
+      break;
+    }
+  }
+  if (!found) {
+    playErrorSoundIfEnabled();
+    showToast('⚠️ Produk dengan kode "' + decodedText + '" tidak ditemukan!', 'error');
+    var manualInput = document.getElementById('scannerManualInput');
+    if (manualInput) { manualInput.value = decodedText; manualInput.focus(); }
+    if (html5QrCode && isScanning) {
+      html5QrCode.pause(true);
+      setTimeout(function() { if (html5QrCode && isScanning) html5QrCode.resume(); }, 2000);
+    }
+  }
+},
+
+
+  
       function(error) {
         // Callback error scanning — silent (biasanya noise frame)
       }
