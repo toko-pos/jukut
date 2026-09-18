@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwAcg0nN3QGBxGdr7yCm8hGifrK9qB29mWXApeKZtqWkBFGO-s0Y4od5AbhJNY4tgQ_tg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwg-3vQ30g0cTwyhHkWQI7aHn3nciRH8aavT3HFAxvJnx0OaIESRG_zJpQkEn62ESo1pg/exec';
 
 
     // ============================================================
@@ -403,132 +403,20 @@ function getInfoTokoSync() {
   #installBanner .btn-close-install { padding: 6px 10px; font-size: 0.7rem; }
 }
 
- /* ===== SCANNER ===== */
- /* 🔥 Overlay gelap proporsional dengan 4 sisi */
-.scanner-dark-top,
-.scanner-dark-bottom,
-.scanner-dark-left,
-.scanner-dark-right {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-  z-index: 5;
-}
-
-.scanner-dark-top {
-  top: 0;
-  left: 0;
-  right: 0;
-  height: calc(50% - 20%);
-}
-
-.scanner-dark-bottom {
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: calc(50% - 20%);
-}
-
-.scanner-dark-left {
-  top: calc(50% - 20%);
-  bottom: calc(50% - 20%);
-  left: 0;
-  width: calc(50% - 35%);
-}
-
-.scanner-dark-right {
-  top: calc(50% - 20%);
-  bottom: calc(50% - 20%);
-  right: 0;
-  width: calc(50% - 35%);
-}
-
-/* ===== SCANNER ===== */
-.scanner-container { 
-  position: relative; 
-  width: 100%; 
-  max-width: 400px; 
-  margin: 0 auto; 
-  border-radius: 12px; 
-  overflow: hidden; 
-  background: #000;
-  aspect-ratio: 1 / 1;
-  max-height: 55vh;
-  isolation: isolate;
-}
-
-.scanner-container video { 
-  width: 100%; 
-  height: auto; 
-  display: block; 
-}
-
-.scanner-overlay { 
-  position: absolute; 
-  top: 50%; 
-  left: 50%; 
-  transform: translate(-50%, -50%); 
-  width: 70%; 
-  height: 40%; 
-  border: 3px solid rgba(76, 175, 80, 0.8); 
-  border-radius: 12px; 
-  pointer-events: none; 
-  animation: pulse-border 1.5s infinite;
-  z-index: 10;
-}
-
-@keyframes pulse-border { 
-  0%, 100% { border-color: rgba(76, 175, 80, 0.8); } 
-  50% { border-color: rgba(76, 175, 80, 0.3); } 
-}
-
-.scanner-controls { 
-  display: flex; 
-  gap: 10px; 
-  justify-content: center; 
-  margin-top: 10px; 
-  flex-wrap: wrap; 
-}
-
-.scanner-controls .btn { min-width: 80px; }
-
-.scanner-status { 
-  text-align: center; 
-  padding: 8px; 
-  font-size: 0.85rem; 
-  color: #666; 
-  min-height: 32px;
-  font-weight: 600;
-}
-
-.btn-scan { 
-  background: #03A9F4; 
-  color: white; 
-  border: none; 
-  padding: 8px 16px; 
-  border-radius: 8px; 
-  cursor: pointer; 
-  font-weight: 600; 
-  font-size: 0.9rem; 
-  transition: all 0.3s; 
-  display: inline-flex; 
-  align-items: center; 
-  gap: 6px; 
-}
-
-.btn-scan:hover { 
-  background: #0288D1; 
-  transform: scale(1.02); 
-}
-
-.btn-scan:disabled { 
-  opacity: 0.5; 
-  cursor: not-allowed; 
-  transform: none !important; 
-}
-
-.btn-scan-stop { background: #f44336; }
-.btn-scan-stop:hover { background: #d32f2f; }
+    
+    /* ===== SCANNER ===== */
+    .scanner-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; background: #000; }
+    .scanner-container video { width: 100%; height: auto; display: block; }
+    .scanner-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 40%; border: 3px solid rgba(76, 175, 80, 0.8); border-radius: 12px; box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.4); pointer-events: none; animation: pulse-border 1.5s infinite; }
+    @keyframes pulse-border { 0%, 100% { border-color: rgba(76, 175, 80, 0.8); } 50% { border-color: rgba(76, 175, 80, 0.3); } }
+    .scanner-controls { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+    .scanner-controls .btn { min-width: 80px; }
+    .scanner-status { text-align: center; padding: 8px; font-size: 0.9rem; color: #666; }
+    .btn-scan { background: #03A9F4; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-scan:hover { background: #0288D1; transform: scale(1.02); }
+    .btn-scan:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    .btn-scan-stop { background: #f44336; }
+    .btn-scan-stop:hover { background: #d32f2f; }
     
     /* ===== HEADER WITH LOGO ===== */
     .header { background: white; padding: 15px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -1103,18 +991,7 @@ function getInfoTokoSync() {
     }
     
     /* ===== MODAL ===== */
-    .modal { 
-  display: none; 
-  position: fixed; 
-  top: 0; 
-  left: 0; 
-  width: 100%; 
-  height: 100%; 
-  background: rgba(0,0,0,0.5); 
-  z-index: 900;       /* 🔥 Turunkan dari 1000 */
-  justify-content: center; 
-  align-items: center; 
-}
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
     .modal.active { display: flex; }
     .modal-content { background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
     .modal-content.large { max-width: 700px; }
@@ -3827,7 +3704,7 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 </div>
 
 <div class="modal" id="scannerModal">
-  <div class="modal-content" style="max-width:450px; max-height:90vh; overflow-y:auto;">
+  <div class="modal-content" style="max-width:450px;">
     <div class="modal-header">
       <h3>📷 Scan Barcode</h3>
       <button class="modal-close" onclick="stopScanner()">×</button>
@@ -3835,17 +3712,9 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
     <div id="scannerBody">
       <div id="scannerContainer">
         <div class="scanner-container" id="scannerBox">
-  <div id="reader" style="width:100%;"></div>
-  
-  <!-- 🔥 4 sisi gelap proporsional -->
-  <div class="scanner-dark-top"></div>
-  <div class="scanner-dark-bottom"></div>
-  <div class="scanner-dark-left"></div>
-  <div class="scanner-dark-right"></div>
-  
-  <!-- 🔥 Kotak hijau panduan -->
-  <div class="scanner-overlay"></div>
-</div>
+          <div id="reader" style="width:100%;"></div>
+          <div class="scanner-overlay"></div>
+        </div>
         <div class="scanner-status" id="scannerStatus">📸 Menyiapkan kamera...</div>
         <div class="scanner-controls">
           <button class="btn btn-danger" id="btnStopScan" onclick="stopScanner()">⏹ Berhenti</button>
@@ -7887,13 +7756,9 @@ function renderPosProducts(hargaMap, kodeReseller) {
 }
 
 function addToCart(kode) {
-  // ============================================================
-  // VALIDASI AWAL
-  // ============================================================
-  
-  if (!currentUser) {
-    showToast('Silakan login terlebih dahulu!', 'warning');
-    return;
+  if (!currentUser) { 
+    showToast('Silakan login terlebih dahulu!', 'warning'); 
+    return; 
   }
   
   if (_isChangingReseller) {
@@ -7901,162 +7766,71 @@ function addToCart(kode) {
     return;
   }
   
-  // Cari produk di list
   var produk = null;
-  for (var i = 0; i < produkList.length; i++) {
-    if (produkList[i].Kode === kode) {
-      produk = produkList[i];
-      break;
+  for (var i = 0; i < produkList.length; i++) { 
+    if (produkList[i].Kode === kode) { 
+      produk = produkList[i]; 
+      break; 
+    } 
+  }
+  if (!produk) return;
+  
+  var stokProduk = parseInt(produk.Stok) || 0;
+  var stokBatch = 0;
+  for (var b = 0; b < batchCache.length; b++) {
+    if (batchCache[b].kode === kode) {
+      stokBatch += parseInt(batchCache[b].stok) || 0;
     }
   }
-  if (!produk) {
-    showToast('⚠️ Produk tidak ditemukan!', 'error');
-    return;
+  var stokEfektif = Math.min(stokProduk, stokBatch);
+  
+  var existing = null;
+  var qtyDiCart = 0;
+  for (var i = 0; i < currentCart.length; i++) { 
+    if (currentCart[i].kode === kode) { 
+      existing = currentCart[i]; 
+      qtyDiCart = existing.qty;
+      break; 
+    } 
   }
   
-  // ============================================================
-  // 🔥 HELPER: VALIDASI STOK & QTY DI CART (REUSABLE)
-  // ============================================================
-  // Cek:
-  //   1. Stok produk (dari Produk sheet)
-  //   2. Stok batch (dari Batch cache)
-  //   3. Qty yang sudah ada di cart
-  //
-  // 🔥 FALLBACK: Kalau batchCache KOSONG → pakai stokProduk saja
-  //    (biar scan tidak gagal saat cache belum ke-load)
-  //
-  // Return: { valid: boolean, stokEfektif, qtyDiCart, stokTersedia, error }
-  // ============================================================
-  function cekStokDanQty() {
-    var stokProduk = parseInt(produk.Stok) || 0;
-    
-    // Hitung total stok batch
-    var stokBatch = 0;
-    for (var b = 0; b < batchCache.length; b++) {
-      if (batchCache[b].kode === kode) {
-        stokBatch += parseInt(batchCache[b].stok) || 0;
-      }
-    }
-    
-    // 🔥 FALLBACK: Kalau batchCache kosong, pakai stokProduk saja
-    var stokEfektif;
-    if (batchCache.length === 0) {
-      stokEfektif = stokProduk;              // ← FALLBACK (fix utama)
-    } else {
-      stokEfektif = Math.min(stokProduk, stokBatch);
-    }
-    
-    // Hitung qty di cart
-    var qtyDiCart = 0;
-    var existing = null;
-    for (var i = 0; i < currentCart.length; i++) {
-      if (currentCart[i].kode === kode) {
-        existing = currentCart[i];
-        qtyDiCart = existing.qty;
-        break;
-      }
-    }
-    
-    var stokTersedia = stokEfektif - qtyDiCart;
-    
-    return {
-      valid: stokTersedia > 0,
-      stokEfektif: stokEfektif,
-      qtyDiCart: qtyDiCart,
-      stokTersedia: stokTersedia,
-      existing: existing,
-      error: stokTersedia <= 0 ? 'Stok produk habis!' : null
-    };
+  var stokTersedia = stokEfektif - qtyDiCart;
+  if (stokTersedia <= 0) { 
+    showToast('Stok produk habis!', 'error'); 
+    return; 
   }
   
-  // ============================================================
-  // 🔥 CEK STOK PERTAMA KALI
-  // ============================================================
-  
-  var cekAwal = cekStokDanQty();
-  if (!cekAwal.valid) {
-    showToast(cekAwal.error || 'Stok tidak mencukupi!', 'error');
-    return;
-  }
-  
-  // ============================================================
-  // 🔥 TENTUKAN HARGA
-  // ============================================================
-  
-  var hargaNormal = parseInt(produk['Harga Jual']) || 0;
+  var hargaNormal = produk['Harga Jual'] || 0;
   var selectReseller = document.getElementById('pilihReseller');
   var kodeReseller = selectReseller ? selectReseller.value : '';
   
-  // CASE 1: TANPA RESELLER → langsung pakai harga normal
   if (!kodeReseller) {
-    prosesAddToCart(produk, kode, hargaNormal, cekAwal.existing);
+    prosesAddToCart(produk, kode, hargaNormal, existing);
     return;
   }
   
-  // CASE 2: CACHE VALID → pakai cache
   if (isHargaCacheValid(kodeReseller)) {
     var harga = getHargaFromCache(kode, hargaNormal);
-    prosesAddToCart(produk, kode, harga, cekAwal.existing);
+    prosesAddToCart(produk, kode, harga, existing);
     return;
   }
-  
-  // CASE 3: FETCH HARGA (ASYNC)
-  // 🔥 GUARD: Cegah double-click
-  if (produk._isFetchingHarga) {
-    console.log('⏳ Fetch harga sedang berjalan untuk ' + kode);
-    return;
-  }
-  produk._isFetchingHarga = true;
   
   fetchHargaReseller(kodeReseller, true)
-    .then(function(hargaMap) {
-      produk._isFetchingHarga = false;
-      
-      // ============================================================
-      // 🔥 RE-CEK STOK (stok bisa berubah selama fetch)
-      // ============================================================
-      
-      var cekUlang = cekStokDanQty();
-      
-      if (!cekUlang.valid) {
-        showToast(cekUlang.error || 'Stok berubah, tidak mencukupi lagi!', 'warning');
-        return;
-      }
-      
-      // ============================================================
-      // 🔥 RE-CARI EXISTING (cart bisa berubah selama fetch)
-      // ============================================================
-      // cekUlang.existing adalah referensi TERBARU, bukan yang lama
-      
-      var harga = hargaNormal;
-      if (hargaMap && hargaMap[kode] && hargaMap[kode].hargaReseller > 0) {
-        harga = parseInt(hargaMap[kode].hargaReseller) || hargaNormal;
-      }
-      
-      prosesAddToCart(produk, kode, harga, cekUlang.existing);
-      
-      // Refresh UI di background
-      loadPosProduk();
-      refreshCartPrices();
-    })
-    .catch(function(error) {
-      produk._isFetchingHarga = false;
-      console.error('❌ Error fetch harga reseller:', error);
-      
-      // ============================================================
-      // 🔥 RE-CEK STOK SETELAH ERROR JUGA
-      // ============================================================
-      
-      var cekUlang = cekStokDanQty();
-      if (!cekUlang.valid) {
-        showToast(cekUlang.error || 'Stok tidak mencukupi!', 'error');
-        return;
-      }
-      
-      // Fallback: pakai harga normal
-      prosesAddToCart(produk, kode, hargaNormal, cekUlang.existing);
-      showToast('⚠️ Pakai harga normal (gagal muat harga reseller)', 'warning');
-    });
+  .then(function(hargaMap) {
+    var harga = hargaNormal;
+    if (hargaMap[kode] && hargaMap[kode].hargaReseller > 0) {
+      harga = hargaMap[kode].hargaReseller;
+    }
+    prosesAddToCart(produk, kode, harga, existing);
+    
+    loadPosProduk();
+    refreshCartPrices();
+  })
+  .catch(function(error) {
+    console.error('❌ Error fallback:', error);
+    prosesAddToCart(produk, kode, hargaNormal, existing);
+    showToast('⚠️ Pakai harga normal (gagal muat harga reseller)', 'warning');
+  });
 }
 
 function prosesAddToCart(produk, kode, harga, existing) {
@@ -12827,7 +12601,6 @@ function initScanner() {
       return;
     }
     if (scannerStarted) stopScannerInternal();
-    
     var readerElement = document.getElementById('reader');
     if (!readerElement) {
       showToast('❌ Elemen scanner tidak ditemukan!', 'error');
@@ -12836,14 +12609,12 @@ function initScanner() {
       return;
     }
     readerElement.innerHTML = '';
-    
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       var statusEl = document.getElementById('scannerStatus');
       if (statusEl) statusEl.textContent = '❌ Browser tidak mendukung kamera!';
       showToast('❌ Browser tidak mendukung akses kamera', 'error');
       return;
     }
-    
     if (typeof Html5Qrcode === 'undefined') {
       var statusEl = document.getElementById('scannerStatus');
       if (statusEl) statusEl.textContent = '❌ Library scanner belum dimuat!';
@@ -12851,181 +12622,86 @@ function initScanner() {
       return;
     }
     
-    // 🔥 INIT DENGAN NATIVE BARCODE DETECTOR API
-    html5QrCode = new Html5Qrcode("reader", {
-      useBarCodeDetectorIfSupported: true,
-      verbose: false
-    });
-    
+    html5QrCode = new Html5Qrcode("reader");
+    var config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
     var statusEl = document.getElementById('scannerStatus');
-    if (statusEl) {
-      statusEl.textContent = '📸 Mengakses kamera ' + 
-        (currentFacingMode === 'environment' ? 'belakang' : 'depan') + '...';
-    }
+    if (statusEl) statusEl.textContent = '📸 Mengakses kamera ' + (currentFacingMode === 'environment' ? 'belakang' : 'depan') + '...';
     
-    // ============================================================
-    // 🔥 CALLBACK SCAN — dipakai bersama oleh start() dan fallback
-    // ============================================================
-        // 🔥 FLAG GUARD — cegah double-scan TANPA pause()
-    var _scanCooldown = false;
-    
-    function onScanSuccess(decodedText) {
-      // 🔥 Cek cooldown — kalau masih cooldown, skip
-      if (_scanCooldown) {
-        return;
-      }
-      
-      var found = false;
-      
-      for (var i = 0; i < produkList.length; i++) {
-        var p = produkList[i];
-        if (p.Kode === decodedText || p['Nama Produk'] === decodedText) {
-          _isFromScanner = true;
-          
-          if (scannerMode === "STOK") {
-            addToStokCart(p.Kode);
-          } else {
-            addToCart(p.Kode);
+    html5QrCode.start(
+      { facingMode: currentFacingMode },
+      config,
+      function(decodedText) {
+        var found = false;
+        for (var i = 0; i < produkList.length; i++) {
+          var p = produkList[i];
+          if (p.Kode === decodedText || p['Nama Produk'] === decodedText) {
+            // 🔥 SET FLAG agar prosesAddToCart tidak mainkan suara (kita mainkan manual)
+            _isFromScanner = true;
+            
+            if (scannerMode === "STOK") {
+              addToStokCart(p.Kode);
+            } else {
+              addToCart(p.Kode);
+            }
+            
+            // 🔥 Reset flag
+            _isFromScanner = false;
+            
+            // 🔥 MAINKAN SUARA LOUD khusus scan
+            playScanSoundIfEnabled();
+            
+            found = true;
+            showToast('✅ ' + p['Nama Produk'] + (scannerMode === "STOK" ? ' ditambahkan ke Stok Masuk!' : ' ditambahkan ke POS!'), 'success');
+            if (html5QrCode && isScanning) {
+              html5QrCode.pause(true);
+              setTimeout(function() { if (html5QrCode && isScanning) html5QrCode.resume(); }, 1000);
+            }
+            break;
           }
-          
-          _isFromScanner = false;
-          
-          // ✅ SUARA BERHASIL
-          playScanSoundIfEnabled();
-          
-          found = true;
-          showToast('✅ ' + p['Nama Produk'] + 
-            (scannerMode === "STOK" ? ' ditambahkan ke Stok Masuk!' : ' ditambahkan ke POS!'), 
-            'success');
-          
-          // 🔥 COOLDOWN 1 detik (TANPA pause)
-          _scanCooldown = true;
-          setTimeout(function() {
-            _scanCooldown = false;
-          }, 1000);
-          
-          break;
         }
-      }
-      
-      if (!found) {
-        // ✅ SUARA ERROR (barcode tidak ditemukan)
-        playErrorSoundIfEnabled();
-        
-        showToast('⚠️ Produk dengan kode "' + decodedText + '" tidak ditemukan!', 'error');
-        
-        var manualInput = document.getElementById('scannerManualInput');
-        if (manualInput) {
-          manualInput.value = decodedText;
-          manualInput.focus();
+        if (!found) {
+          // 🔥 Mainkan suara error kalau barcode tidak ditemukan
+          playErrorSoundIfEnabled();
+          
+          showToast('⚠️ Produk dengan kode "' + decodedText + '" tidak ditemukan!', 'error');
+          var manualInput = document.getElementById('scannerManualInput');
+          if (manualInput) { manualInput.value = decodedText; manualInput.focus(); }
+          if (html5QrCode && isScanning) {
+            html5QrCode.pause(true);
+            setTimeout(function() { if (html5QrCode && isScanning) html5QrCode.resume(); }, 2000);
+          }
         }
-        
-        // 🔥 COOLDOWN 2 detik (TANPA pause)
-        _scanCooldown = true;
-        setTimeout(function() {
-          _scanCooldown = false;
-        }, 2000);
+      },
+      function(error) {
+        // Callback error scanning — silent (biasanya noise frame)
       }
-    }
-    
-    // ============================================================
-    // 🔥 CALLBACK ERROR — silent (noise frame)
-    // ============================================================
-    function onScanError(error) {
-      // Silent — biasanya cuma noise / blur
-    }
-    
-    // ============================================================
-    // 🔥 COBA START DENGAN RESOLUSI HD
-    // ============================================================
-        html5QrCode.start(
-      { 
-        facingMode: currentFacingMode
-        // 🔥 HAPUS width & height → biar default kamera
-      },
-      {
-        fps: 15,
-        qrbox: function(viewfinderWidth, viewfinderHeight) {
-          var minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-          var qrboxSize = Math.floor(minEdge * 0.7);
-          return { width: qrboxSize, height: qrboxSize };
-        },
-        aspectRatio: 1.0,
-        disableFlip: false
-      },
-      onScanSuccess,
-      onScanError
-    )
-    .then(function() {
+    ).then(function() {
       scannerStarted = true;
       isScanning = true;
       scannerRetryCount = 0;
-      
       var statusEl = document.getElementById('scannerStatus');
       if (statusEl) statusEl.textContent = '✅ Kamera aktif - Arahkan ke barcode';
       showToast('📷 Kamera aktif, arahkan ke barcode', 'success');
-      
-    })
-    .catch(function(err) {
-      console.error('❌ Gagal start scanner (HD):', err);
-      console.log('🔄 Fallback: coba tanpa resolusi eksplisit...');
-      
-      // ============================================================
-      // 🔥 FALLBACK: TANPA RESOLUSI EKSPLISIT
-      // ============================================================
-      html5QrCode.start(
-        { facingMode: currentFacingMode },
-        {
-          fps: 15,
-          qrbox: { width: 250, height: 150 },
-          aspectRatio: 1.0
-        },
-        onScanSuccess,
-        onScanError
-      )
-      .then(function() {
-        scannerStarted = true;
-        isScanning = true;
-        scannerRetryCount = 0;
-        
+    }).catch(function(err) {
+      console.error('❌ Gagal memulai scanner:', err);
+      var errorMsg = err.message || 'Unknown error';
+      var statusEl = document.getElementById('scannerStatus');
+      if (statusEl) statusEl.textContent = '❌ Gagal akses kamera: ' + errorMsg;
+      showToast('❌ Gagal akses kamera: ' + errorMsg, 'error');
+      if (currentFacingMode === "environment" && scannerRetryCount < maxRetries) {
+        scannerRetryCount++;
+        currentFacingMode = "user";
         var statusEl = document.getElementById('scannerStatus');
-        if (statusEl) statusEl.textContent = '✅ Kamera aktif (mode kompatibel)';
-        showToast('📷 Kamera aktif, arahkan ke barcode', 'success');
-        
-      })
-      .catch(function(err2) {
-        console.error('❌ Gagal juga (fallback):', err2);
-        
-        var errorMsg = err2.message || 'Unknown error';
+        if (statusEl) statusEl.textContent = '🔄 Mencoba kamera depan... (percobaan ' + scannerRetryCount + ')';
+        showToast('🔄 Mencoba kamera depan...', 'info');
+        setTimeout(function() { initScanner(); }, 1500);
+      } else {
         var statusEl = document.getElementById('scannerStatus');
-        if (statusEl) statusEl.textContent = '❌ Gagal akses kamera: ' + errorMsg;
-        showToast('❌ Gagal akses kamera: ' + errorMsg, 'error');
-        
-        // ============================================================
-        // 🔥 FALLBACK 2: COBA KAMERA DEPAN
-        // ============================================================
-        if (currentFacingMode === "environment" && scannerRetryCount < maxRetries) {
-          scannerRetryCount++;
-          currentFacingMode = "user";
-          
-          var statusEl = document.getElementById('scannerStatus');
-          if (statusEl) statusEl.textContent = '🔄 Mencoba kamera depan... (percobaan ' + scannerRetryCount + ')';
-          showToast('🔄 Mencoba kamera depan...', 'info');
-          
-          setTimeout(function() { initScanner(); }, 1500);
-          
-        } else {
-          var statusEl = document.getElementById('scannerStatus');
-          if (statusEl) {
-            statusEl.innerHTML = '❌ Gagal akses kamera. <br> Gunakan <strong>Input Manual</strong> di bawah.';
-          }
-          
-          var manualInput = document.getElementById('scannerManualInput');
-          if (manualInput) manualInput.focus();
-        }
-      });
+        if (statusEl) statusEl.innerHTML = '❌ Gagal akses kamera. <br> Gunakan <strong>Input Manual</strong> di bawah.';
+        var manualInput = document.getElementById('scannerManualInput');
+        if (manualInput) manualInput.focus();
+      }
     });
-    
   } catch (e) {
     console.error('❌ Error initScanner:', e);
     var statusEl = document.getElementById('scannerStatus');
@@ -13033,8 +12709,6 @@ function initScanner() {
     showToast('❌ Error: ' + (e.message || 'Unknown error'), 'error');
   }
 }
-
-  
 function stopScanner() {
   if (html5QrCode && scannerStarted) stopScannerInternal();
   var modal = document.getElementById('scannerModal');
