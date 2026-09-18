@@ -3766,73 +3766,7 @@ try {
 // ============================================================
 // UTILITY FUNCTIONS
 // ============================================================
-function formatTanggalDisplay(tanggal, withTime) {
-  if (!tanggal) return '-';
-  try {
-    if (typeof tanggal === 'string') {
-      var match = tanggal.match(/(\w{3}) (\w{3}) (\d{2}) (\d{4})/);
-      if (match) {
-        var monthNames = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'};
-        var day = match[3];
-        var month = monthNames[match[2]] || '01';
-        var year = match[4];
-        var result = day + '/' + month + '/' + year;
-        if (withTime) {
-          var timeMatch = tanggal.match(/(\d{2}:\d{2}:\d{2})/);
-          if (timeMatch) result += ' ' + timeMatch[1];
-        }
-        return result;
-      }
-      
-      var parts = tanggal.split(' ');
-      var datePart = parts[0] || '';
-      var timePart = parts[1] || '';
-      if (datePart && datePart.indexOf('-') > 0) {
-        var d = datePart.split('-');
-        if (d.length === 3) {
-          var result = d[2] + '/' + d[1] + '/' + d[0];
-          if (withTime && timePart) {
-            result += ' ' + timePart;
-          }
-          return result;
-        }
-      }
-      
-      if (tanggal.indexOf('/') > 0) {
-        var parts2 = tanggal.split(' ');
-        var datePart2 = parts2[0] || '';
-        var timePart2 = parts2[1] || '';
-        var d2 = datePart2.split('/');
-        if (d2.length === 3) {
-          var result2 = d2[0] + '/' + d2[1] + '/' + d2[2];
-          if (withTime && timePart2) {
-            result2 += ' ' + timePart2;
-          }
-          return result2;
-        }
-      }
-    }
-    
-    var tryDate = new Date(tanggal);
-    if (!isNaN(tryDate.getTime())) {
-      var day = String(tryDate.getDate()).padStart(2, '0');
-      var month = String(tryDate.getMonth() + 1).padStart(2, '0');
-      var year = tryDate.getFullYear();
-      var result = day + '/' + month + '/' + year;
-      if (withTime) {
-        var hours = String(tryDate.getHours()).padStart(2, '0');
-        var minutes = String(tryDate.getMinutes()).padStart(2, '0');
-        var seconds = String(tryDate.getSeconds()).padStart(2, '0');
-        result += ' ' + hours + ':' + minutes + ':' + seconds;
-      }
-      return result;
-    }
-    
-    return String(tanggal);
-  } catch (e) {
-    return String(tanggal);
-  }
-}
+
 
 function getTodayString() {
   var now = new Date();
