@@ -405,13 +405,42 @@ function getInfoTokoSync() {
 
     
     /* ===== SCANNER ===== */
-    .scanner-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; background: #000; }
+    .scanner-container { 
+  position: relative; 
+  width: 100%; 
+  max-width: 400px; 
+  margin: 0 auto; 
+  border-radius: 12px; 
+  overflow: hidden; 
+  background: #000;
+  aspect-ratio: 1 / 1;     /* 🔥 Tambah: paksa rasio 1:1 */
+  max-height: 55vh;        /* 🔥 Tambah: maksimal 55% tinggi layar */
+}
     .scanner-container video { width: 100%; height: auto; display: block; }
-    .scanner-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 40%; border: 3px solid rgba(76, 175, 80, 0.8); border-radius: 12px; box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.4); pointer-events: none; animation: pulse-border 1.5s infinite; }
+    .scanner-overlay { 
+  position: absolute; 
+  top: 50%; 
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  width: 70%; 
+  height: 40%; 
+  border: 3px solid rgba(76, 175, 80, 0.8); 
+  border-radius: 12px; 
+  box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.4); 
+  pointer-events: none; 
+  animation: pulse-border 1.5s infinite; 
+}
     @keyframes pulse-border { 0%, 100% { border-color: rgba(76, 175, 80, 0.8); } 50% { border-color: rgba(76, 175, 80, 0.3); } }
     .scanner-controls { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
     .scanner-controls .btn { min-width: 80px; }
-    .scanner-status { text-align: center; padding: 8px; font-size: 0.9rem; color: #666; }
+    .scanner-status { 
+  text-align: center; 
+  padding: 8px; 
+  font-size: 0.85rem; 
+  color: #666; 
+  min-height: 32px;       /* 🔥 Biar tidak "naik-turun" saat teks ganti */
+  font-weight: 600;       /* 🔥 Biar lebih jelas */
+}
     .btn-scan { background: #03A9F4; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px; }
     .btn-scan:hover { background: #0288D1; transform: scale(1.02); }
     .btn-scan:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
@@ -991,7 +1020,18 @@ function getInfoTokoSync() {
     }
     
     /* ===== MODAL ===== */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal { 
+  display: none; 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%; 
+  background: rgba(0,0,0,0.5); 
+  z-index: 900;       /* 🔥 Turunkan dari 1000 */
+  justify-content: center; 
+  align-items: center; 
+}
     .modal.active { display: flex; }
     .modal-content { background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
     .modal-content.large { max-width: 700px; }
@@ -3704,7 +3744,7 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
 </div>
 
 <div class="modal" id="scannerModal">
-  <div class="modal-content" style="max-width:450px;">
+  <div class="modal-content" style="max-width:450px; max-height:90vh; overflow-y:auto;">
     <div class="modal-header">
       <h3>📷 Scan Barcode</h3>
       <button class="modal-close" onclick="stopScanner()">×</button>
