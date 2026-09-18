@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwg-3vQ30g0cTwyhHkWQI7aHn3nciRH8aavT3HFAxvJnx0OaIESRG_zJpQkEn62ESo1pg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwJ8fbKIB8dxd0l0yr8d-B3-v3DvQLngVkadvK-k9BY5wdsvaZ20eKK5IG25xsJoAJQfQ/exec';
 
 
     // ============================================================
@@ -3766,7 +3766,73 @@ try {
 // ============================================================
 // UTILITY FUNCTIONS
 // ============================================================
-
+function formatTanggalDisplay(tanggal, withTime) {
+  if (!tanggal) return '-';
+  try {
+    if (typeof tanggal === 'string') {
+      var match = tanggal.match(/(\w{3}) (\w{3}) (\d{2}) (\d{4})/);
+      if (match) {
+        var monthNames = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'};
+        var day = match[3];
+        var month = monthNames[match[2]] || '01';
+        var year = match[4];
+        var result = day + '/' + month + '/' + year;
+        if (withTime) {
+          var timeMatch = tanggal.match(/(\d{2}:\d{2}:\d{2})/);
+          if (timeMatch) result += ' ' + timeMatch[1];
+        }
+        return result;
+      }
+      
+      var parts = tanggal.split(' ');
+      var datePart = parts[0] || '';
+      var timePart = parts[1] || '';
+      if (datePart && datePart.indexOf('-') > 0) {
+        var d = datePart.split('-');
+        if (d.length === 3) {
+          var result = d[2] + '/' + d[1] + '/' + d[0];
+          if (withTime && timePart) {
+            result += ' ' + timePart;
+          }
+          return result;
+        }
+      }
+      
+      if (tanggal.indexOf('/') > 0) {
+        var parts2 = tanggal.split(' ');
+        var datePart2 = parts2[0] || '';
+        var timePart2 = parts2[1] || '';
+        var d2 = datePart2.split('/');
+        if (d2.length === 3) {
+          var result2 = d2[0] + '/' + d2[1] + '/' + d2[2];
+          if (withTime && timePart2) {
+            result2 += ' ' + timePart2;
+          }
+          return result2;
+        }
+      }
+    }
+    
+    var tryDate = new Date(tanggal);
+    if (!isNaN(tryDate.getTime())) {
+      var day = String(tryDate.getDate()).padStart(2, '0');
+      var month = String(tryDate.getMonth() + 1).padStart(2, '0');
+      var year = tryDate.getFullYear();
+      var result = day + '/' + month + '/' + year;
+      if (withTime) {
+        var hours = String(tryDate.getHours()).padStart(2, '0');
+        var minutes = String(tryDate.getMinutes()).padStart(2, '0');
+        var seconds = String(tryDate.getSeconds()).padStart(2, '0');
+        result += ' ' + hours + ':' + minutes + ':' + seconds;
+      }
+      return result;
+    }
+    
+    return String(tanggal);
+  } catch (e) {
+    return String(tanggal);
+  }
+}
 
 function getTodayString() {
   var now = new Date();
@@ -6354,15 +6420,7 @@ function showAppAfterLogin() {
   }
   
   // 🔥 Prefetch info toko SEKALI saat login (biar print instan)
-// Tampilkan indikator loading kecil sementara fetch
-showToast('⏳ Memuat info toko...', 'info');
-refreshInfoTokoCache().then(function(infoToko) {
-  if (infoToko && infoToko.namaToko) {
-    console.log('✅ Info toko siap:', infoToko.namaToko);
-  } else {
-    console.warn('⚠️ Info toko kosong setelah login');
-  }
-});
+  refreshInfoTokoCache();
   
   if (typeof showAppByRole === 'function') {
     showAppByRole();
@@ -11264,112 +11322,30 @@ function getInfoTokoSync() {
   return result;
 }
 
-// ============================================================
-// 🔥 GET INFO TOKO ASYNC — TUNGGU CACHE ATAU FETCH DARI SERVER
-// ============================================================
-// Dipakai di fungsi cetak struk yang butuh info toko PASTI ada.
-// Strategi:
-//   1. Cek cache dulu → kalau ada, langsung return
-//   2. Kalau kosong → fetch dari server (blocking, tunggu selesai)
-//   3. Simpan ke cache
-//
-// Return: Promise yang resolve ke { namaToko, alamat, noHp }
-// ============================================================
-function getInfoTokoAsync() {
-  return new Promise(function(resolve) {
-    // Cek cache dulu
-    var cached = getInfoTokoSync();
-    if (cached && cached.namaToko) {
-      resolve(cached);
-      return;
-    }
-    
-    // Cache kosong → fetch dari server
-    console.log('🔄 getInfoTokoAsync: cache kosong, fetch dari server...');
-    
-    if (!currentUser || !currentUser.username) {
-      console.warn('⚠️ getInfoTokoAsync: tidak ada user login');
-      resolve({ namaToko: '', alamat: '', noHp: '' });
-      return;
-    }
-    
-    callGAS('getInfoToko', { username: currentUser.username })
-    .then(function(result) {
-      if (result && result.success) {
-        var data = result.data;
-        if (data && data.data) data = data.data;
-        
-        var infoToko = {
-          namaToko: data.namaToko || '',
-          alamat: data.alamat || '',
-          noHp: data.noHp || ''
-        };
-        
-        // Simpan ke cache
-        localStorage.setItem('info_toko', JSON.stringify(infoToko));
-        _infoTokoCache = infoToko;
-        _infoTokoCacheTime = Date.now();
-        
-        console.log('✅ getInfoTokoAsync: berhasil fetch', infoToko.namaToko);
-        resolve(infoToko);
-      } else {
-        console.warn('⚠️ getInfoTokoAsync: result tidak success');
-        resolve({ namaToko: '', alamat: '', noHp: '' });
-      }
-    })
-    .catch(function(error) {
-      console.error('❌ getInfoTokoAsync error:', error);
-      resolve({ namaToko: '', alamat: '', noHp: '' });
-    });
-  });
-}
-
-  
-// ============================================================
-// 🔥 REFRESH INFO TOKO CACHE (VERSI PROMISE)
-// ============================================================
-// Return: Promise yang resolve ke object infoToko
-// Pemanggil bisa await / .then() untuk memastikan cache siap
-// ============================================================
 function refreshInfoTokoCache() {
-  return new Promise(function(resolve) {
-    if (!currentUser || !currentUser.username) {
-      console.warn('⚠️ refreshInfoTokoCache: tidak ada user login');
-      resolve({ namaToko: '', alamat: '', noHp: '' });
-      return;
+  callGAS('getInfoToko', { 
+    username: currentUser ? currentUser.username : '' 
+  })
+  .then(function(result) {
+    if (result && result.success) {
+      var data = result.data;
+      if (data && data.data) data = data.data;
+      
+      var infoToko = {
+        namaToko: data.namaToko || '',
+        alamat: data.alamat || '',
+        noHp: data.noHp || ''
+      };
+      
+      localStorage.setItem('info_toko', JSON.stringify(infoToko));
+      
+      // 🔥 Update global cache juga (biar getInfoTokoSync() instant)
+      _infoTokoCache = infoToko;
+      _infoTokoCacheTime = Date.now();
     }
-    
-    callGAS('getInfoToko', { 
-      username: currentUser.username 
-    })
-    .then(function(result) {
-      if (result && result.success) {
-        var data = result.data;
-        if (data && data.data) data = data.data;
-        
-        var infoToko = {
-          namaToko: data.namaToko || '',
-          alamat: data.alamat || '',
-          noHp: data.noHp || ''
-        };
-        
-        localStorage.setItem('info_toko', JSON.stringify(infoToko));
-        
-        // Update global cache
-        _infoTokoCache = infoToko;
-        _infoTokoCacheTime = Date.now();
-        
-        console.log('✅ Info toko di-cache:', infoToko.namaToko || '(kosong)');
-        resolve(infoToko);
-      } else {
-        console.warn('⚠️ refreshInfoTokoCache: result tidak success', result);
-        resolve({ namaToko: '', alamat: '', noHp: '' });
-      }
-    })
-    .catch(function(error) {
-      console.error('❌ Gagal refresh cache info toko:', error);
-      resolve({ namaToko: '', alamat: '', noHp: '' });
-    });
+  })
+  .catch(function(error) {
+    console.error('❌ Gagal refresh cache info toko:', error);
   });
 }
 
