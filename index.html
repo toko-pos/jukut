@@ -12586,21 +12586,39 @@ function initScanner() {
     }
     
     html5QrCode = new Html5Qrcode("reader");
-    var config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
-    var statusEl = document.getElementById('scannerStatus');
+    
+      var config = { 
+        fps: 25,                          // 10 → 25 (2.5x lebih cepat)
+        qrbox: { width: 200, height: 120 }, // lebih kecil = processing lebih ringan
+        aspectRatio: 1.0,
+        disableFlip: false,
+        experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true  // 🔥 PENTING untuk Android modern!
+      },
+      
+      videoConstraints: {
+        facingMode: currentFacingMode,
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 }        // pastikan kamera kasih 30fps
+      }
+    };
+    
+  var statusEl = document.getElementById('scannerStatus');
     if (statusEl) statusEl.textContent = '📸 Mengakses kamera ' + (currentFacingMode === 'environment' ? 'belakang' : 'depan') + '...';
     
     html5QrCode.start(
       { facingMode: currentFacingMode },
       config,
       function(decodedText) {
-  var found = false;
-  for (var i = 0; i < produkList.length; i++) {
-    var p = produkList[i];
-    if (p.Kode === decodedText || p['Nama Produk'] === decodedText) {
+        var found = false;
+        for (var i = 0; i < produkList.length; i++) {
+    
+  var p = produkList[i];
+      if (p.Kode === decodedText || p['Nama Produk'] === decodedText) {
       _isFromScanner = true;
       
-      var berhasil = false;
+    var berhasil = false;
       if (scannerMode === "STOK") {
         addToStokCart(p.Kode);
         berhasil = true;   // stok masuk selalu diizinkan
