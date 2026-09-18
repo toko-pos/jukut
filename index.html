@@ -7922,6 +7922,9 @@ function addToCart(kode) {
   //   2. Stok batch (dari Batch cache)
   //   3. Qty yang sudah ada di cart
   //
+  // 🔥 FALLBACK: Kalau batchCache KOSONG → pakai stokProduk saja
+  //    (biar scan tidak gagal saat cache belum ke-load)
+  //
   // Return: { valid: boolean, stokEfektif, qtyDiCart, stokTersedia, error }
   // ============================================================
   function cekStokDanQty() {
@@ -7935,7 +7938,13 @@ function addToCart(kode) {
       }
     }
     
-    var stokEfektif = Math.min(stokProduk, stokBatch);
+    // 🔥 FALLBACK: Kalau batchCache kosong, pakai stokProduk saja
+    var stokEfektif;
+    if (batchCache.length === 0) {
+      stokEfektif = stokProduk;              // ← FALLBACK (fix utama)
+    } else {
+      stokEfektif = Math.min(stokProduk, stokBatch);
+    }
     
     // Hitung qty di cart
     var qtyDiCart = 0;
