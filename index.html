@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwJ8fbKIB8dxd0l0yr8d-B3-v3DvQLngVkadvK-k9BY5wdsvaZ20eKK5IG25xsJoAJQfQ/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwg-3vQ30g0cTwyhHkWQI7aHn3nciRH8aavT3HFAxvJnx0OaIESRG_zJpQkEn62ESo1pg/exec';
 
 
     // ============================================================
@@ -6420,7 +6420,15 @@ function showAppAfterLogin() {
   }
   
   // 🔥 Prefetch info toko SEKALI saat login (biar print instan)
-  refreshInfoTokoCache();
+// Tampilkan indikator loading kecil sementara fetch
+showToast('⏳ Memuat info toko...', 'info');
+refreshInfoTokoCache().then(function(infoToko) {
+  if (infoToko && infoToko.namaToko) {
+    console.log('✅ Info toko siap:', infoToko.namaToko);
+  } else {
+    console.warn('⚠️ Info toko kosong setelah login');
+  }
+});
   
   if (typeof showAppByRole === 'function') {
     showAppByRole();
@@ -11322,30 +11330,112 @@ function getInfoTokoSync() {
   return result;
 }
 
-function refreshInfoTokoCache() {
-  callGAS('getInfoToko', { 
-    username: currentUser ? currentUser.username : '' 
-  })
-  .then(function(result) {
-    if (result && result.success) {
-      var data = result.data;
-      if (data && data.data) data = data.data;
-      
-      var infoToko = {
-        namaToko: data.namaToko || '',
-        alamat: data.alamat || '',
-        noHp: data.noHp || ''
-      };
-      
-      localStorage.setItem('info_toko', JSON.stringify(infoToko));
-      
-      // 🔥 Update global cache juga (biar getInfoTokoSync() instant)
-      _infoTokoCache = infoToko;
-      _infoTokoCacheTime = Date.now();
+// ============================================================
+// 🔥 GET INFO TOKO ASYNC — TUNGGU CACHE ATAU FETCH DARI SERVER
+// ============================================================
+// Dipakai di fungsi cetak struk yang butuh info toko PASTI ada.
+// Strategi:
+//   1. Cek cache dulu → kalau ada, langsung return
+//   2. Kalau kosong → fetch dari server (blocking, tunggu selesai)
+//   3. Simpan ke cache
+//
+// Return: Promise yang resolve ke { namaToko, alamat, noHp }
+// ============================================================
+function getInfoTokoAsync() {
+  return new Promise(function(resolve) {
+    // Cek cache dulu
+    var cached = getInfoTokoSync();
+    if (cached && cached.namaToko) {
+      resolve(cached);
+      return;
     }
-  })
-  .catch(function(error) {
-    console.error('❌ Gagal refresh cache info toko:', error);
+    
+    // Cache kosong → fetch dari server
+    console.log('🔄 getInfoTokoAsync: cache kosong, fetch dari server...');
+    
+    if (!currentUser || !currentUser.username) {
+      console.warn('⚠️ getInfoTokoAsync: tidak ada user login');
+      resolve({ namaToko: '', alamat: '', noHp: '' });
+      return;
+    }
+    
+    callGAS('getInfoToko', { username: currentUser.username })
+    .then(function(result) {
+      if (result && result.success) {
+        var data = result.data;
+        if (data && data.data) data = data.data;
+        
+        var infoToko = {
+          namaToko: data.namaToko || '',
+          alamat: data.alamat || '',
+          noHp: data.noHp || ''
+        };
+        
+        // Simpan ke cache
+        localStorage.setItem('info_toko', JSON.stringify(infoToko));
+        _infoTokoCache = infoToko;
+        _infoTokoCacheTime = Date.now();
+        
+        console.log('✅ getInfoTokoAsync: berhasil fetch', infoToko.namaToko);
+        resolve(infoToko);
+      } else {
+        console.warn('⚠️ getInfoTokoAsync: result tidak success');
+        resolve({ namaToko: '', alamat: '', noHp: '' });
+      }
+    })
+    .catch(function(error) {
+      console.error('❌ getInfoTokoAsync error:', error);
+      resolve({ namaToko: '', alamat: '', noHp: '' });
+    });
+  });
+}
+
+  
+// ============================================================
+// 🔥 REFRESH INFO TOKO CACHE (VERSI PROMISE)
+// ============================================================
+// Return: Promise yang resolve ke object infoToko
+// Pemanggil bisa await / .then() untuk memastikan cache siap
+// ============================================================
+function refreshInfoTokoCache() {
+  return new Promise(function(resolve) {
+    if (!currentUser || !currentUser.username) {
+      console.warn('⚠️ refreshInfoTokoCache: tidak ada user login');
+      resolve({ namaToko: '', alamat: '', noHp: '' });
+      return;
+    }
+    
+    callGAS('getInfoToko', { 
+      username: currentUser.username 
+    })
+    .then(function(result) {
+      if (result && result.success) {
+        var data = result.data;
+        if (data && data.data) data = data.data;
+        
+        var infoToko = {
+          namaToko: data.namaToko || '',
+          alamat: data.alamat || '',
+          noHp: data.noHp || ''
+        };
+        
+        localStorage.setItem('info_toko', JSON.stringify(infoToko));
+        
+        // Update global cache
+        _infoTokoCache = infoToko;
+        _infoTokoCacheTime = Date.now();
+        
+        console.log('✅ Info toko di-cache:', infoToko.namaToko || '(kosong)');
+        resolve(infoToko);
+      } else {
+        console.warn('⚠️ refreshInfoTokoCache: result tidak success', result);
+        resolve({ namaToko: '', alamat: '', noHp: '' });
+      }
+    })
+    .catch(function(error) {
+      console.error('❌ Gagal refresh cache info toko:', error);
+      resolve({ namaToko: '', alamat: '', noHp: '' });
+    });
   });
 }
 
