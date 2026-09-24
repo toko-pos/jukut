@@ -14378,40 +14378,36 @@ function renderAuditHasil(result) {
     html += '</tbody></table></div></div>';
   }
   
-  if (l3.hasil && l3.hasil.length > 0) {
-    var filtered = [];
+    if (l3.hasil && l3.hasil.length > 0) {
+    html += '<div style="margin-bottom: 20px;">';
+    html += '<h4 style="margin: 0 0 10px 0; font-size: 1rem;">📋 LAPIS 3: Batch Terpakai vs Detail Transaksi</h4>';
+    html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px; max-height: 350px; overflow-y: auto;">';
+    html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">';
+    html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
+    html += '<th style="padding: 6px; text-align: left;">Kode</th>';
+    html += '<th style="padding: 6px; text-align: left;">Nama</th>';
+    html += '<th style="padding: 6px; text-align: right;">Terpakai</th>';
+    html += '<th style="padding: 6px; text-align: right;">Jual Transaksi</th>';
+    html += '<th style="padding: 6px; text-align: right;">Retur</th>';
+    html += '<th style="padding: 6px; text-align: right;">Selisih</th>';
+    html += '<th style="padding: 6px; text-align: center;">Status</th>';
+    html += '</tr></thead><tbody>';
+
     for (var i = 0; i < l3.hasil.length; i++) {
-      if (l3.hasil[i].terjual !== 0 || l3.hasil[i].stok !== 0) {
-        filtered.push(l3.hasil[i]);
-      }
+      var b = l3.hasil[i];
+      var beda = b.selisih !== 0;
+      html += '<tr style="border-bottom: 1px solid #f0f0f0; background: ' + (beda ? '#fff5f5' : '') + ';">';
+      html += '<td style="padding: 4px 6px; font-weight: 700;">' + (b.kode || '-') + '</td>';
+      html += '<td style="padding: 4px 6px;">' + (b.nama || '-') + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right;">' + (b.terpakai || 0) + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right;">' + (b.jualTrans || 0) + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right; color: #e65100;">' + (b.returMasuk || 0) + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: right; font-weight: 800; color: ' + (beda ? '#c62828' : '#2e7d32') + ';">' + (b.selisih > 0 ? '+' : '') + (b.selisih || 0) + '</td>';
+      html += '<td style="padding: 4px 6px; text-align: center;">' + (beda ? '❌' : '✅') + '</td>';
+      html += '</tr>';
     }
-    if (filtered.length > 0) {
-      html += '<div style="margin-bottom: 20px;">';
-      html += '<h4 style="margin: 0 0 10px 0; font-size: 1rem;">📋 LAPIS 3: Detail per Batch</h4>';
-      html += '<div style="overflow-x: auto; border: 1px solid #e8ecf4; border-radius: 8px; max-height: 350px; overflow-y: auto;">';
-      html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">';
-      html += '<thead><tr style="background: #f0f4ff; position: sticky; top: 0;">';
-      html += '<th style="padding: 6px;">Kode</th>';
-      html += '<th style="padding: 6px;">Batch</th>';
-      html += '<th style="padding: 6px;">Stok Awal</th>';
-      html += '<th style="padding: 6px;">Stok</th>';
-      html += '<th style="padding: 6px;">Terjual</th>';
-      html += '<th style="padding: 6px;">Tgl Masuk</th>';
-      html += '</tr></thead><tbody>';
-      
-      for (var i = 0; i < filtered.length; i++) {
-        var b = filtered[i];
-        html += '<tr style="border-bottom: 1px solid #f0f0f0;">';
-        html += '<td style="padding: 4px 6px; font-weight: 700;">' + b.kode + '</td>';
-        html += '<td style="padding: 4px 6px; font-size: 0.7rem;">' + b.batch + '</td>';
-        html += '<td style="padding: 4px 6px; text-align: right;">' + b.stokAwal + '</td>';
-        html += '<td style="padding: 4px 6px; text-align: right; font-weight: 600;">' + b.stok + '</td>';
-        html += '<td style="padding: 4px 6px; text-align: right; color: ' + (b.terjual > 0 ? '#c62828' : '#666') + ';">' + b.terjual + '</td>';
-        html += '<td style="padding: 4px 6px; font-size: 0.7rem;">' + (b.tanggalMasuk || '-') + '</td>';
-        html += '</tr>';
-      }
-      html += '</tbody></table></div></div>';
-    }
+
+    html += '</tbody></table></div></div>';
   }
   
   var now = new Date();
