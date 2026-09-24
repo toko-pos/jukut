@@ -4552,16 +4552,60 @@ function renderTransaksi(data) {
             html += '<td style="text-align:center; color:#999;">-</td>';
         }
         
-        var statusText = t.status || 'Selesai';
-        var statusColor = '#4CAF50';
-        if (statusText === 'BELUM BAYAR') statusColor = '#f44336';
-        else if (statusText === 'CICILAN') statusColor = '#FF9800';
-        else if (statusText === 'LUNAS') statusColor = '#4CAF50';
-        else if (statusText === 'Selesai') statusColor = '#4CAF50';
-        
-        html += '<td style="text-align:center;">';
-        html += '<span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:700; background:' + statusColor + '; color:white; white-space:nowrap;">' + statusText + '</span>';
-        html += '</td>';
+        // ============================================================
+// 🔥 TENTUKAN STATUS FINAL (KHUSUS RS- YANG PERNAH HUTANG)
+// ============================================================
+var statusText = t.status || 'Selesai';
+var statusColor = '#4CAF50';
+
+// Cek apakah ini transaksi reseller
+var isRS = (t.isReseller === true) || (id && String(id).indexOf('RS-') === 0);
+
+// Kalau RS-, pakai status dari Piutang Reseller (sudah di-override backend)
+// Backend kirim: status, sisa, pembayaran, isReseller
+if (isRS) {
+    var sisa = parseInt(t.sisa) || 0;
+    var dibayar = parseInt(t.pembayaran) || 0;
+    var total = parseInt(t.total) || 0;
+    
+    // Normalisasi status dari backend
+    var statusUpper = String(statusText).toUpperCase().trim();
+    
+    // Prioritas: pakai field sisa & dibayar untuk tentukan status final
+    if (sisa <= 0 && total > 0) {
+        // Sisa 0 → LUNAS (baik lunas langsung maupun lunas via cicilan)
+        statusText = 'LUNAS';
+        statusColor = '#4CAF50';
+    } else if (sisa > 0 && dibayar > 0) {
+        // Masih ada sisa, tapi sudah bayar sebagian → CICILAN
+        statusText = 'CICILAN';
+        statusColor = '#FF9800';
+    } else if (sisa > 0 && dibayar === 0) {
+        // Belum bayar sama sekali
+        statusText = 'BELUM BAYAR';
+        statusColor = '#f44336';
+    }
+    // Kalau sisa & dibayar tidak ada (RS- lunas langsung tanpa piutang),
+    // statusText tetap dari backend (biasanya 'LUNAS' atau 'Selesai')
+} else {
+    // Non-RS: pakai logika lama
+    if (statusText === 'BELUM BAYAR') statusColor = '#f44336';
+    else if (statusText === 'CICILAN') statusColor = '#FF9800';
+    else if (statusText === 'LUNAS') statusColor = '#4CFF50'; // fix typo
+    else if (statusText === 'Selesai') statusColor = '#4CAF50';
+}
+
+// Render dengan badge + icon
+var statusIcon = '';
+if (statusText === 'LUNAS') statusIcon = '✅ ';
+else if (statusText === 'CICILAN') statusIcon = '🔄 ';
+else if (statusText === 'BELUM BAYAR') statusIcon = '⚠️ ';
+
+html += '<td style="text-align:center;">';
+html += '<span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:700; background:' + statusColor + '; color:white; white-space:nowrap;">' + statusIcon + statusText + '</span>';
+html += '</td>';
+
+  
         
         html += '<td style="text-align:center; padding:6px 4px;">';
         html += '<div style="display:inline-flex;gap:5px;align-items:center;justify-content:center;">';
