@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzErFUkcQbU0qYm95JnWjdmx8iSpKm2_-BjeOfRZ-50XvlH1j6NbCjMqzsxpFNXkY9MSw/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbyolHZYSW2X7Oz5SVQN07wu_g0kAcgypMmut09mBYLcEIscJR0FeHq9Xm-hcdb57NRsjg/exec';
 
 
     // ============================================================
@@ -14232,7 +14232,9 @@ function bukaAuditStok() {
   document.getElementById('auditError').style.display = 'none';
   document.getElementById('auditFooter').style.display = 'none';
   
-  callGAS('auditStokLengkap', {})
+ 
+  callGAS('auditStok3LapisDenganRetur', {})
+    
   .then(function(result) {
     document.getElementById('auditLoading').style.display = 'none';
     
