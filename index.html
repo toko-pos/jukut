@@ -4813,7 +4813,7 @@ function tambahQRFooterCleanter(content, callback) {
 
   
 // ============================================================
-// 🔥 CETAK VIA CLEANTER (OPTIMIZED)
+// 🔥 CETAK VIA CLEANTER (OPTIMIZED + RETUR)
 // ============================================================
 async function cetakViaCleanter(idTransaksi) {
   var t0 = performance.now();
@@ -4840,20 +4840,36 @@ async function cetakViaCleanter(idTransaksi) {
       var cacheEntry = transaksiCacheForPrint[idTransaksi];
       var age = Date.now() - cacheEntry.timestamp;
       
-      if (age < TRANSAKSI_CACHE_TTL) {
-        var cachedData = cacheEntry.data;
-        
+      // 🔥 VALIDASI CACHE — harus punya field retur
+      var cachedData = cacheEntry.data;
+      var isCacheValid = cachedData && 
+                         cachedData.totalRetur !== undefined &&
+                         cachedData.totalKotor !== undefined;
+      
+      if (isCacheValid && age < TRANSAKSI_CACHE_TTL) {
         cachedHeader = {
           Tanggal: cachedData.tanggal,
           Waktu: cachedData.waktu,
           Kasir: cachedData.kasir,
+          
+          // Total
           Total: cachedData.total,
+          TotalKotor: cachedData.totalKotor,
+          
+          // 🔥 RETUR — WAJIB DISALIN!
+          TotalRetur: cachedData.totalRetur,
+          qtyRetur: cachedData.qtyRetur,
+          totalRetur: cachedData.totalRetur,
+          
+          // Pembayaran
           Pembayaran: cachedData.pembayaran,
           Kembalian: cachedData.kembalian,
-          'Nama Pembeli': cachedData.namaPembeli,
-          Status: cachedData.status,
           Dibayar: cachedData.dibayar,
           Sisa: cachedData.sisa,
+          
+          // Info lain
+          'Nama Pembeli': cachedData.namaPembeli,
+          Status: cachedData.status,
           isReseller: cachedData.isReseller,
           KodeReseller: cachedData.kodeReseller,
           NamaReseller: cachedData.namaReseller
@@ -4871,6 +4887,11 @@ async function cetakViaCleanter(idTransaksi) {
         }
         
         console.log('⚡ Pakai cache untuk cetak:', idTransaksi);
+        console.log('   Cache TotalRetur:', cachedData.totalRetur);
+      } else {
+        // Cache lama / tanpa field retur → hapus, ambil fresh dari backend
+        console.log('🗑️ Cache lama dihapus (tanpa field retur):', idTransaksi);
+        delete transaksiCacheForPrint[idTransaksi];
       }
     }
 
@@ -4909,54 +4930,58 @@ async function cetakViaCleanter(idTransaksi) {
       ? (detailResult.data && detailResult.data.data ? detailResult.data.data : detailResult.data)
       : [];
 
+    // 🔥 DEBUG
+    console.log('🔍 Header TotalRetur:', header.TotalRetur);
+    console.log('🔍 Header qtyRetur:', header.qtyRetur);
+    console.log('🔍 Header Total:', header.Total);
+
     var infoToko = getInfoTokoSync();
 
     var WIDTH = 32;
     var DIVIDER = '-'.repeat(WIDTH);
 
-/**
- * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
- * Kalau tidak muat, sisi kiri dipotong (dengan elipsis).
- */
-function makeRow(left, right) {
-  left  = String(left  == null ? '' : left);
-  right = String(right == null ? '' : right);
-  
-  var spaceCount = WIDTH - left.length - right.length;
-  if (spaceCount >= 1) {
-    return left + ' '.repeat(spaceCount) + right;
-  }
-  
-  if (right.length >= WIDTH) {
-    right = right.substring(0, WIDTH);
-  }
-  
-  var maxLeftLen = WIDTH - right.length - 1;
-  if (maxLeftLen < 1) {
-    right = right.substring(0, WIDTH - 1);
-    maxLeftLen = 0;
-  }
-  
-  var trimmedLeft = left;
-  if (left.length > maxLeftLen) {
-    if (maxLeftLen <= 1) {
-      trimmedLeft = '';
-    } else {
-      trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+    /**
+     * 🔥 Buat 1 baris struk yang DIJAMIN tidak overflow.
+     */
+    function makeRow(left, right) {
+      left  = String(left  == null ? '' : left);
+      right = String(right == null ? '' : right);
+      
+      var spaceCount = WIDTH - left.length - right.length;
+      if (spaceCount >= 1) {
+        return left + ' '.repeat(spaceCount) + right;
+      }
+      
+      if (right.length >= WIDTH) {
+        right = right.substring(0, WIDTH);
+      }
+      
+      var maxLeftLen = WIDTH - right.length - 1;
+      if (maxLeftLen < 1) {
+        right = right.substring(0, WIDTH - 1);
+        maxLeftLen = 0;
+      }
+      
+      var trimmedLeft = left;
+      if (left.length > maxLeftLen) {
+        if (maxLeftLen <= 1) {
+          trimmedLeft = '';
+        } else {
+          trimmedLeft = left.substring(0, maxLeftLen - 1) + '…';
+        }
+      }
+      
+      var pad = WIDTH - trimmedLeft.length - right.length;
+      if (pad < 1) pad = 1;
+      
+      var result = trimmedLeft + ' '.repeat(pad) + right;
+      
+      if (result.length > WIDTH) {
+        result = result.substring(0, WIDTH);
+      }
+      
+      return result;
     }
-  }
-  
-  var pad = WIDTH - trimmedLeft.length - right.length;
-  if (pad < 1) pad = 1;
-  
-  var result = trimmedLeft + ' '.repeat(pad) + right;
-  
-  if (result.length > WIDTH) {
-    result = result.substring(0, WIDTH);
-  }
-  
-  return result;
-}
 
     var content = [];
 
@@ -5019,280 +5044,268 @@ function makeRow(left, right) {
 
     content.push({ type: 'text', text: DIVIDER });
 
-   // ===== DETAIL PRODUK (DENGAN WORD WRAP) =====
-var grandTotal = 0;
-if (detail && detail.length > 0) {
-  for (var idx = 0; idx < detail.length; idx++) {
-    var item = detail[idx];
-    var nama = String(item['Nama Produk'] || item.namaProduk || 'Produk');
-    var qty = parseInt(item.Qty || item.qty || 0);
-    var harga = parseInt(item.Harga || item.harga || 0);
-    var subtotal = harga * qty;
-    grandTotal += subtotal;
+    // ===== DETAIL PRODUK (DENGAN WORD WRAP) =====
+    var grandTotal = 0;
+    if (detail && detail.length > 0) {
+      for (var idx = 0; idx < detail.length; idx++) {
+        var item = detail[idx];
+        var nama = String(item['Nama Produk'] || item.namaProduk || 'Produk');
+        var qty = parseInt(item.Qty || item.qty || 0);
+        var harga = parseInt(item.Harga || item.harga || 0);
+        var subtotal = harga * qty;
+        grandTotal += subtotal;
 
-    // 🔥 FORMAT ANGKA
-    var hargaFmt = new Intl.NumberFormat('id-ID').format(harga);
-    var subtotalFmt = new Intl.NumberFormat('id-ID').format(subtotal);
+        var hargaFmt = new Intl.NumberFormat('id-ID').format(harga);
+        var subtotalFmt = new Intl.NumberFormat('id-ID').format(subtotal);
 
-    // 🔥 WORD WRAP NAMA PRODUK (full 32 char, tanpa suffix qty)
-    var maxNamaChars = WIDTH;
+        var maxNamaChars = WIDTH;
 
-    var namaLines = [];
+        var namaLines = [];
 
-    if (nama.length <= maxNamaChars) {
-      namaLines.push(nama);
-    } else {
-      var words = nama.split(' ');
-      var currentLine = '';
-
-      for (var w = 0; w < words.length; w++) {
-        var word = words[w];
-        var testLine = currentLine ? currentLine + ' ' + word : word;
-
-        if (testLine.length <= maxNamaChars) {
-          currentLine = testLine;
+        if (nama.length <= maxNamaChars) {
+          namaLines.push(nama);
         } else {
-          if (currentLine) namaLines.push(currentLine);
+          var words = nama.split(' ');
+          var currentLine = '';
 
-          if (word.length > maxNamaChars) {
-            while (word.length > maxNamaChars) {
-              namaLines.push(word.substring(0, maxNamaChars));
-              word = word.substring(maxNamaChars);
+          for (var w = 0; w < words.length; w++) {
+            var word = words[w];
+            var testLine = currentLine ? currentLine + ' ' + word : word;
+
+            if (testLine.length <= maxNamaChars) {
+              currentLine = testLine;
+            } else {
+              if (currentLine) namaLines.push(currentLine);
+
+              if (word.length > maxNamaChars) {
+                while (word.length > maxNamaChars) {
+                  namaLines.push(word.substring(0, maxNamaChars));
+                  word = word.substring(maxNamaChars);
+                }
+              }
+              currentLine = word;
             }
           }
-          currentLine = word;
+          if (currentLine) namaLines.push(currentLine);
+        }
+
+        for (var nl = 0; nl < namaLines.length; nl++) {
+          content.push({
+            type: 'text',
+            text: nl === 0 ? namaLines[nl] : '  ' + namaLines[nl]
+          });
+        }
+
+        var hargaLine = hargaFmt + ' x ' + qty;
+        var spaceNeeded = hargaLine.length + subtotalFmt.length;
+
+        if (spaceNeeded + 1 > WIDTH) {
+          content.push({
+            type: 'text',
+            text: '  ' + hargaLine
+          });
+          content.push({
+            type: 'text',
+            text: makeRow('', subtotalFmt)
+          });
+        } else {
+          content.push({
+            type: 'text',
+            text: makeRow('  ' + hargaLine, subtotalFmt)
+          });
         }
       }
-      if (currentLine) namaLines.push(currentLine);
     }
 
-    // 🔹 Baris nama produk (word wrap)
-    for (var nl = 0; nl < namaLines.length; nl++) {
+    content.push({ type: 'text', text: DIVIDER });
+
+    // ============================================================
+    // 🔥 TOTAL & PEMBAYARAN (DENGAN RETUR)
+    // ============================================================
+    var total = parseInt(header.Total || header.total || grandTotal);
+
+    // 🔥 AMBIL INFO RETUR
+    var totalReturStruk = parseInt(header.TotalRetur || header.totalRetur || 0);
+    var qtyReturStruk = parseInt(header.qtyRetur || header.TotalReturQty || header.totalReturQty || 0);
+
+    console.log('💰 Total:', total, '| Retur:', totalReturStruk, '| Qty Retur:', qtyReturStruk);
+
+    if (totalReturStruk > 0) {
+      var totalKotorStruk = total + totalReturStruk;
+      var totalKotorFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalKotorStruk);
+      var totalReturFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalReturStruk);
+      
+      // Baris 1: Total Awal
       content.push({
         type: 'text',
-        text: nl === 0 ? namaLines[nl] : '  ' + namaLines[nl]
+        text: makeRow('Total Awal', totalKotorFmt)
       });
+      
+      // Baris 2: Retur
+      content.push({
+        type: 'text',
+        text: makeRow('📦 Retur (' + qtyReturStruk + ' pcs)', '- ' + totalReturFmt),
+        bold: true
+      });
+      
+      // Baris 3: Divider
+      content.push({ type: 'text', text: DIVIDER });
     }
 
-    // 🔹 Baris harga: "{harga} x {qty}" di kiri, subtotal di kanan
-    var hargaLine = hargaFmt + ' x ' + qty;
-    var spaceNeeded = hargaLine.length + subtotalFmt.length;
+    // TOTAL (riil)
+    var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
 
-    if (spaceNeeded + 1 > WIDTH) {
-      // ❌ Tidak muat 1 baris → harga di kiri, subtotal di baris berikut
-      content.push({
-        type: 'text',
-        text: '  ' + hargaLine
-      });
-      content.push({
-        type: 'text',
-        text: makeRow('', subtotalFmt)
-      });
-    } else {
-      // ✅ Muat 1 baris
-      content.push({
-        type: 'text',
-        text: makeRow('  ' + hargaLine, subtotalFmt)
-      });
-    }
-  }
-}
-
-content.push({ type: 'text', text: DIVIDER });
-
-// ===== TOTAL & PEMBAYARAN =====
-var total = parseInt(header.Total || header.total || grandTotal);
-
-// ============================================================
-// 🔥 INFO RETUR (KALAU ADA)
-// ============================================================
-var totalReturStruk = parseInt(header.TotalRetur || header.totalRetur || 0);
-var qtyReturStruk = parseInt(header.qtyRetur || header.TotalReturQty || header.totalReturQty || 0);
-
-if (totalReturStruk > 0) {
-  var totalKotorStruk = total + totalReturStruk;
-  var totalKotorFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalKotorStruk);
-  var totalReturFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalReturStruk);
-  
-  // Baris 1: Total Awal
-  content.push({
-    type: 'text',
-    text: makeRow('Total Awal', totalKotorFmt)
-  });
-  
-  // Baris 2: Retur
-  content.push({
-    type: 'text',
-    text: makeRow('📦 Retur (' + qtyReturStruk + ' pcs)', '- ' + totalReturFmt),
-    bold: true
-  });
-  
-  // Baris 3: Divider
-  content.push({ type: 'text', text: DIVIDER });
-}
-
-// TOTAL (riil)
-var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
-
-content.push({
-  type: 'text',
-  text: makeRow('TOTAL', totalFmt),
-  bold: true
-});
-
-// 🔥 AMBIL SEMUA FIELD HUTANG
-var statusRaw = String(header.Status || header.status || '').toUpperCase().trim();
-var dibayar = parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0);
-var sisa = parseInt(header.Sisa || header.sisa || 0);
-var hutangAwal = total - dibayar;
-
-// Tentukan status jika kosong
-var status = statusRaw;
-if (!status) {
-  if (sisa <= 0 && dibayar >= total && total > 0) status = 'LUNAS';
-  else if (sisa > 0 && dibayar > 0) status = 'CICILAN';
-  else if (sisa > 0 && dibayar === 0) status = 'BELUM BAYAR';
-}
-
-// 🔥 BLOK KHUSUS JIKA STATUS BUKAN LUNAS
-if (status !== 'LUNAS' && (sisa > 0 || status === 'BELUM BAYAR' || status === 'CICILAN')) {
-  
-  if (dibayar > 0 && dibayar < total) {
-    var hutangAwalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(hutangAwal);
     content.push({
       type: 'text',
-      text: makeRow('Hutang Awal', hutangAwalFmt)
-    });
-    
-    var dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
-    content.push({
-      type: 'text',
-      text: makeRow('Dibayar', dibayarFmt)
-    });
-  }
-
-  if (sisa > 0) {
-    var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisa);
-    content.push({
-      type: 'text',
-      text: makeRow('SISA HUTANG', sisaFmt),
+      text: makeRow('TOTAL', totalFmt),
       bold: true
     });
-  }
 
-  var statusLabel = status === 'CICILAN' ? 'CICILAN' : 'BELUM LUNAS';
-  content.push({
-    type: 'text',
-    text: makeRow('Status', statusLabel),
-    bold: true
-  });
+    // 🔥 AMBIL SEMUA FIELD HUTANG
+    var statusRaw = String(header.Status || header.status || '').toUpperCase().trim();
+    var dibayar = parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0);
+    var sisa = parseInt(header.Sisa || header.sisa || 0);
+    var hutangAwal = total - dibayar;
 
-  content.push({ type: 'text', text: DIVIDER });
-  
-  if (status === 'CICILAN') {
+    var status = statusRaw;
+    if (!status) {
+      if (sisa <= 0 && dibayar >= total && total > 0) status = 'LUNAS';
+      else if (sisa > 0 && dibayar > 0) status = 'CICILAN';
+      else if (sisa > 0 && dibayar === 0) status = 'BELUM BAYAR';
+    }
+
+    // 🔥 BLOK KHUSUS JIKA STATUS BUKAN LUNAS
+    if (status !== 'LUNAS' && (sisa > 0 || status === 'BELUM BAYAR' || status === 'CICILAN')) {
+      
+      if (dibayar > 0 && dibayar < total) {
+        var hutangAwalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(hutangAwal);
+        content.push({
+          type: 'text',
+          text: makeRow('Hutang Awal', hutangAwalFmt)
+        });
+        
+        var dibayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
+        content.push({
+          type: 'text',
+          text: makeRow('Dibayar', dibayarFmt)
+        });
+      }
+
+      if (sisa > 0) {
+        var sisaFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(sisa);
+        content.push({
+          type: 'text',
+          text: makeRow('SISA HUTANG', sisaFmt),
+          bold: true
+        });
+      }
+
+      var statusLabel = status === 'CICILAN' ? 'CICILAN' : 'BELUM LUNAS';
+      content.push({
+        type: 'text',
+        text: makeRow('Status', statusLabel),
+        bold: true
+      });
+
+      content.push({ type: 'text', text: DIVIDER });
+      
+      if (status === 'CICILAN') {
+        content.push({
+          type: 'text',
+          text: '*** CICILAN ***',
+          align: 'center',
+          bold: true
+        });
+        content.push({
+          type: 'text',
+          text: 'Dibayar: Rp ' + new Intl.NumberFormat('id-ID').format(dibayar),
+          align: 'center'
+        });
+      } else {
+        content.push({
+          type: 'text',
+          text: '*** BELUM LUNAS ***',
+          align: 'center',
+          bold: true
+        });
+      }
+
+      content.push({
+        type: 'text',
+        text: 'Sisa Hutang: Rp ' + new Intl.NumberFormat('id-ID').format(sisa),
+        align: 'center',
+        bold: true
+      });
+
+      content.push({ type: 'text', text: DIVIDER });
+    }
+    else {
+      if (dibayar > 0 && dibayar <= total) {
+        var bayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
+        content.push({
+          type: 'text',
+          text: makeRow('Bayar', bayarFmt)
+        });
+      }
+
+      var kembali = parseInt(header.Kembalian || header.kembalian || 0);
+      if (kembali > 0) {
+        var kembaliFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(kembali);
+        content.push({
+          type: 'text',
+          text: makeRow('Kembali', kembaliFmt)
+        });
+      }
+    }
+
+    content.push({ type: 'text', text: DIVIDER });
+
+    // ===== FOOTER =====
     content.push({
       type: 'text',
-      text: '*** CICILAN ***',
+      text: 'TERIMA KASIH',
       align: 'center',
       bold: true
     });
     content.push({
       type: 'text',
-      text: 'Dibayar: Rp ' + new Intl.NumberFormat('id-ID').format(dibayar),
+      text: 'Barang tidak dapat ditukar',
       align: 'center'
     });
-  } else {
-    content.push({
-      type: 'text',
-      text: '*** BELUM LUNAS ***',
-      align: 'center',
-      bold: true
+
+    // 🔥 Tunggu QR selesai
+    await new Promise(function(resolve) {
+      tambahQRFooterCleanter(content, resolve);
     });
-  }
 
-  content.push({
-    type: 'text',
-    text: 'Sisa Hutang: Rp ' + new Intl.NumberFormat('id-ID').format(sisa),
-    align: 'center',
-    bold: true
-  });
+    content.push({ type: 'feed' });
+      
+    var payload = {
+      content: content
+    };  
+    console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
 
-  content.push({ type: 'text', text: DIVIDER });
-}
-else {
-  if (dibayar > 0 && dibayar <= total) {
-    var bayarFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(dibayar);
-    content.push({
-      type: 'text',
-      text: makeRow('Bayar', bayarFmt)
+    var response = await fetch('http://localhost:9100/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
+
+    if (!response.ok) {
+      var errText = await response.text();
+      throw new Error('HTTP ' + response.status + ': ' + errText);
+    }
+
+    var t1 = performance.now();
+    console.log('⏱️ Total cetak:', (t1 - t0).toFixed(0), 'ms');
+    showToast('✅ Struk terkirim ke printer!', 'success');
+
+  } catch (error) {
+    console.error('❌ Error cetak Cleanter:', error);
+    showToast('❌ Gagal cetak: ' + error.message, 'error');
+  } finally {
+    window._isPrintingThermal = false;
   }
-
-  var kembali = parseInt(header.Kembalian || header.kembalian || 0);
-  if (kembali > 0) {
-    var kembaliFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(kembali);
-    content.push({
-      type: 'text',
-      text: makeRow('Kembali', kembaliFmt)
-    });
-  }
-}
-
-  // 🔥 TAMBAH DIVIDER DI SINI
-      content.push({ type: 'text', text: DIVIDER });
-
-
-
-// ===== FOOTER =====
-content.push({
-  type: 'text',
-  text: 'TERIMA KASIH',
-  align: 'center',
-  bold: true
-});
-content.push({
-  type: 'text',
-  text: 'Barang tidak dapat ditukar',
-  align: 'center'
-});
-
-
-// 🔥 Tunggu QR selesai
-await new Promise(function(resolve) {
-  tambahQRFooterCleanter(content, resolve);
-});
-  
-
-// 🔥 TAMBAHKAN BARIS INI — feed di paling akhir
-content.push({ type: 'feed' });
-  
-var payload = {
-  content: content
-};  
-console.log('🖨️ Payload Cleanter:', JSON.stringify(payload, null, 2));
-
-
-var response = await fetch('http://localhost:9100/print', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(payload)
-});
-
-if (!response.ok) {
-  var errText = await response.text();
-  throw new Error('HTTP ' + response.status + ': ' + errText);
-}
-
-var t1 = performance.now();
-console.log('⏱️ Total cetak:', (t1 - t0).toFixed(0), 'ms');
-showToast('✅ Struk terkirim ke printer!', 'success');
-
-} catch (error) {
-  console.error('❌ Error cetak Cleanter:', error);
-  showToast('❌ Gagal cetak: ' + error.message, 'error');
-} finally {
-  window._isPrintingThermal = false;
-}
 }
 
 
