@@ -2467,6 +2467,180 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   }
 }
 
+/* ============================================================
+   🔥 TABEL PRODUK — OPTIMASI LEBAR KOLOM
+   Lebarkan Nama, kecilkan kolom lain
+   ============================================================ */
+
+/* Padding dasar — lebih rapat */
+#produkTable thead th {
+  padding: 8px 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+#produkTable tbody td {
+  padding: 6px 6px;
+  font-size: 0.8rem;
+  vertical-align: middle;
+  line-height: 1.3;
+}
+
+/* 🔥 KOLOM 1: Kode — persempit */
+#produkTable th:nth-child(1),
+#produkTable td:nth-child(1) {
+  width: 60px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* 🔥 KOLOM 2: Nama Produk — LEBARKAN */
+#produkTable th:nth-child(2),
+#produkTable td:nth-child(2) {
+  min-width: 200px;
+  width: auto;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.3;
+}
+
+/* 🔥 KOLOM 3: Kategori — persempit */
+#produkTable th:nth-child(3),
+#produkTable td:nth-child(3) {
+  width: 80px;
+  white-space: nowrap;
+}
+
+/* 🔥 KOLOM 4 & 5: Harga Beli / Harga Jual — persempit */
+#produkTable th:nth-child(4),
+#produkTable td:nth-child(4),
+#produkTable th:nth-child(5),
+#produkTable td:nth-child(5) {
+  width: 85px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* 🔥 KOLOM 6: Stok — persempit, center */
+#produkTable th:nth-child(6),
+#produkTable td:nth-child(6) {
+  width: 50px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 🔥 KOLOM 7: Satuan — persempit */
+#produkTable th:nth-child(7),
+#produkTable td:nth-child(7) {
+  width: 55px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET (≤768px)
+   ============================================================ */
+@media (max-width: 768px) {
+  #produkTable thead th {
+    padding: 6px 4px;
+    font-size: 0.65rem;
+  }
+  
+  #produkTable tbody td {
+    padding: 5px 4px;
+    font-size: 0.7rem;
+  }
+  
+  #produkTable th:nth-child(1),
+  #produkTable td:nth-child(1) {
+    width: 50px;
+  }
+  
+  #produkTable th:nth-child(2),
+  #produkTable td:nth-child(2) {
+    min-width: 160px;
+  }
+  
+  #produkTable th:nth-child(3),
+  #produkTable td:nth-child(3) {
+    width: 70px;
+  }
+  
+  #produkTable th:nth-child(4),
+  #produkTable td:nth-child(4),
+  #produkTable th:nth-child(5),
+  #produkTable td:nth-child(5) {
+    width: 75px;
+    font-size: 0.65rem;
+  }
+  
+  #produkTable th:nth-child(6),
+  #produkTable td:nth-child(6) {
+    width: 45px;
+  }
+  
+  #produkTable th:nth-child(7),
+  #produkTable td:nth-child(7) {
+    width: 50px;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — HP (≤480px)
+   ============================================================ */
+@media (max-width: 480px) {
+  #produkTable thead th {
+    padding: 5px 3px;
+    font-size: 0.6rem;
+  }
+  
+  #produkTable tbody td {
+    padding: 4px 3px;
+    font-size: 0.65rem;
+    line-height: 1.25;
+  }
+  
+  #produkTable th:nth-child(1),
+  #produkTable td:nth-child(1) {
+    width: 45px;
+    font-size: 0.6rem;
+  }
+  
+  #produkTable th:nth-child(2),
+  #produkTable td:nth-child(2) {
+    min-width: 140px;
+    font-size: 0.65rem;
+  }
+  
+  #produkTable th:nth-child(3),
+  #produkTable td:nth-child(3) {
+    width: 60px;
+    font-size: 0.6rem;
+  }
+  
+  #produkTable th:nth-child(4),
+  #produkTable td:nth-child(4),
+  #produkTable th:nth-child(5),
+  #produkTable td:nth-child(5) {
+    width: 65px;
+    font-size: 0.6rem;
+  }
+  
+  #produkTable th:nth-child(6),
+  #produkTable td:nth-child(6) {
+    width: 40px;
+    font-size: 0.6rem;
+  }
+  
+  #produkTable th:nth-child(7),
+  #produkTable td:nth-child(7) {
+    width: 45px;
+    font-size: 0.6rem;
+  }
+}
+
+  
     /* ===== KOLOM NILAI & POTENSI DI TABEL PRODUK ===== */
 #produkTable td:nth-last-child(2),       /* kolom Nilai */
 #produkTable th:nth-last-child(2),
