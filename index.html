@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxg6yOWs8P9RCQCSS2B9CNibWMjTXuliDdp0OAPrFZvvdkZOqw6TmR4YxPyv-fCHDQekw/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxsvVcpApwwKNxD4OROdy-WTOHy0U-U5dEdPqFvzFXqmH8LO9IyH9okhvv2TlyEOtaM0w/exec';
 
 
     // ============================================================
@@ -11491,13 +11491,26 @@ function generateStrukHTML(data) {
   }
   
   h.push('<div style="border-top:1px dashed #999;margin:5px 0;"></div>');
-  h.push('<div class="info"><b>ID:</b> ' + data.id + '</div>');
-  h.push('<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>');
-  h.push('<div class="info"><b>Kasir:</b> ' + data.kasir + '</div>');
-  if (data.namaPembeli && data.namaPembeli !== '-') {
-    h.push('<div class="info"><b>Pembeli:</b> ' + data.namaPembeli + '</div>');
-  }
-  h.push('</div>');
+h.push('<div class="info"><b>ID:</b> ' + data.id + '</div>');
+h.push('<div class="info"><b>Tanggal:</b> ' + formatTanggalDisplay(data.tanggal) + ' ' + (data.waktu || '') + '</div>');
+h.push('<div class="info"><b>Kasir:</b> ' + (data.kasir || '-') + '</div>');
+
+// 🔥 SELALU TAMPILKAN NAMA PEMBELI (biar konsisten)
+var namaPembeliStruk = String(data.namaPembeli || data['Nama Pembeli'] || '').trim();
+if (!namaPembeliStruk) namaPembeliStruk = '-';
+
+// Cek apakah ini reseller
+var isResellerStruk = false;
+var kodeResellerStruk = data.kodeReseller || data.KodeReseller || '';
+if (data.isReseller || data.IsReseller) isResellerStruk = true;
+if (data.id && data.id.indexOf('RS-') === 0) isResellerStruk = true;
+
+if (isResellerStruk) {
+  h.push('<div class="info"><b>👥 Reseller:</b> ' + namaPembeliStruk + (kodeResellerStruk ? ' (' + kodeResellerStruk + ')' : '') + '</div>');
+} else {
+  h.push('<div class="info"><b>Pembeli:</b> ' + namaPembeliStruk + '</div>');
+}
+h.push('</div>');
   
   // ===== DETAIL PRODUK =====
   h.push('<div class="items-struk">');
@@ -11525,7 +11538,25 @@ function generateStrukHTML(data) {
   
   // ===== BLOK TOTAL & PEMBAYARAN =====
   h.push('<div class="total-struk">');
-  h.push('<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(total) + '</span></div>');
+
+// 🔥 INFO RETUR (kalau ada)
+var totalReturStruk = parseInt(data.totalRetur || data.TotalRetur || 0);
+if (totalReturStruk > 0) {
+  var totalKotorStruk = total + totalReturStruk;
+  
+  h.push('<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;color:#666;">');
+  h.push('<span>Total Awal</span><span>' + formatRupiahPlain(totalKotorStruk) + '</span>');
+  h.push('</div>');
+  
+  h.push('<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;color:#e65100;font-weight:600;">');
+  h.push('<span>📦 Retur (' + (data.qtyRetur || data.TotalReturQty || 0) + ' pcs)</span>');
+  h.push('<span>− ' + formatRupiahPlain(totalReturStruk) + '</span>');
+  h.push('</div>');
+  
+  h.push('<div style="border-top:1px dashed #999;margin:3px 0;"></div>');
+}
+
+h.push('<div class="total-row"><span>TOTAL</span><span>' + formatRupiahPlain(total) + '</span></div>');
   
   // 🔥 BLOK HUTANG/CICILAN
   if (isHutang) {
