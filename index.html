@@ -5342,6 +5342,24 @@ function renderDetailRow(idTransaksi, detail, colCount) {
         return;
     }
     
+    // ============================================================
+    // 🔥 AMBIL DATA RETUR UNTUK TRANSAKSI INI
+    // ============================================================
+    var returInfo = null;
+    try {
+        if (transaksiCacheForPrint[idTransaksi] && transaksiCacheForPrint[idTransaksi].data) {
+            var cacheData = transaksiCacheForPrint[idTransaksi].data;
+            returInfo = {
+                totalRp: cacheData.totalRetur || 0,
+                totalQty: cacheData.qtyRetur || 0,
+                totalKotor: cacheData.totalKotor || 0,
+                totalRiil: cacheData.total || 0
+            };
+        }
+    } catch (e) {
+        console.warn('⚠️ Gagal ambil info retur:', e);
+    }
+    
     var html = '<td colspan="' + colCount + '" style="padding:0;">';
     html += '<div class="detail-container">';
     html += '<table class="table-detail">';
@@ -5367,8 +5385,40 @@ function renderDetailRow(idTransaksi, detail, colCount) {
     }
     
     html += '</tbody><tfoot>';
-    html += '<tr><td colspan="5" style="text-align:right;"><strong>Grand Total</strong></td>';
-    html += '<td style="text-align:right;"><strong>Rp ' + formatRupiah(grandTotal) + '</strong></td></tr>';
+    
+    // ============================================================
+    // BARIS GRAND TOTAL (SELALU TAMPIL)
+    // ============================================================
+    html += '<tr>';
+    html += '<td colspan="5" style="text-align:right;"><strong>Grand Total</strong></td>';
+    html += '<td style="text-align:right;"><strong>Rp ' + formatRupiah(grandTotal) + '</strong></td>';
+    html += '</tr>';
+    
+    // ============================================================
+    // 🔥 BARIS RETUR (HANYA KALAU ADA)
+    // ============================================================
+    if (returInfo && returInfo.totalRp > 0) {
+        // Baris 1: 📦 Retur (merah/orange)
+        html += '<tr style="background:#fff3e0;">';
+        html += '<td colspan="5" style="text-align:right; color:#e65100; font-weight:600;">';
+        html += '📦 Retur (' + returInfo.totalQty + ' pcs)';
+        html += '</td>';
+        html += '<td style="text-align:right; color:#e65100; font-weight:700;">';
+        html += '− Rp ' + formatRupiah(returInfo.totalRp);
+        html += '</td>';
+        html += '</tr>';
+        
+        // Baris 2: 💰 Total Riil (hijau, tebal)
+        html += '<tr style="background:#e8f5e9; border-top:2px solid #4CAF50;">';
+        html += '<td colspan="5" style="text-align:right; color:#2e7d32; font-weight:800; font-size:1rem;">';
+        html += '✅ Total Riil (Setelah Retur)';
+        html += '</td>';
+        html += '<td style="text-align:right; color:#2e7d32; font-weight:800; font-size:1rem;">';
+        html += 'Rp ' + formatRupiah(returInfo.totalRiil || grandTotal - returInfo.totalRp);
+        html += '</td>';
+        html += '</tr>';
+    }
+    
     html += '</tfoot></table>';
     html += '</div></td>';
     
