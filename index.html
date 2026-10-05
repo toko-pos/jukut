@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwE1y5_eh93muiEF3uTWA9WapfXbwavTQ1xgWk6Wr9RLadLZNgJBNcOzF3Q5of5e98JmA/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxg6yOWs8P9RCQCSS2B9CNibWMjTXuliDdp0OAPrFZvvdkZOqw6TmR4YxPyv-fCHDQekw/exec';
 
 
     // ============================================================
@@ -5318,22 +5318,22 @@ function toggleDetailTransaksi(idTransaksi) {
     
     parentRow.parentNode.insertBefore(newRow, parentRow.nextSibling);
     
-    callGAS('getDetailTransaksi', { idTransaksi: idTransaksi })
-    .then(function(result) {
-        console.log('📥 Result:', result);
-        if (result && result.success) {
-            renderDetailRow(idTransaksi, result.data, colCount);
-        } else {
-            showDetailError(idTransaksi, result ? result.error : 'Gagal memuat detail', colCount);
-        }
-    })
-    .catch(function(error) {
-        console.error('❌ Error:', error);
-        showDetailError(idTransaksi, 'Error: ' + error.message, colCount);
-    });
+    callGAS('getDetailTransaksiWithRetur', { idTransaksi: idTransaksi })
+.then(function(result) {
+    console.log('📥 Result:', result);
+    if (result && result.success) {
+        renderDetailRow(idTransaksi, result.items, result.retur, colCount);
+    } else {
+        showDetailError(idTransaksi, result ? result.error : 'Gagal memuat detail', colCount);
+    }
+})
+.catch(function(error) {
+    console.error('❌ Error:', error);
+    showDetailError(idTransaksi, 'Error: ' + error.message, colCount);
+});
 }
 
-function renderDetailRow(idTransaksi, detail, colCount) {
+function renderDetailRow(idTransaksi, detail, returInfo, colCount) {
     var row = document.getElementById('detail-' + idTransaksi);
     if (!row) return;
     
@@ -5343,22 +5343,11 @@ function renderDetailRow(idTransaksi, detail, colCount) {
     }
     
     // ============================================================
-    // 🔥 AMBIL DATA RETUR UNTUK TRANSAKSI INI
+    // 🔥 RETUR INFO (dikirim dari toggleDetailTransaksi via backend)
     // ============================================================
-    var returInfo = null;
-    try {
-        if (transaksiCacheForPrint[idTransaksi] && transaksiCacheForPrint[idTransaksi].data) {
-            var cacheData = transaksiCacheForPrint[idTransaksi].data;
-            returInfo = {
-                totalRp: cacheData.totalRetur || 0,
-                totalQty: cacheData.qtyRetur || 0,
-                totalKotor: cacheData.totalKotor || 0,
-                totalRiil: cacheData.total || 0
-            };
-        }
-    } catch (e) {
-        console.warn('⚠️ Gagal ambil info retur:', e);
-    }
+    returInfo = returInfo || { totalRp: 0, totalQty: 0 };
+    
+    console.log('🔍 renderDetailRow | Retur:', returInfo);
     
     var html = '<td colspan="' + colCount + '" style="padding:0;">';
     html += '<div class="detail-container">';
@@ -5398,7 +5387,7 @@ function renderDetailRow(idTransaksi, detail, colCount) {
     // 🔥 BARIS RETUR (HANYA KALAU ADA)
     // ============================================================
     if (returInfo && returInfo.totalRp > 0) {
-        // Baris 1: 📦 Retur (merah/orange)
+        // Baris 1: 📦 Retur
         html += '<tr style="background:#fff3e0;">';
         html += '<td colspan="5" style="text-align:right; color:#e65100; font-weight:600;">';
         html += '📦 Retur (' + returInfo.totalQty + ' pcs)';
@@ -5408,13 +5397,16 @@ function renderDetailRow(idTransaksi, detail, colCount) {
         html += '</td>';
         html += '</tr>';
         
-        // Baris 2: 💰 Total Riil (hijau, tebal)
+        // Baris 2: ✅ Total Riil
+        var totalRiil = grandTotal - returInfo.totalRp;
+        if (totalRiil < 0) totalRiil = 0;
+        
         html += '<tr style="background:#e8f5e9; border-top:2px solid #4CAF50;">';
         html += '<td colspan="5" style="text-align:right; color:#2e7d32; font-weight:800; font-size:1rem;">';
         html += '✅ Total Riil (Setelah Retur)';
         html += '</td>';
         html += '<td style="text-align:right; color:#2e7d32; font-weight:800; font-size:1rem;">';
-        html += 'Rp ' + formatRupiah(returInfo.totalRiil || grandTotal - returInfo.totalRp);
+        html += 'Rp ' + formatRupiah(totalRiil);
         html += '</td>';
         html += '</tr>';
     }
