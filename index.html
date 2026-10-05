@@ -9981,21 +9981,32 @@ function showTambahProduk() {
 function cetakStrukFromHistory(id) {
   var t0 = performance.now();
   
-  // 🔥 CEK CACHE DULU (instant kalau ada)
+  // ============================================================
+  // 🔥 CEK CACHE DULU — VALIDASI FIELD RETUR
+  // ============================================================
   if (transaksiCacheForPrint[id]) {
     var cacheEntry = transaksiCacheForPrint[id];
     var age = Date.now() - cacheEntry.timestamp;
     
-    if (age < TRANSAKSI_CACHE_TTL) {
-      console.log('⚡ Pakai cache print preview:', id, '(' + age + 'ms)');
-      showStruk(cacheEntry.data, true);
-      return; // INSTANT!
+    var cacheData = cacheEntry.data;
+    var isCacheValid = cacheData && 
+                       cacheData.totalRetur !== undefined &&
+                       cacheData.totalKotor !== undefined;
+    
+    if (isCacheValid && age < TRANSAKSI_CACHE_TTL) {
+      console.log('⚡ Pakai cache print preview:', id);
+      showStruk(cacheData, true);
+      return;
+    }
+    
+    if (!isCacheValid) {
+      console.log('🗑️ Cache lama dihapus (tanpa field retur):', id);
+      delete transaksiCacheForPrint[id];
     }
   }
   
   showToast('⏳ Memuat data transaksi...', 'info');
   
-  // 🔥 Ambil header & detail PARALEL (bukan berurutan)
   Promise.all([
     callGAS('getTransaksiById', { idTransaksi: id }),
     callGAS('getDetailTransaksi', { idTransaksi: id })
@@ -10030,9 +10041,9 @@ function cetakStrukFromHistory(id) {
         if (keyLower === 'nama produk' || keyLower === 'produk' || keyLower === 'nama') namaProduk = item[key] || 'Produk';
       }
       
-      if (qty === 0) qty = parseInt(item['Qty']) || parseInt(item['qty']) || parseInt(item['Quantity']) || 0;
-      if (harga === 0) harga = parseInt(item['Harga']) || parseInt(item['harga']) || parseInt(item['Price']) || 0;
-      if (namaProduk === 'Produk') namaProduk = item['Nama Produk'] || item['nama produk'] || item['Produk'] || item['produk'] || 'Produk';
+      if (qty === 0) qty = parseInt(item['Qty']) || parseInt(item['qty']) || 0;
+      if (harga === 0) harga = parseInt(item['Harga']) || parseInt(item['harga']) || 0;
+      if (namaProduk === 'Produk') namaProduk = item['Nama Produk'] || item['nama produk'] || item['Produk'] || 'Produk';
       
       items.push({ 
         nama: namaProduk, 
@@ -10042,32 +10053,50 @@ function cetakStrukFromHistory(id) {
       });
     }
     
+    // ============================================================
+    // 🔥 SIMPAN SEMUA FIELD (TERMASUK RETUR & KOTOR)
+    // ============================================================
     var data = {
       id: id,
       tanggal: header.Tanggal || header.tanggal || '',
       waktu: header.Waktu || header.waktu || '',
       kasir: header.Kasir || header.kasir || 'Admin',
+      
+      // Total
       total: parseInt(header.Total || header.total || 0),
+      totalKotor: parseInt(header.TotalKotor || header.totalKotor || 0),
+      
+      // 🔥 RETUR
+      totalRetur: parseInt(header.TotalRetur || header.totalRetur || 0),
+      qtyRetur: parseInt(header.qtyRetur || header.TotalReturQty || header.totalReturQty || 0),
+      
+      // Pembayaran
       pembayaran: parseInt(header.Pembayaran || header.pembayaran || 0),
       kembalian: parseInt(header.Kembalian || header.kembalian || 0),
-      namaPembeli: header['Nama Pembeli'] || header.namaPembeli || '-',
-      items: items,
-      status: header.Status || header.status || '',
-      dibayar: parseInt(header.Dibayar || header.dibayar || header.Pembayaran || header.pembayaran || 0),
+      dibayar: parseInt(header.Dibayar || header.dibayar || 0),
       sisa: parseInt(header.Sisa || header.sisa || 0),
+      
+      // Pembeli
+      namaPembeli: header['Nama Pembeli'] || header.namaPembeli || '-',
+      
+      // Status & Reseller
+      status: header.Status || header.status || '',
       isReseller: header.isReseller || header.IsReseller || false,
       kodeReseller: header.KodeReseller || header.kodeReseller || '',
-      namaReseller: header.NamaReseller || header.namaReseller || ''
+      
+      items: items
     };
     
-    // Simpan ke cache
+    console.log('📦 Data struk (fresh):', data);
+    
     transaksiCacheForPrint[id] = {
       data: data,
       timestamp: Date.now()
     };
     
-    // 🔥 Prefetch: ambil data lain di background
-    prefetchNextTransactions(id);
+    if (typeof prefetchNextTransactions === 'function') {
+      prefetchNextTransactions(id);
+    }
     
     showStruk(data, true);
     
