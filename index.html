@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxsvVcpApwwKNxD4OROdy-WTOHy0U-U5dEdPqFvzFXqmH8LO9IyH9okhvv2TlyEOtaM0w/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwAeIPkSg13WDTFiPdaIGsmaQGrN4VDCBb6hdE4MdvkFk6ztvEfuY_utKqSEauMUfxlHQ/exec';
 
 
     // ============================================================
@@ -2506,9 +2506,39 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   /* ===== TOMBOL AKSI PIUTANG RESELLER (SAMAKAN DENGAN TRANSAKSI) ===== */
 #piutangResellerTable .aksi-piutang-wrapper {
   display: inline-flex;
+  flex-direction: row;
   gap: 6px;
   align-items: center;
   justify-content: center;
+}
+
+/* 🔥 RESPONSIVE HP — TOMBOL BERTUMPUK KE BAWAH */
+@media (max-width: 480px) {
+  #piutangResellerTable .aksi-piutang-wrapper {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  #piutangResellerTable .aksi-piutang-wrapper button {
+    width: 100%;
+    min-width: 60px;
+    height: 32px;
+    font-size: 0.6rem;
+  }
+  
+  #piutangResellerTable .aksi-piutang-wrapper button .aksi-icon {
+    font-size: 0.9rem;
+  }
+  
+  #piutangResellerTable .aksi-piutang-wrapper button .aksi-label {
+    font-size: 0.5rem;
+  }
+}
+
+/* Lebar kolom Aksi biar tidak terlalu sempit */
+#piutangResellerTable th:last-child,
+#piutangResellerTable td:last-child {
+  min-width: 80px;
 }
 
 #piutangResellerTable .aksi-piutang-wrapper button {
@@ -5072,6 +5102,36 @@ content.push({ type: 'text', text: DIVIDER });
 
 // ===== TOTAL & PEMBAYARAN =====
 var total = parseInt(header.Total || header.total || grandTotal);
+
+// ============================================================
+// 🔥 INFO RETUR (KALAU ADA)
+// ============================================================
+var totalReturStruk = parseInt(header.TotalRetur || header.totalRetur || 0);
+var qtyReturStruk = parseInt(header.qtyRetur || header.TotalReturQty || header.totalReturQty || 0);
+
+if (totalReturStruk > 0) {
+  var totalKotorStruk = total + totalReturStruk;
+  var totalKotorFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalKotorStruk);
+  var totalReturFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalReturStruk);
+  
+  // Baris 1: Total Awal
+  content.push({
+    type: 'text',
+    text: makeRow('Total Awal', totalKotorFmt)
+  });
+  
+  // Baris 2: Retur
+  content.push({
+    type: 'text',
+    text: makeRow('📦 Retur (' + qtyReturStruk + ' pcs)', '- ' + totalReturFmt),
+    bold: true
+  });
+  
+  // Baris 3: Divider
+  content.push({ type: 'text', text: DIVIDER });
+}
+
+// TOTAL (riil)
 var totalFmt = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
 
 content.push({
@@ -14742,6 +14802,7 @@ function loadPiutangReseller() {
           namaReseller: item.namaReseller,
           total: total,
           dibayar: dibayar,
+          retur: parseInt(item.retur) || 0,      // 🔥 TAMBAHKAN INI
           sisa: sisa,
           status: status,
           riwayatCount: item.riwayatCount || 0
