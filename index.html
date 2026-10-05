@@ -3189,16 +3189,16 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   <div class="table-wrapper" style="margin-top:15px;">
     <table id="tabelPiutang">
       
-      <thead>
+<thead>
   <tr>
     <th style="width:40px;">No</th>
     <th>Tanggal</th>
     <th>ID Transaksi</th>
     <th>Reseller</th>
-    <th style="text-align:right;">Total</th>
-    <th style="text-align:right;">Diterima</th>
-    <th style="text-align:right; background:#fff3e0;">📦 Retur</th>
-    <th style="text-align:right;">Sisa</th>
+    <th style="text-align:right;">Total Piutang</th>
+    <th style="text-align:right;">Sudah Diterima</th>
+    <th style="text-align:right; background:#fff3e0;">📦 Retur</th>   <!-- 🔥 HARUS ADA -->
+    <th style="text-align:right;">Sisa Piutang</th>
     <th style="text-align:center;">Umur</th>
     <th style="text-align:center;">Status</th>
     <th style="text-align:center;min-width:100px;">Aksi</th>
@@ -14858,9 +14858,11 @@ function renderTabelPiutang(belumLunas) {
     var t = belumLunas[i];
     var total = t.total || 0;
     var dibayar = t.dibayar || 0;
+    var retur = t.retur || 0;           // 🔥 FIELD RETUR
     var sisa = t.sisa || 0;
-    var progress = total > 0 ? Math.round((dibayar / total) * 100) : 0;
+    var progress = total > 0 ? Math.round(((dibayar + retur) / total) * 100) : 0;
     
+    // Tentukan status class
     var statusClass, statusText;
     if (t.status === 'LUNAS') {
       statusClass = 'badge-success';
@@ -14875,6 +14877,7 @@ function renderTabelPiutang(belumLunas) {
     
     var rowStyle = (t.status === 'LUNAS') ? 'background:#f0fdf4;' : '';
     
+    // Hitung umur
     var umurHari = 0;
     if (t.tanggal) {
       try {
@@ -14894,44 +14897,56 @@ function renderTabelPiutang(belumLunas) {
     html += '<td style="white-space:nowrap;">' + formatTanggalDisplay(t.tanggal) + '</td>';
     html += '<td><strong>' + escapeHtml(t.idTransaksi || '-') + '</strong></td>';
     html += '<td>' + escapeHtml(t.namaReseller || '-') + '</td>';
-    html += '<td style="text-align:right;font-weight:600;">' + formatRupiah(total) + '</td>';
-    html += '<td style="text-align:right;color:#2e7d32;font-weight:600;">' + formatRupiah(dibayar) + '</td>';
-
-    html += '<td style="text-align:right;color:#e65100;font-weight:600;">' + 
-        (t.retur > 0 ? formatRupiah(t.retur) : '<span style="color:#ccc;">-</span>') + 
-        '</td>';
     
+    // Kolom Total
+    html += '<td style="text-align:right;font-weight:600;">' + formatRupiah(total) + '</td>';
+    
+    // Kolom Diterima
+    html += '<td style="text-align:right;color:#2e7d32;font-weight:600;">' + formatRupiah(dibayar) + '</td>';
+    
+    // 🔥 KOLOM RETUR (BARU — INI YANG HILANG)
+    html += '<td style="text-align:right;color:#e65100;font-weight:600;">' + 
+            (retur > 0 ? formatRupiah(retur) : '<span style="color:#ccc;">-</span>') + 
+            '</td>';
+    
+    // Kolom Sisa
     html += '<td style="text-align:right;font-weight:700;color:' + (sisa > 0 ? '#c62828' : '#2e7d32') + ';">' + formatRupiah(sisa) + '</td>';
+    
+    // Kolom Umur
     html += '<td style="text-align:center;"><span style="background:' + umurBg + ';color:' + umurColor + ';padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:700;white-space:nowrap;">' + umurHari + ' hari</span></td>';
+    
+    // Kolom Status
     html += '<td style="text-align:center;">';
     html += '<span class="' + statusClass + '" style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:600;">' + statusText + '</span>';
     html += '</td>';
+    
+    // Kolom Aksi
     html += '<td style="text-align:center;white-space:nowrap;">';
-html += '<div class="aksi-piutang-wrapper">';
-
-if (sisa > 0) {
-  html += '<button class="btn-aksi-terima" ' +
-          'onclick="bukaPopupBayarPiutang(\'' + escapeHtml(t.idTransaksi) + '\',\'' + escapeHtml(t.kodeReseller) + '\',\'' + escapeHtml(t.namaReseller) + '\',' + total + ',' + dibayar + ',' + sisa + ')" ' +
-          'title="Terima Pembayaran">' +
-          '<span class="aksi-icon">💰</span>' +
-          '<span class="aksi-label">TERIMA</span>' +
-          '</button>';
-} else {
-  html += '<button class="btn-aksi-lunas" disabled title="Lunas">' +
-          '<span class="aksi-icon">✅</span>' +
-          '<span class="aksi-label">LUNAS</span>' +
-          '</button>';
-}
-
-html += '<button class="btn-aksi-riwayat" ' +
-        'onclick="lihatRiwayatPiutang(\'' + escapeHtml(t.idTransaksi) + '\')" ' +
-        'title="Riwayat Pembayaran">' +
-        '<span class="aksi-icon">📋</span>' +
-        '<span class="aksi-label">RIWAYAT</span>' +
-        '</button>';
-
-html += '</div>';
-html += '</td>';
+    html += '<div class="aksi-piutang-wrapper">';
+    
+    if (sisa > 0) {
+      html += '<button class="btn-aksi-terima" ' +
+              'onclick="bukaPopupBayarPiutang(\'' + escapeHtml(t.idTransaksi) + '\',\'' + escapeHtml(t.kodeReseller) + '\',\'' + escapeHtml(t.namaReseller) + '\',' + total + ',' + dibayar + ',' + sisa + ')" ' +
+              'title="Terima Pembayaran">' +
+              '<span class="aksi-icon">💰</span>' +
+              '<span class="aksi-label">TERIMA</span>' +
+              '</button>';
+    } else {
+      html += '<button class="btn-aksi-lunas" disabled title="Lunas">' +
+              '<span class="aksi-icon">✅</span>' +
+              '<span class="aksi-label">LUNAS</span>' +
+              '</button>';
+    }
+    
+    html += '<button class="btn-aksi-riwayat" ' +
+            'onclick="lihatRiwayatPiutang(\'' + escapeHtml(t.idTransaksi) + '\')" ' +
+            'title="Riwayat Pembayaran">' +
+            '<span class="aksi-icon">📋</span>' +
+            '<span class="aksi-label">RIWAYAT</span>' +
+            '</button>';
+    
+    html += '</div>';
+    html += '</td>';
     html += '</tr>';
   }
   
