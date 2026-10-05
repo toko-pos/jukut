@@ -2347,10 +2347,18 @@ body.role-reseller .nav button[onclick*="showPage('reseller')"] {
   }
 }
 
-#page-transaksi .table-wrapper table {
+/* 🔥 HANYA tabel transaksi utama yang min-width 870px */
+#page-transaksi #transaksiMainTable {
     table-layout: fixed;
     width: 100%;
     min-width: 870px;
+}
+
+/* 🔥 Tabel Piutang Reseller — lebar fleksibel */
+#page-transaksi #tabelPiutang {
+    table-layout: auto;
+    width: 100%;
+    min-width: 0;
 }
 
 #page-transaksi .table-wrapper thead th {
