@@ -12212,6 +12212,12 @@ function loadHutangVendor() {
             '<button class="btn btn-bayar" disabled title="Lunas">✅</button>'
         ) +
         '<button class="btn btn-riwayat" onclick="lihatRiwayatPembayaranVendor(\'' + noNotaEscaped + '\')" title="Riwayat">📋</button>' +
+
+            // TAMBAHKAN TOMBOL RETUR INI
+    '<button class="btn" onclick="bukaPopupReturVendor(\'' + noNotaEscaped + '\')" title="Retur Barang" ' +
+        'style="background:#E65100;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:0.85rem;">📦</button>' +
+'</div>';
+            
     '</div>' +
 '</td>' +
               '</tr>';
@@ -16829,7 +16835,473 @@ function exportPiutangResellerCSV() {
   document.addEventListener('keydown', handler, { once: true });
 })();
 
+// ============================================================
+// 🔥 RETUR VENDOR — STATE & UI FRONTEND
+// ============================================================
 
+var _dataReturVendorAktif = null;
+
+function bukaPopupReturVendor(noNota) {
+  showToast('⏳ Memuat data retur...', 'info');
+  
+  callGAS('getDetailReturVendor', { noNota: noNota })
+  .then(function(result) {
+    if (!result || !result.success) {
+      showToast('❌ ' + (result ? result.error : 'Gagal memuat data'), 'error');
+      return;
+    }
+    
+    _dataReturVendorAktif = result;
+    renderPopupReturVendor(result);
+  })
+  .catch(function(error) {
+    console.error('❌ Error bukaPopupReturVendor:', error);
+    showToast('❌ ' + error.message, 'error');
+  });
+}
+
+function renderPopupReturVendor(data) {
+  var header = data.header;
+  var detail = data.detail || [];
+  var riwayat = data.riwayat || [];
+  
+  var html = '';
+  
+  // HEADER
+  html += '<div style="background:linear-gradient(135deg,#E65100,#BF360C);padding:15px 18px;border-radius:10px;color:white;margin-bottom:15px;">';
+  html += '  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">';
+  html += '    <div>';
+  html += '      <div style="font-size:0.7rem;opacity:0.9;">🏢 ' + escapeHtml(header.vendor) + '</div>';
+  html += '      <div style="font-size:0.85rem;font-weight:700;margin-top:3px;">' + escapeHtml(header.noNota) + '</div>';
+  html += '      <div style="font-size:0.7rem;opacity:0.85;margin-top:2px;">📅 ' + formatTanggalDisplay(header.tanggal) + '</div>';
+  html += '    </div>';
+  html += '    <div style="text-align:right;">';
+  html += '      <div style="font-size:0.7rem;opacity:0.9;">Sisa Hutang</div>';
+  html += '      <div style="font-size:1.4rem;font-weight:800;">' + formatRupiah(header.sisaHutang) + '</div>';
+  html += '      <div style="font-size:0.7rem;opacity:0.85;">' + header.status + '</div>';
+  html += '    </div>';
+  html += '  </div>';
+  html += '</div>';
+  
+  // RINGKASAN
+  html += '<div style="background:#f8faff;padding:12px 15px;border-radius:8px;border:1px solid #e8ecf4;margin-bottom:15px;font-size:0.85rem;">';
+  html += '  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;">';
+  html += '    <div style="display:flex;justify-content:space-between;"><span style="color:#666;">Total Nota:</span><strong>' + formatRupiah(header.totalNota) + '</strong></div>';
+  html += '    <div style="display:flex;justify-content:space-between;"><span style="color:#666;">Sudah Dibayar:</span><strong style="color:#2e7d32;">' + formatRupiah(header.totalDibayar) + '</strong></div>';
+  html += '    <div style="display:flex;justify-content:space-between;"><span style="color:#666;">Total Retur:</span><strong style="color:#e65100;">' + formatRupiah(header.totalRetur) + '</strong></div>';
+  html += '    <div style="display:flex;justify-content:space-between;"><span style="color:#666;">Sisa Hutang:</span><strong style="color:' + (header.sisaHutang > 0 ? '#c62828' : '#2e7d32') + ';">' + formatRupiah(header.sisaHutang) + '</strong></div>';
+  html += '  </div>';
+  html += '</div>';
+  
+  // RIWAYAT
+  if (riwayat.length > 0) {
+    html += '<div style="margin-bottom:15px;">';
+    html += '  <div style="font-weight:700;font-size:0.85rem;color:#37474f;margin-bottom:6px;">📋 Riwayat (' + riwayat.length + 'x)</div>';
+    html += '  <div style="max-height:150px;overflow-y:auto;border:1px solid #e8ecf4;border-radius:8px;background:#fafbff;">';
+    for (var i = 0; i < riwayat.length; i++) {
+      var r = riwayat[i];
+      var icon = r.tipe === 'BAYAR' ? '💵' : (r.tipe === 'REFUND' ? '💰' : '📦');
+      var color = r.tipe === 'BAYAR' ? '#2e7d32' : (r.tipe === 'REFUND' ? '#1565c0' : '#e65100');
+      var label = r.tipe === 'BAYAR' ? 'Bayar' : (r.tipe === 'REFUND' ? 'Refund' : 'Retur');
+      
+      html += '<div style="padding:8px 12px;border-bottom:1px solid #eee;font-size:0.8rem;">';
+      html += '  <div style="display:flex;justify-content:space-between;align-items:center;">';
+      html += '    <div><span style="background:' + color + '20;color:' + color + ';padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:700;">' + icon + ' ' + label + '</span><span style="margin-left:8px;color:#666;">' + formatTanggalDisplay(r.tanggal) + '</span></div>';
+      html += '    <strong style="color:' + color + ';">' + formatRupiah(r.nominal) + '</strong>';
+      html += '  </div>';
+      html += '</div>';
+    }
+    html += '  </div>';
+    html += '</div>';
+  }
+  
+  // KALAU SUDAH LUNAS TOTAL
+  if (header.sisaHutang <= 0 && detail.every(function(p) { return p.qtySisaRetur <= 0; })) {
+    html += '<div style="background:#e8f5e9;border-left:4px solid #4CAF50;padding:12px 15px;border-radius:8px;margin-bottom:15px;text-align:center;">';
+    html += '  <div style="font-size:1.5rem;">✅</div>';
+    html += '  <div style="font-weight:700;color:#2e7d32;margin-top:4px;">HUTANG LUNAS & SEMUA BARANG SUDAH DIRETUR</div>';
+    html += '</div>';
+    html += '<button type="button" onclick="closeModal()" style="width:100%;padding:14px;background:#607D8B;color:white;border:none;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;">✖ Tutup</button>';
+    
+    document.getElementById('modalTitle').textContent = '📦 Retur Vendor';
+    document.getElementById('modalContent').classList.add('large');
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('modal').classList.add('active');
+    return;
+  }
+  
+  // INPUT PRODUK
+  html += '<div style="margin-bottom:15px;">';
+  html += '  <div style="font-weight:700;font-size:0.85rem;color:#37474f;margin-bottom:6px;">📦 Pilih Produk yang Diretur:</div>';
+  html += '  <div style="border:1px solid #e8ecf4;border-radius:8px;overflow:hidden;">';
+  html += '    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">';
+  html += '      <thead><tr style="background:#f0f4ff;">';
+  html += '        <th style="padding:8px 6px;text-align:left;font-size:0.7rem;">Produk</th>';
+  html += '        <th style="padding:8px 6px;text-align:center;font-size:0.7rem;width:45px;">Beli</th>';
+  html += '        <th style="padding:8px 6px;text-align:center;font-size:0.7rem;width:45px;">Retur</th>';
+  html += '        <th style="padding:8px 6px;text-align:center;font-size:0.7rem;width:45px;">Sisa</th>';
+  html += '        <th style="padding:8px 6px;text-align:right;font-size:0.7rem;width:70px;">Harga</th>';
+  html += '        <th style="padding:8px 6px;text-align:center;font-size:0.7rem;width:65px;">Qty Retur</th>';
+  html += '      </tr></thead><tbody>';
+  
+  for (var i = 0; i < detail.length; i++) {
+    var p = detail[i];
+    html += '<tr style="border-bottom:1px solid #f0f0f0;">';
+    html += '<td style="padding:6px 6px;font-size:0.75rem;">' + escapeHtml(p.nama) + '</td>';
+    html += '<td style="padding:6px 6px;text-align:center;">' + p.qtyBeli + '</td>';
+    html += '<td style="padding:6px 6px;text-align:center;color:#e65100;font-weight:700;">' + p.qtySudahRetur + '</td>';
+    html += '<td style="padding:6px 6px;text-align:center;font-weight:700;">' + p.qtySisaRetur + '</td>';
+    html += '<td style="padding:6px 6px;text-align:right;font-size:0.7rem;color:#666;">' + formatRupiahPlain(p.harga) + '</td>';
+    html += '<td style="padding:4px 6px;text-align:center;">';
+    
+    if (p.qtySisaRetur > 0) {
+      html += '<input type="number" class="inputReturVendor" data-kode="' + p.kode + '" data-harga="' + p.harga + '" data-max="' + p.qtySisaRetur + '" min="0" max="' + p.qtySisaRetur + '" value="0" style="width:60px;padding:4px;border:1.5px solid #dce3f0;border-radius:4px;font-size:0.8rem;text-align:center;font-weight:700;" oninput="hitungRingkasanReturVendor()">';
+    } else {
+      html += '<span style="color:#ccc;font-size:0.7rem;">—</span>';
+    }
+    html += '</td>';
+    html += '</tr>';
+  }
+  
+  html += '      </tbody></table>';
+  html += '  </div>';
+  html += '</div>';
+  
+  // ALASAN & TANGGAL
+  html += '<div style="margin-bottom:15px;">';
+  html += '  <div class="form-group" style="margin-bottom:8px;">';
+  html += '    <label style="font-size:0.8rem;font-weight:600;color:#555;">📝 Alasan Retur</label>';
+  html += '    <input type="text" id="alasanReturVendor" placeholder="Contoh: Barang rusak" value="Barang rusak" style="width:100%;padding:8px 12px;border:1px solid #dce3f0;border-radius:6px;font-size:0.85rem;">';
+  html += '  </div>';
+  html += '  <div class="form-group" style="margin-bottom:0;">';
+  html += '    <label style="font-size:0.8rem;font-weight:600;color:#555;">📅 Tanggal Retur</label>';
+  html += '    <input type="date" id="tanggalReturVendor" value="' + getTodayString() + '" style="width:100%;padding:8px 12px;border:1px solid #dce3f0;border-radius:6px;font-size:0.85rem;">';
+  html += '  </div>';
+  html += '</div>';
+  
+  // RINGKASAN OTOMATIS
+  html += '<div id="ringkasanReturVendor" style="background:#f0f8ff;padding:12px 15px;border-radius:8px;border:1px solid #dce3f0;margin-bottom:15px;">';
+  html += '  <div style="font-weight:700;font-size:0.85rem;color:#37474f;margin-bottom:8px;">📊 Ringkasan (Otomatis)</div>';
+  html += '  <div id="ringkasanReturVendorContent" style="font-size:0.85rem;color:#555;">';
+  html += '    <div style="text-align:center;color:#999;padding:10px;">Isi qty retur untuk melihat ringkasan</div>';
+  html += '  </div>';
+  html += '</div>';
+  
+  // TOMBOL
+  html += '<div style="display:flex;gap:8px;">';
+  html += '  <button type="button" class="btn-proses-retur-vendor" onclick="prosesReturVendorAction()" style="flex:2;padding:14px;background:linear-gradient(135deg,#E65100,#BF360C);color:white;border:none;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 4px 15px rgba(230,81,0,0.3);opacity:0.5;cursor:not-allowed;" disabled>✅ Proses Retur</button>';
+  html += '  <button type="button" onclick="closeModal()" style="flex:1;padding:14px;background:#607D8B;color:white;border:none;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;">✖ Batal</button>';
+  html += '</div>';
+  
+  document.getElementById('modalTitle').textContent = '📦 Retur ke Vendor';
+  document.getElementById('modalContent').classList.add('large');
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modal').classList.add('active');
+  
+  setTimeout(function() {
+    var input = document.querySelector('.inputReturVendor');
+    if (input) input.focus();
+  }, 300);
+}
+
+function hitungRingkasanReturVendor() {
+  if (!_dataReturVendorAktif) return;
+  var header = _dataReturVendorAktif.header;
+  var sisaHutang = header.sisaHutang;
+  
+  var nilaiRetur = 0, qtyRetur = 0;
+  var inputs = document.querySelectorAll('.inputReturVendor');
+  for (var i = 0; i < inputs.length; i++) {
+    var inp = inputs[i];
+    var qty = parseInt(inp.value) || 0;
+    var max = parseInt(inp.dataset.max) || 0;
+    var harga = parseInt(inp.dataset.harga) || 0;
+    if (qty > max) { qty = max; inp.value = max; }
+    if (qty < 0) { qty = 0; inp.value = 0; }
+    nilaiRetur += qty * harga;
+    qtyRetur += qty;
+  }
+  
+  var metode, potong = 0, refund = 0;
+  var labelMetode, warnaMetode, iconMetode;
+  
+  if (nilaiRetur <= 0) {
+    metode = null;
+  } else if (sisaHutang <= 0) {
+    metode = 'REFUND'; refund = nilaiRetur;
+    labelMetode = 'REFUND TUNAI (hutang sudah lunas)'; warnaMetode = '#1565c0'; iconMetode = '💰';
+  } else if (nilaiRetur <= sisaHutang) {
+    metode = 'POTONG HUTANG'; potong = nilaiRetur;
+    labelMetode = 'POTONG HUTANG (retur ≤ sisa hutang)'; warnaMetode = '#2e7d32'; iconMetode = '🔗';
+  } else {
+    metode = 'CAMPURAN'; potong = sisaHutang; refund = nilaiRetur - sisaHutang;
+    labelMetode = 'CAMPURAN (potong hutang + refund)'; warnaMetode = '#9C27B0'; iconMetode = '🔄';
+  }
+  
+  var sisaBaru = Math.max(0, sisaHutang - potong);
+  var el = document.getElementById('ringkasanReturVendorContent');
+  if (!el) return;
+  
+  if (nilaiRetur <= 0) {
+    el.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">Isi qty retur untuk melihat ringkasan</div>';
+  } else {
+    var html = '';
+    html += '<div style="background:' + warnaMetode + '15;border-left:4px solid ' + warnaMetode + ';padding:8px 12px;border-radius:6px;margin-bottom:8px;">';
+    html += '  <div style="font-weight:700;color:' + warnaMetode + ';font-size:0.8rem;">' + iconMetode + ' ' + labelMetode + '</div>';
+    html += '</div>';
+    
+    html += '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Qty Retur:</span><strong>' + qtyRetur + ' produk</strong></div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Nilai Retur:</span><strong>' + formatRupiah(nilaiRetur) + '</strong></div>';
+    
+    if (potong > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2e7d32;"><span>→ Potong Hutang:</span><strong>' + formatRupiah(potong) + '</strong></div>';
+    if (refund > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#1565c0;"><span>→ Refund Tunai:</span><strong>' + formatRupiah(refund) + '</strong></div>';
+    
+    html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px dashed #ccc;margin-top:4px;font-weight:700;"><span>Hutang Setelah:</span><strong style="color:' + (sisaBaru > 0 ? '#c62828' : '#2e7d32') + ';">' + formatRupiah(sisaBaru) + '</strong></div>';
+    
+    if (refund > 0) {
+      html += '<div style="background:#e3f2fd;padding:8px 10px;border-radius:6px;margin-top:8px;font-size:0.75rem;color:#0d47a1;">💡 <strong>Info:</strong> Vendor harus mengembalikan <strong>' + formatRupiah(refund) + '</strong>.</div>';
+    }
+    el.innerHTML = html;
+  }
+  
+  var btn = document.querySelector('.btn-proses-retur-vendor');
+  if (btn) {
+    if (nilaiRetur > 0) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+    else { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; }
+  }
+}
+
+function prosesReturVendorAction() {
+  if (!_dataReturVendorAktif) return;
+  var header = _dataReturVendorAktif.header;
+  
+  var itemsRetur = [];
+  var inputs = document.querySelectorAll('.inputReturVendor');
+  for (var i = 0; i < inputs.length; i++) {
+    var qty = parseInt(inputs[i].value) || 0;
+    if (qty > 0) itemsRetur.push({ kode: inputs[i].dataset.kode, qty: qty });
+  }
+  
+  if (itemsRetur.length === 0) { showToast('⚠️ Isi qty retur dulu', 'warning'); return; }
+  
+  var alasan = (document.getElementById('alasanReturVendor') || {}).value || 'Barang rusak';
+  var tanggal = (document.getElementById('tanggalReturVendor') || {}).value || getTodayString();
+  
+  var nilaiRetur = 0;
+  for (var i = 0; i < itemsRetur.length; i++) {
+    for (var j = 0; j < _dataReturVendorAktif.detail.length; j++) {
+      if (_dataReturVendorAktif.detail[j].kode === itemsRetur[i].kode) {
+        nilaiRetur += itemsRetur[i].qty * _dataReturVendorAktif.detail[j].harga;
+        break;
+      }
+    }
+  }
+  
+  var sisaHutang = header.sisaHutang;
+  var metode, potong = 0, refund = 0;
+  if (sisaHutang <= 0) { metode = 'REFUND'; refund = nilaiRetur; }
+  else if (nilaiRetur <= sisaHutang) { metode = 'POTONG HUTANG'; potong = nilaiRetur; }
+  else { metode = 'CAMPURAN'; potong = sisaHutang; refund = nilaiRetur - sisaHutang; }
+  
+  var konfirmasi = '⚠️ Konfirmasi Retur Vendor\n\nVendor: ' + header.vendor + '\nNo.Nota: ' + header.noNota + '\n\nNilai Retur: ' + formatRupiah(nilaiRetur) + '\nMetode: ' + metode + '\n';
+  if (potong > 0) konfirmasi += '🔗 Potong Hutang: ' + formatRupiah(potong) + '\n';
+  if (refund > 0) konfirmasi += '💰 Refund Tunai: ' + formatRupiah(refund) + '\n';
+  konfirmasi += '\nLanjutkan?';
+  
+  if (!confirm(konfirmasi)) return;
+  
+  var btn = document.querySelector('.btn-proses-retur-vendor');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; btn.style.opacity = '0.6'; }
+  
+  callGAS('prosesReturVendor', {
+    noNota: header.noNota, itemsRetur: itemsRetur, alasan: alasan, tanggal: tanggal,
+    user: currentUser ? currentUser.nama : 'System'
+  })
+  .then(function(result) {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Proses Retur'; btn.style.opacity = '1'; }
+    
+    if (result && result.success) {
+      showToast('✅ ' + result.message, 'success');
+      tampilkanNotaReturVendor(result.data);
+      loadHutangVendor();
+    } else {
+      showToast('❌ ' + (result ? result.error : 'Gagal'), 'error');
+    }
+  })
+  .catch(function(error) {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Proses Retur'; btn.style.opacity = '1'; }
+    showToast('❌ Error: ' + error.message, 'error');
+  });
+}
+
+function tampilkanNotaReturVendor(data) {
+  var infoToko = getInfoTokoSync();
+  window._lastReturVendorData = data;
+  
+  var html = '<div class="struk-container" id="strukReturVendor" style="background:white;padding:15px;border-radius:10px;border:1px solid #e8ecf4;font-family:\'Courier New\',monospace;font-size:9px;max-width:340px;margin:0 auto 15px;">';
+  html += '<div style="text-align:center;border-bottom:1px dashed #333;padding-bottom:5px;margin-bottom:5px;">';
+  html += '<div style="font-weight:bold;font-size:11px;">' + escapeHtml(infoToko.namaToko || 'POS SYSTEM') + '</div>';
+  if (infoToko.alamat) html += '<div style="font-size:7px;color:#444;">' + escapeHtml(infoToko.alamat) + '</div>';
+  if (infoToko.noHp) html += '<div style="font-size:7px;color:#444;">📞 ' + escapeHtml(infoToko.noHp) + '</div>';
+  html += '</div>';
+  html += '<div style="text-align:center;font-weight:bold;padding:3px 0;margin-bottom:5px;">NOTA RETUR VENDOR</div>';
+  
+  html += '<div style="border-bottom:1px dashed #333;padding-bottom:5px;margin-bottom:5px;">';
+  html += '<div style="display:flex;"><span style="display:inline-block;width:70px;">ID Retur</span><span>: ' + escapeHtml(data.idRetur) + '</span></div>';
+  html += '<div style="display:flex;"><span style="display:inline-block;width:70px;">Tgl</span><span>: ' + formatTanggalDisplay(data.tanggal) + '</span></div>';
+  html += '<div style="display:flex;"><span style="display:inline-block;width:70px;">No.Nota</span><span>: ' + escapeHtml(data.noNota) + '</span></div>';
+  html += '<div style="display:flex;"><span style="display:inline-block;width:70px;">Vendor</span><span>: ' + escapeHtml(data.vendor) + '</span></div>';
+  html += '</div>';
+  
+  html += '<div style="border-bottom:1px dashed #333;padding-bottom:5px;margin-bottom:5px;">';
+  html += '<div style="font-weight:bold;font-size:8px;margin-bottom:3px;">📦 RETUR BARANG (' + data.qtyRetur + ' pcs)</div>';
+  for (var i = 0; i < data.itemsRetur.length; i++) {
+    var it = data.itemsRetur[i];
+    html += '<div style="display:flex;justify-content:space-between;font-size:8px;"><span>' + escapeHtml(it.nama) + ' x' + it.qty + '</span><span>Rp ' + formatRupiahPlain(it.subtotal) + '</span></div>';
+  }
+  html += '<div style="display:flex;justify-content:space-between;font-weight:bold;margin-top:3px;border-top:1px dotted #999;padding-top:3px;"><span>Total Retur</span><span>Rp ' + formatRupiahPlain(data.nilaiRetur) + '</span></div>';
+  html += '</div>';
+  
+  html += '<div style="border-bottom:1px dashed #333;padding-bottom:5px;margin-bottom:5px;">';
+  html += '<div style="font-weight:bold;font-size:8px;margin-bottom:3px;">⚙️ METODE: ' + data.metode + '</div>';
+  if (data.nilaiPotongHutang > 0) html += '<div style="display:flex;justify-content:space-between;font-size:8px;color:#2e7d32;"><span>🔗 Potong Hutang</span><span>Rp ' + formatRupiahPlain(data.nilaiPotongHutang) + '</span></div>';
+  if (data.nilaiRefundTunai > 0) html += '<div style="display:flex;justify-content:space-between;font-size:8px;color:#1565c0;"><span>💰 Refund Tunai</span><span>Rp ' + formatRupiahPlain(data.nilaiRefundTunai) + '</span></div>';
+  html += '</div>';
+  
+  html += '<div style="border-bottom:1px dashed #333;padding-bottom:5px;margin-bottom:5px;">';
+  html += '<div style="display:flex;justify-content:space-between;font-weight:bold;font-size:11px;"><span>SISA HUTANG</span><span>Rp ' + formatRupiahPlain(data.sisaHutangBaru) + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between;margin-top:3px;"><span>Status</span><span style="font-weight:bold;">' + (data.sisaHutangBaru === 0 ? '✅ LUNAS' : '🔄 CICILAN') + '</span></div>';
+  html += '</div>';
+  
+  html += '<div style="text-align:center;border-top:1px dashed #ccc;margin-top:6px;padding-top:5px;">';
+  html += '<div style="font-weight:bold;">TERIMA KASIH</div>';
+  html += '<div style="font-size:7px;color:#999;">' + formatTanggalDisplay(new Date(), true) + '</div>';
+  html += '</div></div>';
+  
+  var totalBtn = shouldShowThermalButton() ? 3 : 2;
+  html += '<div style="display:grid;grid-template-columns:repeat(' + totalBtn + ',1fr);gap:8px;margin-bottom:12px;">';
+  html += '<button onclick="printNotaReturVendor()" style="padding:12px;background:linear-gradient(135deg,#E65100,#BF360C);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:70px;justify-content:center;"><span style="font-size:1.4rem;">🖨️</span><span style="font-size:0.7rem;">Cetak</span></button>';
+  if (shouldShowThermalButton()) html += '<button onclick="cetakNotaReturVendorThermal()" style="padding:12px;background:linear-gradient(135deg,#03A9F4,#0288D1);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:70px;justify-content:center;"><span style="font-size:1.4rem;">📱</span><span style="font-size:0.7rem;">Thermal</span></button>';
+  html += '<button onclick="closeModal()" style="padding:12px;background:#607D8B;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:70px;justify-content:center;"><span style="font-size:1.4rem;">✖</span><span style="font-size:0.7rem;">Tutup</span></button>';
+  html += '</div>';
+  
+  document.getElementById('modalTitle').textContent = '✅ Nota Retur Vendor';
+  document.getElementById('modalContent').classList.add('large');
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modal').classList.add('active');
+}
+
+function printNotaReturVendor() {
+  var content = document.getElementById('strukReturVendor');
+  if (!content) { showToast('⚠️ Nota tidak ditemukan', 'error'); return; }
+  var printWindow = window.open('', '_blank', 'width=280,height=auto');
+  printWindow.document.write('<html><head><title>Nota Retur Vendor</title><style>body { font-family: "Courier New", monospace; font-size: 8px; margin: 0; padding: 5px; } .struk-container { max-width: 58mm; margin: 0 auto; }</style></head><body>');
+  printWindow.document.write(content.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  setTimeout(function() { printWindow.print(); }, 300);
+}
+
+async function cetakNotaReturVendorThermal() {
+  var data = window._lastReturVendorData;
+  if (!data) return;
+  if (window._isPrintingThermal) return;
+  window._isPrintingThermal = true;
+  
+  try {
+    showToast('⏳ Menyiapkan nota...', 'info');
+    var bridgeReady = await isCleanterAvailableCached();
+    if (!bridgeReady) { showToast('❌ Cleanter belum aktif', 'error'); return; }
+    
+    var infoToko = getInfoTokoSync();
+    var WIDTH = 32;
+    var DIVIDER = '-'.repeat(WIDTH);
+    
+    function makeRow(left, right) {
+      left = String(left == null ? '' : left); right = String(right == null ? '' : right);
+      var spaceCount = WIDTH - left.length - right.length;
+      if (spaceCount >= 1) return left + ' '.repeat(spaceCount) + right;
+      var maxLeftLen = WIDTH - right.length - 1;
+      if (maxLeftLen < 1) { right = right.substring(0, WIDTH - 1); maxLeftLen = 0; }
+      var trimmedLeft = left;
+      if (left.length > maxLeftLen) trimmedLeft = (maxLeftLen <= 1) ? '' : left.substring(0, maxLeftLen - 1) + '…';
+      var pad = WIDTH - trimmedLeft.length - right.length;
+      if (pad < 1) pad = 1;
+      return trimmedLeft + ' '.repeat(pad) + right;
+    }
+    
+    function makeLabelRow(label, value, labelWidth) {
+      labelWidth = labelWidth || 8; label = String(label == null ? '' : label); value = String(value == null ? '' : value);
+      var paddedLabel = label;
+      while (paddedLabel.length < labelWidth) paddedLabel += ' ';
+      if (paddedLabel.length > labelWidth) paddedLabel = paddedLabel.substring(0, labelWidth);
+      return paddedLabel + ' : ' + value;
+    }
+    
+    var content = [];
+    content.push({ type: 'text', text: infoToko.namaToko || 'POS SYSTEM', align: 'center', bold: true, size: 'large' });
+    content.push({ type: 'text', text: ' ' });
+    if (infoToko.alamat) content.push({ type: 'text', text: String(infoToko.alamat), align: 'center' });
+    if (infoToko.noHp) content.push({ type: 'text', text: 'Telp. ' + String(infoToko.noHp), align: 'center' });
+    
+    content.push({ type: 'text', text: DIVIDER });
+    content.push({ type: 'text', text: 'NOTA RETUR VENDOR', align: 'center', bold: true });
+    content.push({ type: 'text', text: DIVIDER });
+    
+    content.push({ type: 'text', text: makeLabelRow('ID Retur', data.idRetur, 8) });
+    content.push({ type: 'text', text: makeLabelRow('Tanggal', formatTanggalDisplay(data.tanggal), 8) });
+    content.push({ type: 'text', text: makeLabelRow('No.Nota', data.noNota, 8) });
+    content.push({ type: 'text', text: makeLabelRow('Vendor', data.vendor, 8) });
+    
+    content.push({ type: 'text', text: DIVIDER });
+    content.push({ type: 'text', text: '📦 RETUR BARANG', bold: true });
+    
+    for (var i = 0; i < data.itemsRetur.length; i++) {
+      var it = data.itemsRetur[i];
+      var nama = String(it.nama);
+      if (nama.length > 18) nama = nama.substring(0, 17) + '.';
+      content.push({ type: 'text', text: nama + ' x' + it.qty });
+      content.push({ type: 'text', text: makeRow('  @ Rp ' + formatRupiahPlain(it.harga), 'Rp ' + formatRupiahPlain(it.subtotal)) });
+    }
+    
+    content.push({ type: 'text', text: DIVIDER });
+    content.push({ type: 'text', text: makeRow('TOTAL RETUR', 'Rp ' + formatRupiahPlain(data.nilaiRetur)), bold: true });
+    content.push({ type: 'text', text: DIVIDER });
+    content.push({ type: 'text', text: '⚙️ METODE: ' + data.metode, bold: true });
+    
+    if (data.nilaiPotongHutang > 0) content.push({ type: 'text', text: makeRow('🔗 Potong Hutang', 'Rp ' + formatRupiahPlain(data.nilaiPotongHutang)) });
+    if (data.nilaiRefundTunai > 0) {
+      content.push({ type: 'text', text: makeRow('💰 Refund Tunai', 'Rp ' + formatRupiahPlain(data.nilaiRefundTunai)), bold: true });
+      content.push({ type: 'text', text: '→ Vendor mengembalikan uang', align: 'center', size: 'small' });
+    }
+    
+    content.push({ type: 'text', text: DIVIDER });
+    content.push({ type: 'text', text: makeRow('SISA HUTANG', 'Rp ' + formatRupiahPlain(data.sisaHutangBaru)), bold: true });
+    content.push({ type: 'text', text: makeRow('Status', data.sisaHutangBaru === 0 ? 'LUNAS' : 'CICILAN'), bold: true });
+    
+    if (data.alasan) content.push({ type: 'text', text: 'Alasan: ' + data.alasan });
+    
+    content.push({ type: 'text', text: DIVIDER });
+    content.push({ type: 'text', text: makeRow('Diproses oleh', data.user) });
+    content.push({ type: 'text', text: DIVIDER });
+    content.push({ type: 'text', text: 'TERIMA KASIH', align: 'center', bold: true });
+    
+    await new Promise(function(resolve) { tambahQRFooterCleanter(content, resolve); });
+    content.push({ type: 'feed' });
+    
+    var response = await fetch('http://localhost:9100/print', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: content })
+    });
+    
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    showToast('✅ Nota retur terkirim ke printer!', 'success');
+  } catch (error) {
+    showToast('❌ Gagal cetak: ' + error.message, 'error');
+  } finally {
+    window._isPrintingThermal = false;
+  }
+}
   
 </script>
 
