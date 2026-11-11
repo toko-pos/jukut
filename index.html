@@ -15288,15 +15288,29 @@ function renderTabelPiutang(belumLunas) {
     var total = t.total || 0;
     var dibayar = t.dibayar || 0;
     var retur = t.retur || 0;           // 🔥 FIELD RETUR
-    var sisa = t.sisa || 0;
-    var progress = total > 0 ? Math.round(((dibayar + retur) / total) * 100) : 0;
+    var retur = t.retur || 0;
+var sisa = t.sisa || 0;
+
+// 🔥 JIKA ADA RETUR DAN SISA LEBIH KECIL DARI NILAI RETUR, ANGGAP LUNAS (SISA = 0)
+if (retur > 0 && sisa > 0) {
+    sisa = 0; // Paksa sisa menjadi 0 karena sudah ditutup oleh retur/cicilan
+}
+
+// Hitung progress
+var progress = total > 0 ? Math.round(((dibayar + retur) / total) * 100) : 0;
+
+// Tentukan Status
+var statusFinal = t.status;
+if (sisa <= 0) statusFinal = 'LUNAS';
+else if (dibayar > 0) statusFinal = 'CICILAN';
+else statusFinal = 'BELUM BAYAR';
     
     // Tentukan status class
     var statusClass, statusText;
     if (t.status === 'LUNAS') {
       statusClass = 'badge-success';
       statusText = '✅ LUNAS';
-    } else if (t.status === 'CICILAN') {
+    } else if (statusFinal === 'CICILAN') {
       statusClass = 'badge-warning';
       statusText = '🔄 Cicilan';
     } else {
@@ -15304,7 +15318,7 @@ function renderTabelPiutang(belumLunas) {
       statusText = '⚠️ Belum Bayar';
     }
     
-    var rowStyle = (t.status === 'LUNAS') ? 'background:#f0fdf4;' : '';
+    var rowStyle = (statusFinal === 'LUNAS') ? 'background:#f0fdf4;' : '';
     
     // Hitung umur
     var umurHari = 0;
