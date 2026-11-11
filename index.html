@@ -15396,14 +15396,16 @@ function renderTabelPiutang(belumLunas) {
 function lihatRiwayatPiutang(idTransaksi) {
   showToast('⏳ Memuat riwayat...', 'info');
   
-  // 🔥 Ambil data riwayat + header piutang secara paralel
+  // 🔥 Ambil data riwayat + header + retur secara paralel
   Promise.all([
     callGAS('getRiwayatPembayaranPiutang', { idTransaksi: idTransaksi }),
-    callGAS('getHeaderPiutangReseller', { idTransaksi: idTransaksi })
+    callGAS('getHeaderPiutangReseller', { idTransaksi: idTransaksi }),
+    callGAS('getDetailPiutangUntukTerima', { idTransaksi: idTransaksi }) // 🔥 Tambahan untuk ambil data retur
   ])
   .then(function(results) {
     var riwayatResult = results[0];
     var headerResult = results[1];
+    var returResult = results[2];
     
     // Validasi riwayat
     if (!riwayatResult || !riwayatResult.success) {
@@ -15413,7 +15415,7 @@ function lihatRiwayatPiutang(idTransaksi) {
     
     var rows = riwayatResult.data || [];
     
-    // 🔥 Ambil header piutang (dari sheet Piutang Reseller)
+    // Ambil header piutang
     var header = (headerResult && headerResult.success && headerResult.data) 
       ? headerResult.data 
       : null;
@@ -15433,9 +15435,23 @@ function lihatRiwayatPiutang(idTransaksi) {
       };
     }
     
+    // 🔥 Ambil total retur
+    var totalRetur = 0;
+    if (returResult && returResult.success) {
+      totalRetur = returResult.header.totalRetur || 0;
+    }
+
+    // 🔥 HITUNG SISA DAN STATUS YANG BENAR (SINKRON DENGAN POPUP TERIMA)
+    var sisaFix = Math.max(0, header.total - header.dibayar - totalRetur);
+    var statusFix = sisaFix <= 0 ? 'LUNAS' : (header.dibayar > 0 ? 'CICILAN' : 'BELUM BAYAR');
+    
+    // Timpa header dengan nilai yang sudah fix agar dipakai di seluruh tampilan
+    header.sisa = sisaFix;
+    header.status = statusFix;
+
     var infoToko = getInfoTokoSync();
     
-    // 🔥 Simpan data untuk cetak
+    // Simpan data untuk cetak
     window._lastRiwayatPiutangData = {
       idTransaksi: idTransaksi,
       header: header,
@@ -15455,12 +15471,12 @@ function lihatRiwayatPiutang(idTransaksi) {
     var statusIcon = '⚠️';
     var statusLabel = 'BELUM BAYAR';
     
-    if (header.status === 'LUNAS' || header.sisa <= 0) {
+    if (statusFix === 'LUNAS') {
       statusColor = '#2e7d32';
       statusBg = '#e8f5e9';
       statusIcon = '✅';
       statusLabel = 'LUNAS';
-    } else if (header.dibayar > 0) {
+    } else if (statusFix === 'CICILAN') {
       statusColor = '#e65100';
       statusBg = '#fff3e0';
       statusIcon = '🔄';
@@ -15474,31 +15490,34 @@ function lihatRiwayatPiutang(idTransaksi) {
     html += '  <div style="font-size:0.75rem;opacity:0.85;margin-top:2px;">📄 ' + escapeHtml(header.idTransaksi) + ' · 📅 ' + formatTanggalDisplay(header.tanggal) + '</div>';
     html += '</div>';
     
-    // 🔥 RINGKASAN PIUTANG (4 KARTU)
     // 🔥 RINGKASAN PIUTANG (4 KARTU RESPONSIVE)
-html += '<div class="piutang-summary-grid">';
+    html += '<div class="piutang-summary-grid">';
 
-html += '  <div class="piutang-summary-card" style="background:#f0f4ff;border-left-color:#6C63FF;">';
-html += '    <div class="piutang-summary-label">💰 Total Piutang</div>';
-html += '    <div class="piutang-summary-value" style="color:#1a2332;">' + formatRupiah(header.total) + '</div>';
-html += '  </div>';
+    html += '  <div class="piutang-summary-card" style="background:#f0f4ff;border-left-color:#6C63FF;">';
+    html += '    <div class="piutang-summary-label">💰 Total Piutang</div>';
+    html += '    <div class="piutang-summary-value" style="color:#1a2332;">' + formatRupiah(header.total) + '</div>';
+    html += '  </div>';
 
-html += '  <div class="piutang-summary-card" style="background:#e8f5e9;border-left-color:#4CAF50;">';
-html += '    <div class="piutang-summary-label">✅ Diterima</div>';
-html += '    <div class="piutang-summary-value" style="color:#2e7d32;">' + formatRupiah(header.dibayar) + '</div>';
-html += '  </div>';
+    html += '  <div class="piutang-summary-card" style="background:#e8f5e9;border-left-color:#4CAF50;">';
+    html += '    <div class="piutang-summary-label">✅ Diterima</div>';
+    html += '    <div class="piutang-summary-value" style="color:#2e7d32;">' + formatRupiah(header.dibayar) + '</div>';
+    html += '  </div>';
 
-html += '  <div class="piutang-summary-card" style="background:#ffebee;border-left-color:#f44336;">';
-html += '    <div class="piutang-summary-label">⚠️ Sisa</div>';
-html += '    <div class="piutang-summary-value" style="color:' + (header.sisa > 0 ? '#c62828' : '#2e7d32') + ';">' + formatRupiah(header.sisa) + '</div>';
-html += '  </div>';
+    // 🔥 KARTU RETUR BARU
+    html += '  <div class="piutang-summary-card" style="background:#fff3e0;border-left-color:#e65100;">';
+    html += '    <div class="piutang-summary-label">📦 Retur</div>';
+    html += '    <div class="piutang-summary-value" style="color:#e65100;">' + formatRupiah(totalRetur) + '</div>';
+    html += '  </div>';
 
-html += '  <div class="piutang-summary-card" style="background:' + statusBg + ';border-left-color:' + statusColor + ';">';
-html += '    <div class="piutang-summary-label">📊 Status</div>';
-html += '    <div class="piutang-summary-value" style="color:' + statusColor + ';font-size:0.9rem;">' + statusIcon + ' ' + statusLabel + '</div>';
-html += '  </div>';
+    html += '  <div class="piutang-summary-card" style="background:' + statusBg + ';border-left-color:' + statusColor + ';">';
+    html += '    <div class="piutang-summary-label">📊 Sisa / Status</div>';
+    html += '    <div class="piutang-summary-value" style="color:' + statusColor + ';font-size:0.9rem;display:flex;flex-direction:column;gap:2px;">';
+    html += '       <span>' + formatRupiah(sisaFix) + '</span>';
+    html += '       <span style="font-size:0.65rem;">' + statusIcon + ' ' + statusLabel + '</span>';
+    html += '    </div>';
+    html += '  </div>';
 
-html += '</div>';
+    html += '</div>';
     
     // 🔥 RIWAYAT PEMBAYARAN
     html += '<div style="background:#f0f4ff;padding:10px 14px;border-radius:8px;margin-bottom:10px;">';
@@ -15540,8 +15559,8 @@ html += '</div>';
       html += '</table></div>';
     }
     
-    // 🔥 PROGRESS BAR
-    var persen = header.total > 0 ? Math.round((header.dibayar / header.total) * 100) : 0;
+    // 🔥 PROGRESS BAR (UBAH RUMUS AGAR RETUR IKUT DIHITUNG)
+    var persen = header.total > 0 ? Math.round(((header.dibayar + totalRetur) / header.total) * 100) : 0;
     html += '<div style="background:white;padding:12px 15px;border-radius:10px;margin-top:15px;border:1px solid #e8ecf4;">';
     html += '  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
     html += '    <div style="font-size:0.75rem;font-weight:600;color:#555;">📊 Progress Penerimaan</div>';
