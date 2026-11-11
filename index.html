@@ -15288,17 +15288,16 @@ function renderTabelPiutang(belumLunas) {
     var total = t.total || 0;
     var dibayar = t.dibayar || 0;
     var retur = t.retur || 0;
-    var sisa = t.sisa || 0;
+    
+    // Ambil sisa dari database. Jika kosong, hitung manual.
+    var sisa = (t.sisa !== undefined && t.sisa !== null) ? t.sisa : Math.max(0, total - dibayar - retur);
 
-    // 🔥 LOGIKA PERBAIKAN: Jika Cicilan + Retur >= Total, paksa Sisa = 0
+    // 🔥 KUNCI PERBAIKAN: Paksa sisa menjadi 0 jika Cicilan + Retur sudah menutupi Total
     if ((dibayar + retur) >= total && total > 0) {
         sisa = 0; 
     }
 
-    // Hitung progress
-    var progress = total > 0 ? Math.round(((dibayar + retur) / total) * 100) : 0;
-    
-    // Tentukan status class & text berdasarkan Sisa yang sudah dihitung ulang
+    // Tentukan Status
     var statusClass, statusText;
     if (sisa <= 0) {
       statusClass = 'badge-success';
@@ -15340,12 +15339,12 @@ function renderTabelPiutang(belumLunas) {
     // Kolom Diterima
     html += '<td style="text-align:right;color:#2e7d32;font-weight:600;">' + formatRupiah(dibayar) + '</td>';
     
-    // Kolom Retur
+    // 🔥 KOLOM RETUR (Menampilkan nilai retur dengan warna oranye)
     html += '<td style="text-align:right;color:#e65100;font-weight:600;">' + 
             (retur > 0 ? formatRupiah(retur) : '<span style="color:#ccc;">-</span>') + 
             '</td>';
     
-    // Kolom Sisa
+    // Kolom Sisa (Akan menampilkan Rp 0 jika lunas)
     html += '<td style="text-align:right;font-weight:700;color:' + (sisa > 0 ? '#c62828' : '#2e7d32') + ';">' + formatRupiah(sisa) + '</td>';
     
     // Kolom Umur
