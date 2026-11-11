@@ -55,7 +55,7 @@
   <!-- 🔥 GANTI URL INI DENGAN HASIL DEPLOY GAS ANDA! 🔥             -->
   <!-- ============================================================ -->
   <script>
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwiQ3nTn24qeCLm_3a_HixjpefeiynYsYADtwy7mn1xHVmaR1HZ2_BBXDq-m80rUEjIBg/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbzSptxYvEGJ9FOTPtxdC5NxiprnU2HYqSzucpXCTx5EASGQOIVj7JmljPEQ1eJll7I0Zw/exec';
 
 
     // ============================================================
@@ -15287,30 +15287,23 @@ function renderTabelPiutang(belumLunas) {
     var t = belumLunas[i];
     var total = t.total || 0;
     var dibayar = t.dibayar || 0;
-    var retur = t.retur || 0;           // 🔥 FIELD RETUR
     var retur = t.retur || 0;
-var sisa = t.sisa || 0;
+    var sisa = t.sisa || 0;
 
-// 🔥 JIKA ADA RETUR DAN SISA LEBIH KECIL DARI NILAI RETUR, ANGGAP LUNAS (SISA = 0)
-if (retur > 0 && sisa > 0) {
-    sisa = 0; // Paksa sisa menjadi 0 karena sudah ditutup oleh retur/cicilan
-}
+    // 🔥 LOGIKA PERBAIKAN: Jika Cicilan + Retur >= Total, paksa Sisa = 0
+    if ((dibayar + retur) >= total && total > 0) {
+        sisa = 0; 
+    }
 
-// Hitung progress
-var progress = total > 0 ? Math.round(((dibayar + retur) / total) * 100) : 0;
-
-// Tentukan Status
-var statusFinal = t.status;
-if (sisa <= 0) statusFinal = 'LUNAS';
-else if (dibayar > 0) statusFinal = 'CICILAN';
-else statusFinal = 'BELUM BAYAR';
+    // Hitung progress
+    var progress = total > 0 ? Math.round(((dibayar + retur) / total) * 100) : 0;
     
-    // Tentukan status class
+    // Tentukan status class & text berdasarkan Sisa yang sudah dihitung ulang
     var statusClass, statusText;
-    if (t.status === 'LUNAS') {
+    if (sisa <= 0) {
       statusClass = 'badge-success';
       statusText = '✅ LUNAS';
-    } else if (statusFinal === 'CICILAN') {
+    } else if (dibayar > 0) {
       statusClass = 'badge-warning';
       statusText = '🔄 Cicilan';
     } else {
@@ -15318,7 +15311,7 @@ else statusFinal = 'BELUM BAYAR';
       statusText = '⚠️ Belum Bayar';
     }
     
-    var rowStyle = (statusFinal === 'LUNAS') ? 'background:#f0fdf4;' : '';
+    var rowStyle = (sisa <= 0) ? 'background:#f0fdf4;' : '';
     
     // Hitung umur
     var umurHari = 0;
@@ -15347,7 +15340,7 @@ else statusFinal = 'BELUM BAYAR';
     // Kolom Diterima
     html += '<td style="text-align:right;color:#2e7d32;font-weight:600;">' + formatRupiah(dibayar) + '</td>';
     
-    // 🔥 KOLOM RETUR (BARU — INI YANG HILANG)
+    // Kolom Retur
     html += '<td style="text-align:right;color:#e65100;font-weight:600;">' + 
             (retur > 0 ? formatRupiah(retur) : '<span style="color:#ccc;">-</span>') + 
             '</td>';
